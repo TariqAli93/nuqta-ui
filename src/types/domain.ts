@@ -1,0 +1,451 @@
+﻿/**
+ * Local DTO types — replaces `@nuqtaplus/core` entity imports.
+ *
+ * These are plain TypeScript interfaces matching the shapes returned by the
+ * backend API.  No Zod schemas, no runtime validation — the backend is
+ * authoritative for all business rules.
+ */
+
+// ── Category ────────────────────────────────────────────────────────────────
+export interface Category {
+  id?: number;
+  name: string;
+  description?: string | null;
+  isActive?: boolean;
+  createdAt?: string;
+  createdBy?: number;
+}
+
+// ── Customer ────────────────────────────────────────────────────────────────
+export interface Customer {
+  id?: number;
+  name: string;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  notes?: string | null;
+  totalPurchases?: number;
+  totalDebt?: number;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: number;
+}
+
+// ── Payment ─────────────────────────────────────────────────────────────────
+export type PaymentMethod = 'cash' | 'card' | 'bank_transfer' | 'credit';
+
+export interface Payment {
+  id?: number;
+  saleId?: number | null;
+  purchaseId?: number | null;
+  customerId?: number | null;
+  supplierId?: number | null;
+  amount: number;
+  currency?: string;
+  exchangeRate?: number;
+  paymentMethod: PaymentMethod;
+  referenceNumber?: string | null;
+  idempotencyKey?: string | null;
+  status?: 'completed' | 'voided' | 'refunded';
+  paymentDate?: string;
+  notes?: string | null;
+  createdAt?: string;
+  createdBy?: number;
+}
+
+// ── Product ─────────────────────────────────────────────────────────────────
+export interface Product {
+  id?: number;
+  name: string;
+  sku?: string | null;
+  barcode?: string | null;
+  categoryId?: number | null;
+  description?: string | null;
+  costPrice: number;
+  sellingPrice: number;
+  currency?: string;
+  stock?: number;
+  minStock?: number;
+  unit?: string;
+  supplier?: string | null;
+  supplierId?: number | null;
+  expireDate?: string | null;
+  isExpire?: boolean;
+  status?: 'available' | 'out_of_stock' | 'discontinued';
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: number;
+}
+
+// ── Sale ────────────────────────────────────────────────────────────────────
+export interface SaleItemDepletion {
+  batchNumber?: string | null;
+  expiryDate?: string | null;
+  quantityBase: number;
+  costPerUnit?: number;
+  totalCost?: number;
+}
+
+export interface SaleItem {
+  id?: number;
+  saleId?: number;
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitName?: string;
+  unitFactor?: number;
+  quantityBase?: number;
+  batchId?: number;
+  unitPrice: number;
+  discount?: number;
+  subtotal: number;
+  cogs?: number;
+  weightedAverageCost?: number;
+  createdAt?: string;
+  depletions?: SaleItemDepletion[];
+}
+
+export interface Sale {
+  id?: number;
+  invoiceNumber: string;
+  customerId?: number | null;
+  subtotal: number;
+  discount?: number;
+  tax?: number;
+  total: number;
+  currency?: string;
+  exchangeRate?: number;
+  interestRate?: number;
+  interestAmount?: number;
+  paymentType?: 'cash' | 'credit' | 'mixed';
+  paidAmount?: number;
+  remainingAmount?: number;
+  status?: 'pending' | 'completed' | 'cancelled';
+  notes?: string | null;
+  idempotencyKey?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: number;
+  items?: SaleItem[];
+  cogs?: number;
+  totalCogs?: number;
+  profit?: number;
+  marginBps?: number;
+  journalEntryId?: number;
+}
+
+// ── Settings ────────────────────────────────────────────────────────────────
+export interface Settings {
+  id?: number;
+  key: string;
+  value: string;
+  description?: string | null;
+  updatedAt?: string;
+  updatedBy?: number;
+}
+
+export interface CompanySettings {
+  name: string;
+  address?: string | null;
+  phone?: string | null;
+  phone2?: string | null;
+  email?: string | null;
+  taxId?: string | null;
+  logo?: string | null;
+  currency: string;
+  lowStockThreshold?: number;
+}
+
+// ── User ────────────────────────────────────────────────────────────────────
+export type UserRole = 'admin' | 'cashier' | 'manager' | 'viewer';
+
+export interface User {
+  id?: number;
+  username: string;
+  password: string;
+  fullName: string;
+  phone?: string | null;
+  role?: UserRole;
+  isActive?: boolean;
+  lastLoginAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ── Supplier ────────────────────────────────────────────────────────────────
+export interface Supplier {
+  id?: number;
+  name: string;
+  phone?: string | null;
+  phone2?: string | null;
+  address?: string | null;
+  city?: string | null;
+  notes?: string | null;
+  openingBalance?: number;
+  currentBalance?: number;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: number;
+}
+
+// ── Purchase ────────────────────────────────────────────────────────────────
+export interface PurchaseItem {
+  id?: number;
+  purchaseId?: number;
+  productId: number;
+  productName: string;
+  unitName?: string;
+  unitFactor?: number;
+  quantity: number;
+  quantityBase: number;
+  unitCost: number;
+  lineSubtotal: number;
+  discount?: number;
+  batchId?: number;
+  batchNumber?: string;
+  expiryDate?: string | null;
+  createdAt?: string;
+}
+
+export interface Purchase {
+  id?: number;
+  invoiceNumber: string;
+  supplierId: number;
+  subtotal: number;
+  discount?: number;
+  tax?: number;
+  total: number;
+  paidAmount?: number;
+  remainingAmount?: number;
+  currency?: string;
+  exchangeRate?: number;
+  status?: 'pending' | 'completed' | 'cancelled' | 'received' | 'partial';
+  notes?: string | null;
+  receivedAt?: string | null;
+  idempotencyKey?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: number;
+  items?: PurchaseItem[];
+  payments?: any[];
+  movements?: any[];
+}
+
+// ── Inventory ───────────────────────────────────────────────────────────────
+export interface InventoryMovement {
+  id?: number;
+  productId: number;
+  batchId?: number;
+  movementType: 'in' | 'out' | 'adjust';
+  reason: 'sale' | 'purchase' | 'return' | 'damage' | 'manual' | 'opening';
+  quantityBase: number;
+  unitName?: string;
+  unitFactor?: number;
+  stockBefore: number;
+  stockAfter: number;
+  costPerUnit?: number;
+  totalCost?: number;
+  sourceType?: 'sale' | 'purchase' | 'adjustment' | 'return';
+  sourceId?: number;
+  notes?: string | null;
+  createdAt?: string;
+  createdBy?: number;
+}
+
+// ── Accounting ──────────────────────────────────────────────────────────────
+export interface Account {
+  id?: number;
+  code: string;
+  name: string;
+  nameAr?: string | null;
+  accountType: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
+  parentId?: number | null;
+  isSystem?: boolean;
+  isActive?: boolean;
+  balance?: number;
+  createdAt?: string;
+}
+
+export interface JournalLine {
+  id?: number;
+  journalEntryId?: number;
+  accountId: number;
+  debit?: number;
+  credit?: number;
+  description?: string | null;
+  createdAt?: string;
+}
+
+export interface JournalEntry {
+  id?: number;
+  entryNumber: string;
+  entryDate: string;
+  description: string;
+  sourceType?: 'sale' | 'purchase' | 'payment' | 'adjustment' | 'manual';
+  sourceId?: number;
+  isPosted?: boolean;
+  isReversed?: boolean;
+  reversalOfId?: number;
+  postingBatchId?: number | null;
+  totalAmount: number;
+  currency?: string;
+  notes?: string | null;
+  createdAt?: string;
+  createdBy?: number;
+  lines?: JournalLine[];
+}
+
+// ── Ledger ──────────────────────────────────────────────────────────────────
+export interface CustomerLedgerEntry {
+  id?: number;
+  customerId: number;
+  transactionType: 'invoice' | 'payment' | 'return' | 'adjustment' | 'opening';
+  amount: number;
+  balanceAfter: number;
+  saleId?: number;
+  paymentId?: number;
+  journalEntryId?: number;
+  notes?: string | null;
+  createdAt?: string;
+  createdBy?: number;
+}
+
+export interface SupplierLedgerEntry {
+  id?: number;
+  supplierId: number;
+  transactionType: 'invoice' | 'payment' | 'return' | 'adjustment' | 'opening';
+  amount: number;
+  balanceAfter: number;
+  purchaseId?: number;
+  paymentId?: number;
+  journalEntryId?: number;
+  notes?: string | null;
+  createdAt?: string;
+  createdBy?: number;
+}
+
+// ── Product Unit ────────────────────────────────────────────────────────────
+export interface ProductUnit {
+  id?: number;
+  productId: number;
+  unitName: string;
+  factorToBase?: number;
+  barcode?: string | null;
+  sellingPrice?: number | null;
+  isDefault?: boolean;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
+// ── Product Batch ───────────────────────────────────────────────────────────
+export interface ProductBatch {
+  id?: number;
+  productId: number;
+  batchNumber: string;
+  expiryDate?: string | null;
+  manufacturingDate?: string | null;
+  quantityReceived: number;
+  quantityOnHand: number;
+  costPerUnit?: number;
+  purchaseId?: number;
+  status?: 'active' | 'expired' | 'depleted' | 'recalled';
+  notes?: string | null;
+  createdAt?: string;
+}
+
+// ── Barcode ─────────────────────────────────────────────────────────────────
+export interface BarcodeTemplate {
+  id?: number;
+  name: string;
+  width: number;
+  height: number;
+  barcodeType?: 'CODE128' | 'EAN13' | 'QR';
+  showPrice?: boolean;
+  showName?: boolean;
+  showBarcode?: boolean;
+  showExpiry?: boolean;
+  layoutJson?: string | null;
+  isDefault?: boolean;
+  createdAt?: string;
+}
+
+export interface BarcodePrintJob {
+  id?: number;
+  templateId: number;
+  productId: number;
+  productName: string;
+  barcode?: string | null;
+  price?: number;
+  expiryDate?: string | null;
+  quantity?: number;
+  status?: 'pending' | 'printing' | 'printed' | 'failed';
+  printedAt?: string | null;
+  printError?: string | null;
+  createdAt?: string;
+  createdBy?: number;
+}
+
+export type UserPublic = Omit<User, 'password'>;
+
+export type CustomerInput = Pick<Customer, 'name' | 'phone' | 'address' | 'city' | 'notes'>;
+
+export type ProductInput = Pick<
+  Product,
+  | 'name'
+  | 'sku'
+  | 'barcode'
+  | 'categoryId'
+  | 'description'
+  | 'costPrice'
+  | 'sellingPrice'
+  | 'stock'
+  | 'minStock'
+  | 'unit'
+  | 'supplier'
+  | 'supplierId'
+  | 'status'
+  | 'isActive'
+  | 'isExpire'
+  | 'expireDate'
+>;
+
+export type SaleInput = Omit<Sale, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'> & {
+  paymentMethod?: string;
+  referenceNumber?: string;
+  idempotencyKey?: string;
+};
+
+export type FirstUserInput = {
+  username: string;
+  password: string;
+  fullName: string;
+  phone?: string | null;
+};
+
+export type UserInput = Pick<User, 'username' | 'fullName' | 'role' | 'isActive' | 'phone'> & {
+  password?: string;
+};
+
+export type CategoryInput = Pick<Category, 'name' | 'description' | 'isActive'>;
+
+export type SettingsCurrencyResponse = {
+  defaultCurrency: string;
+  usdRate: number;
+  iqdRate: number;
+};
+
+export type CompanySettingsInput = Pick<
+  CompanySettings,
+  | 'name'
+  | 'address'
+  | 'phone'
+  | 'phone2'
+  | 'email'
+  | 'taxId'
+  | 'logo'
+  | 'currency'
+  | 'lowStockThreshold'
+>;

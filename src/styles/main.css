@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+@import './fonts.css';
+
+/* Custom styles can be added here */
+html,
+body,
+* {
+  font-family: 'Cairo', sans-serif !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  scrollbar-gutter: both-edges;
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-track {
+  display: none;
+}
+
+::webkit-scrollbar-button {
+  display: none !important;
+}

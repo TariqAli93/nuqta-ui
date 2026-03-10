@@ -1,0 +1,26 @@
+import type { RouteRecordRaw } from 'vue-router';
+
+const PurchasesListView = () => import('../../views/purchases/PurchasesListView.vue');
+const PurchaseFormView = () => import('../../views/purchases/PurchaseFormView.vue');
+const PurchaseDetailsView = () => import('../../views/purchases/PurchaseDetailsView.vue');
+
+export const purchasesRoutes: RouteRecordRaw[] = [
+  {
+    path: 'purchases',
+    name: 'Purchases',
+    component: PurchasesListView,
+    meta: { requiresPurchasing: true, requiresManagePurchases: true },
+  },
+  {
+    path: 'purchases/new',
+    name: 'PurchaseCreate',
+    component: PurchaseFormView,
+    meta: { requiresManagePurchases: true, requiresPurchasing: true },
+  },
+  {
+    path: 'purchases/:id',
+    name: 'PurchaseDetails',
+    component: PurchaseDetailsView,
+    meta: { requiresPurchasing: true, requiresManagePurchases: true },
+  },
+];
