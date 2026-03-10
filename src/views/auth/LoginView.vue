@@ -92,8 +92,8 @@ const authStore = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 
-const username = ref<string | null>('admin');
-const password = ref<string | null>('admin123');
+const username = ref<string | null>(import.meta.env.DEV ? 'admin' : null);
+const password = ref<string | null>(import.meta.env.DEV ? 'admin123' : null);
 const showPassword = ref<boolean>(false);
 const loginFormRef = ref<LoginForm>();
 
@@ -107,7 +107,9 @@ async function submit(): Promise<void> {
 
   try {
     await authStore.login({ username: username.value!, password: password.value! });
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/';
+    const rawRedirect = route.query.redirect;
+    const redirect =
+      typeof rawRedirect === 'string' && rawRedirect.startsWith('/') ? rawRedirect : '/';
     router.push({ path: redirect });
   } catch (err: any) {
     notifyError(mapErrorToArabic(err, 'errors.loginFailed'));

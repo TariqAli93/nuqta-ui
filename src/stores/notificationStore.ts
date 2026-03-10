@@ -25,12 +25,21 @@ export interface ToastOptions {
 
 const DEFAULT_TIMEOUT = 3000;
 const DEFAULT_DEDUPE_WINDOW = 3000;
+const MAX_DEDUPE_TTL = 60_000; // prune entries older than 60 s to prevent unbounded growth
 const dedupeRegistry = new Map<string, { id: string; timestamp: number }>();
+
+function pruneDedupeRegistry(): void {
+  const cutoff = Date.now() - MAX_DEDUPE_TTL;
+  for (const [key, entry] of dedupeRegistry) {
+    if (entry.timestamp < cutoff) dedupeRegistry.delete(key);
+  }
+}
 
 export const useNotificationStore = defineStore('notification', () => {
   const defaultPosition = ref<string>('top-center');
 
   function showMessage(message: string, type: ToastType, opts: ToastOptions = {}): string {
+    pruneDedupeRegistry();
     const now = Date.now();
     const dedupeKey = opts.dedupeKey ?? message;
     const dedupeWindowMs = opts.dedupeWindowMs ?? DEFAULT_DEDUPE_WINDOW;
