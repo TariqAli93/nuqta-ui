@@ -94,10 +94,7 @@
 
       <v-spacer />
 
-      <v-chip :color="isOnline ? 'success' : 'error'" variant="tonal" size="small" class="mr-2">
-        <v-icon start size="12">mdi-check-circle</v-icon>
-        {{ onLineText }}
-      </v-chip>
+      <ConnectionStatus />
 
       <v-btn variant="text" class="win-ghost-btn" @click="toggleTheme">
         <v-icon> mdi-theme-light-dark </v-icon>
@@ -136,6 +133,8 @@ import { t } from '@/i18n/t';
 import * as uiAccess from '@/auth/uiAccess';
 import { notifyWarn } from '@/utils/notify';
 import { useTheme } from 'vuetify';
+import { initEventBridge, destroyEventBridge } from '@/plugins/eventBridge';
+import ConnectionStatus from '@/components/shared/ConnectionStatus.vue';
 
 // import logo from '../assets/logo.png';
 const logo = new URL('../assets/logo.png', import.meta.url).href;
@@ -153,8 +152,6 @@ function toggleTheme() {
   vuetifyStore.toggleTheme();
 }
 
-const isOnline = ref(navigator.onLine);
-const onLineText = ref(isOnline.value ? t('pos.online') : t('pos.offline'));
 const appNavigationDrawer = ref(true);
 
 const currentUser = computed(() => authStore.user?.username ?? t('common.none'));
@@ -439,11 +436,6 @@ const logout = () => {
   router.push('/auth/login');
 };
 
-const updateOnlineStatus = () => {
-  isOnline.value = navigator.onLine;
-  onLineText.value = isOnline.value ? t('pos.online') : t('pos.offline');
-};
-
 // Watch authentication status and logout if not authenticated
 watch(
   () => authStore.isAuthenticated,
@@ -461,13 +453,12 @@ onMounted(async () => {
     return;
   }
 
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
+  // Start real-time event stream for multi-terminal sync
+  initEventBridge();
 });
 
 onUnmounted(() => {
-  window.removeEventListener('online', updateOnlineStatus);
-  window.removeEventListener('offline', updateOnlineStatus);
+  destroyEventBridge();
 });
 </script>
 <style scoped>

@@ -157,6 +157,91 @@ function handleUnauthorized(error: ApiError): void {
 }
 
 // ---------------------------------------------------------------------------
+// Request deduplication (Strategy 5)
+// ---------------------------------------------------------------------------
+
+/** In-flight GET requests — identical requests share the same Promise. */
+const inflightRequests = new Map<string, Promise<unknown>>();
+
+function dedupKey(url: string, params?: Record<string, unknown>): string {
+  return `GET:${url}:${params ? JSON.stringify(params) : ''}`;
+}
+
+// ---------------------------------------------------------------------------
+// Retry with exponential backoff (Strategy 6)
+// ---------------------------------------------------------------------------
+
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1_000;
+
+/** Circuit breaker state */
+let consecutiveFailures = 0;
+let circuitOpenUntil = 0;
+const CIRCUIT_FAILURE_THRESHOLD = 5;
+const CIRCUIT_COOLDOWN_MS = 30_000;
+
+function isCircuitOpen(): boolean {
+  if (consecutiveFailures < CIRCUIT_FAILURE_THRESHOLD) return false;
+  if (Date.now() > circuitOpenUntil) {
+    // Half-open — allow one probe
+    consecutiveFailures = CIRCUIT_FAILURE_THRESHOLD - 1;
+    return false;
+  }
+  return true;
+}
+
+function recordSuccess(): void {
+  consecutiveFailures = 0;
+}
+
+function recordFailure(): void {
+  consecutiveFailures++;
+  if (consecutiveFailures >= CIRCUIT_FAILURE_THRESHOLD) {
+    circuitOpenUntil = Date.now() + CIRCUIT_COOLDOWN_MS;
+  }
+}
+
+function isRetryable(err: AxiosError): boolean {
+  // Don't retry client errors (4xx) — they won't succeed on retry
+  if (err.response && err.response.status >= 400 && err.response.status < 500) {
+    return false;
+  }
+  // Retry on 5xx, network errors, and timeouts
+  return true;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
+  if (isCircuitOpen()) {
+    throw new Error('Circuit breaker is open — requests are temporarily blocked');
+  }
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const result = await fn();
+      recordSuccess();
+      return result;
+    } catch (error) {
+      const axErr = error as AxiosError;
+      if (attempt < retries && isRetryable(axErr)) {
+        recordFailure();
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+        await sleep(delay);
+        continue;
+      }
+      recordFailure();
+      throw error;
+    }
+  }
+
+  // Unreachable but TypeScript needs it
+  throw new Error('Retry exhausted');
+}
+
+// ---------------------------------------------------------------------------
 // Generic HTTP helpers returning ApiResult<T>
 // ---------------------------------------------------------------------------
 
@@ -188,19 +273,34 @@ export async function apiGet<T>(
   params?: Record<string, unknown>,
   options?: ApiRequestOptions
 ): Promise<ApiResult<T>> {
-  try {
-    const config: AxiosRequestConfig = { params };
-    if (options?.signal) config.signal = options.signal;
-    const response = await http.get(url, config);
-    return normalizeApiResult<T>(response.data);
-  } catch (error) {
-    if (axios.isCancel(error)) {
-      return createFailure({ code: 'CANCELLED', message: 'Request cancelled', status: 0 });
-    }
-    const apiError = axiosErrorToApiError(error as AxiosError);
-    handleUnauthorized(apiError);
-    return createFailure(apiError);
+  const key = dedupKey(url, params);
+
+  // Dedup: return in-flight request if one exists for the same key
+  const inflight = inflightRequests.get(key);
+  if (inflight) {
+    return inflight as Promise<ApiResult<T>>;
   }
+
+  const request = (async (): Promise<ApiResult<T>> => {
+    try {
+      const config: AxiosRequestConfig = { params };
+      if (options?.signal) config.signal = options.signal;
+      const response = await withRetry(() => http.get(url, config));
+      return normalizeApiResult<T>(response.data);
+    } catch (error) {
+      if (axios.isCancel(error)) {
+        return createFailure({ code: 'CANCELLED', message: 'Request cancelled', status: 0 });
+      }
+      const apiError = axiosErrorToApiError(error as AxiosError);
+      handleUnauthorized(apiError);
+      return createFailure(apiError);
+    } finally {
+      inflightRequests.delete(key);
+    }
+  })();
+
+  inflightRequests.set(key, request);
+  return request;
 }
 
 export async function apiGetPaged<T>(
@@ -208,19 +308,33 @@ export async function apiGetPaged<T>(
   params?: Record<string, unknown>,
   options?: ApiRequestOptions
 ): Promise<ApiResult<PagedResult<T>>> {
-  try {
-    const config: AxiosRequestConfig = { params };
-    if (options?.signal) config.signal = options.signal;
-    const response = await http.get(url, config);
-    return normalizeApiResult<PagedResult<T>>(response.data, toPagedResult);
-  } catch (error) {
-    if (axios.isCancel(error)) {
-      return createFailure({ code: 'CANCELLED', message: 'Request cancelled', status: 0 });
-    }
-    const apiError = axiosErrorToApiError(error as AxiosError);
-    handleUnauthorized(apiError);
-    return createFailure(apiError);
+  const key = dedupKey(url + ':paged', params);
+
+  const inflight = inflightRequests.get(key);
+  if (inflight) {
+    return inflight as Promise<ApiResult<PagedResult<T>>>;
   }
+
+  const request = (async (): Promise<ApiResult<PagedResult<T>>> => {
+    try {
+      const config: AxiosRequestConfig = { params };
+      if (options?.signal) config.signal = options.signal;
+      const response = await withRetry(() => http.get(url, config));
+      return normalizeApiResult<PagedResult<T>>(response.data, toPagedResult);
+    } catch (error) {
+      if (axios.isCancel(error)) {
+        return createFailure({ code: 'CANCELLED', message: 'Request cancelled', status: 0 });
+      }
+      const apiError = axiosErrorToApiError(error as AxiosError);
+      handleUnauthorized(apiError);
+      return createFailure(apiError);
+    } finally {
+      inflightRequests.delete(key);
+    }
+  })();
+
+  inflightRequests.set(key, request);
+  return request;
 }
 
 export async function apiPost<T>(
