@@ -315,6 +315,8 @@
   'pos.shift': 'الشفت',
   'pos.online': 'متصل',
   'pos.offline': 'غير متصل',
+  'pos.syncing': 'مزامنة',
+  'pos.degraded': 'اتصال ضعيف',
   'pos.clearCartTitle': 'مسح السلة',
   'pos.clearCartText': 'هل تريد مسح جميع العناصر من السلة؟',
   'pos.removeItemTitle': 'حذف عنصر',
