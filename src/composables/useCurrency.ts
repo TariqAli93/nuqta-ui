@@ -2,9 +2,9 @@ import { ref, computed, getCurrentInstance, onMounted } from 'vue';
 import { settingsClient } from '../api/endpoints/settings';
 import type { CompanySettings } from '../types/domain';
 
+// Module-level cache — intentionally shared so only one API call is made
 const companySettings = ref<CompanySettings | null>(null);
-const isLoading = ref(false);
-const error = ref<string | null>(null);
+let _fetchPromise: Promise<void> | null = null;
 
 // Currency symbol mapping
 export const CURRENCY_SYMBOLS: Record<string, string> = {
@@ -29,24 +29,36 @@ const ZERO_DECIMAL_CURRENCIES = new Set(['IQD', 'JPY', 'KWD', 'KRW', 'VND']);
  * only the default currency defined in CompanySettings.
  */
 export function useCurrency() {
+  // Instance-scoped: each component gets its own loading/error state
+  const isLoading = ref(false);
+  const error = ref<string | null>(null);
+
   const fetchCompanySettings = async (force = false) => {
     if (companySettings.value && !force) return;
+
+    // Reuse an in-flight request instead of firing a duplicate
+    if (_fetchPromise && !force) return _fetchPromise;
 
     isLoading.value = true;
     error.value = null;
 
-    try {
-      const result = await settingsClient.getCompany();
-      if (result.ok && result.data) {
-        companySettings.value = result.data;
-      } else if (!result.ok) {
-        error.value = result.error?.message || 'Failed to load company settings';
+    _fetchPromise = (async () => {
+      try {
+        const result = await settingsClient.getCompany();
+        if (result.ok && result.data) {
+          companySettings.value = result.data;
+        } else if (!result.ok) {
+          error.value = result.error?.message || 'Failed to load company settings';
+        }
+      } catch (err) {
+        error.value = err instanceof Error ? err.message : 'Unknown error';
+      } finally {
+        isLoading.value = false;
+        _fetchPromise = null;
       }
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Unknown error';
-    } finally {
-      isLoading.value = false;
-    }
+    })();
+
+    return _fetchPromise;
   };
 
   /** Update local settings without a network call (e.g. after store save). */
