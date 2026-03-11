@@ -79,6 +79,18 @@
         <v-app-bar flat height="64" class="win-command-bar border-r-0">
           <v-toolbar-title class="text-subtitle-1">{{ t('layout.workspace') }}</v-toolbar-title>
           <v-spacer />
+          <v-tooltip :text="sseConnected ? t('layout.sseConnected') : t('layout.sseDisconnected')" location="bottom">
+            <template #activator="{ props: tooltipProps }">
+              <v-icon
+                v-bind="tooltipProps"
+                :color="sseConnected ? 'success' : 'grey'"
+                size="small"
+                class="me-2"
+              >
+                {{ sseConnected ? 'mdi-circle' : 'mdi-circle-outline' }}
+              </v-icon>
+            </template>
+          </v-tooltip>
           <v-menu v-model="showAlerts" offset-y>
             <template #activator="{ props }">
               <v-btn variant="text" class="win-ghost-btn" v-bind="props">
@@ -145,6 +157,7 @@ import { useRouter } from 'vue-router';
 import { useVuetifyStore } from '@/stores/vuetify';
 import { ref } from 'vue';
 import { t } from '@/i18n/t';
+import { useEventStream } from '@/composables/useEventStream';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -156,4 +169,8 @@ const logout = () => {
 };
 
 const showAlerts = ref(false);
+
+// SSE connection for real-time events
+const { connected: sseConnected, connect: connectSSE } = useEventStream();
+connectSSE();
 </script>

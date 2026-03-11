@@ -62,6 +62,18 @@
   'errors.outOfStock': 'المنتج غير متوفر في المخزون',
   'errors.stockBelowZero': 'لا يمكن أن يكون المخزون أقل من الصفر',
   'errors.initializeFailed': 'فشل تهيئة النظام',
+  'errors.rateLimited': 'تم تجاوز الحد المسموح من الطلبات، يرجى الانتظار',
+
+  'pos.keyboardShortcuts': 'اختصارات لوحة المفاتيح',
+  'pos.shortcutHelp': 'عرض المساعدة',
+  'pos.shortcutHoldSale': 'تعليق الفاتورة',
+  'pos.shortcutPayment': 'الدفع',
+  'pos.shortcutClear': 'مسح السلة',
+  'pos.shortcutCancel': 'إلغاء',
+  'pos.shortcutAddItem': 'إضافة منتج',
+
+  'layout.sseConnected': 'متصل بالخادم',
+  'layout.sseDisconnected': 'غير متصل بالخادم',
 
   'nav.pos': 'نقطة البيع',
   'nav.products': 'المنتجات',
