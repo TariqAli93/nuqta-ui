@@ -61,6 +61,14 @@ vi.mock('@/api', () => ({
   setAccessToken: vi.fn(),
 }));
 
+// Also mock the direct settings endpoint import used by accountingStore
+vi.mock('@/api/endpoints/settings', () => ({
+  settingsClient: {
+    getTyped: vi.fn(),
+    setTyped: vi.fn(),
+  },
+}));
+
 vi.mock('@/utils/notify', () => ({
   notifySuccess: vi.fn(),
   notifyError: vi.fn(),
@@ -321,8 +329,9 @@ describe('usePosPayment — auto-posting', () => {
   });
 
   it('auto-posts journal entry when autoPostOnSale is enabled and journalEntryId is returned', async () => {
-    const { salesClient, productsClient, posClient, postingClient, settingsClient } =
+    const { salesClient, productsClient, posClient, postingClient } =
       await import('@/api');
+    const { settingsClient } = await import('@/api/endpoints/settings');
     vi.mocked(salesClient.create).mockResolvedValue(
       createApiSuccess({
         id: 10,
@@ -366,8 +375,8 @@ describe('usePosPayment — auto-posting', () => {
       posClient,
       postingClient,
       accountingClient,
-      settingsClient,
     } = await import('@/api');
+    const { settingsClient } = await import('@/api/endpoints/settings');
     vi.mocked(salesClient.create).mockResolvedValue(
       createApiSuccess({ id: 10, invoiceNumber: 'INV-10', subtotal: 5000, total: 5000 })
     );

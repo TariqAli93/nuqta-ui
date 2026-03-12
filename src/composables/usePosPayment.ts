@@ -60,19 +60,19 @@ export function usePosPayment() {
       void autoPostSaleEntry(saleId, journalEntryId);
     }
 
-    void posClient
-      .afterPay({
-        saleId,
-        printerName: settingsStore.selectedPrinter || undefined,
-      })
-      .then((result) => {
+    void (async () => {
+      try {
+        const result = await posClient.afterPay({
+          saleId,
+          printerName: settingsStore.selectedPrinter || undefined,
+        });
         if (!result.ok) {
           notifyError(mapErrorToArabic(result.error, 'errors.unexpected'));
         }
-      })
-      .catch(() => {
+      } catch {
         notifyError(t('errors.unexpected'));
-      });
+      }
+    })();
   }
 
   async function processPayment(
