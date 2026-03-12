@@ -7,5 +7,8 @@ export const profileRoutes: RouteRecordRaw[] = [
     path: 'profile',
     name: 'Profile',
     component: ProfileView,
+    meta: {
+      breadcrumb: { title: 'nav.profile', to: '/profile' },
+    },
   },
 ];

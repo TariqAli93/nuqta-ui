@@ -6,8 +6,8 @@ import { useRouter } from 'vue-router';
 import type { ApiError, ApiResult } from '@/api/contracts';
 import { ErrorCodes } from '@/api/error-codes';
 import { t } from '@/i18n/t';
+import { notifyError, notifyWarn } from '@/utils/notify';
 
-/** Map error codes to Arabic translation keys */
 const errorCodeMap: Record<string, string> = {
   [ErrorCodes.VALIDATION_ERROR]: 'errors.invalidData',
   [ErrorCodes.NOT_FOUND]: 'errors.loadFailed',
@@ -27,22 +27,19 @@ const errorCodeMap: Record<string, string> = {
 export function useApiError() {
   const router = useRouter();
 
-  /**
-   * Get a user-friendly Arabic message for an API error.
-   */
   function getErrorMessage(error: ApiError): string {
     const key = errorCodeMap[error.code];
     if (key) return t(key);
     return error.message || t('errors.unexpected');
   }
 
-  /**
-   * Handle an API error appropriately:
-   * - Auth errors → redirect to login
-   * - Validation errors → return field details
-   * - Others → return localized message
-   */
-  function handleError(result: ApiResult<unknown>): {
+  function handleError(
+    result: ApiResult<unknown>,
+    options?: {
+      notify?: boolean;
+      dedupeKey?: string;
+    }
+  ): {
     message: string;
     details?: unknown;
     isAuth: boolean;
@@ -50,28 +47,42 @@ export function useApiError() {
     if (result.ok) return { message: '', isAuth: false };
 
     const { error } = result;
+    const message = getErrorMessage(error);
+    const notifyUser = options?.notify !== false;
+    const dedupeKey = options?.dedupeKey ?? error.code;
 
-    // Auth errors → redirect
     if (error.code === ErrorCodes.UNAUTHORIZED) {
-      router.push('/auth/login');
-      return { message: getErrorMessage(error), isAuth: true };
+      if (notifyUser) {
+        notifyWarn(message, { dedupeKey });
+      }
+      void router.push('/auth/login');
+      return { message, isAuth: true };
     }
 
-    // Permission errors
     if (error.code === ErrorCodes.PERMISSION_DENIED) {
-      return { message: getErrorMessage(error), isAuth: false };
+      if (notifyUser) {
+        notifyWarn(message, { dedupeKey });
+      }
+      return { message, isAuth: false };
     }
 
-    // Validation errors with field details
     if (error.code === ErrorCodes.VALIDATION_ERROR && error.details) {
+      if (notifyUser) {
+        notifyError(message, { dedupeKey });
+      }
       return {
-        message: getErrorMessage(error),
+        message,
         details: error.details,
         isAuth: false,
       };
     }
 
-    return { message: getErrorMessage(error), isAuth: false };
+    if (notifyUser) {
+      const notifyFn = error.code === ErrorCodes.RATE_LIMITED ? notifyWarn : notifyError;
+      notifyFn(message, { dedupeKey });
+    }
+
+    return { message, isAuth: false };
   }
 
   return { getErrorMessage, handleError };

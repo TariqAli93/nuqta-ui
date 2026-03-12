@@ -9,18 +9,36 @@ export const purchasesRoutes: RouteRecordRaw[] = [
     path: 'purchases',
     name: 'Purchases',
     component: PurchasesListView,
-    meta: { requiresPurchasing: true, requiresManagePurchases: true },
+    meta: {
+      requiresPurchasing: true,
+      requiresManagePurchases: true,
+      breadcrumb: { title: 'nav.purchases', to: '/purchases' },
+    },
   },
   {
     path: 'purchases/new',
     name: 'PurchaseCreate',
     component: PurchaseFormView,
-    meta: { requiresManagePurchases: true, requiresPurchasing: true },
+    meta: {
+      requiresManagePurchases: true,
+      requiresPurchasing: true,
+      breadcrumb: [
+        { title: 'nav.purchases', to: '/purchases' },
+        { title: 'common.add' },
+      ],
+    },
   },
   {
     path: 'purchases/:id',
     name: 'PurchaseDetails',
     component: PurchaseDetailsView,
-    meta: { requiresPurchasing: true, requiresManagePurchases: true },
+    meta: {
+      requiresPurchasing: true,
+      requiresManagePurchases: true,
+      breadcrumb: [
+        { title: 'nav.purchases', to: '/purchases' },
+        { title: 'common.details' },
+      ],
+    },
   },
 ];

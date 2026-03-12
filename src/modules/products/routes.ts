@@ -9,13 +9,22 @@ export const productsRoutes: RouteRecordRaw[] = [
     path: 'products',
     name: 'ProductWorkspace',
     component: ProductWorkspaceView,
-    meta: { requiresManageProducts: true },
+    meta: {
+      requiresManageProducts: true,
+      breadcrumb: { title: 'nav.products', to: '/products' },
+    },
   },
   {
     path: 'products/barcode-templates',
     name: 'BarcodeTemplateBuilder',
     component: BarcodeTemplateBuilderView,
-    meta: { requiresManageProducts: true },
+    meta: {
+      requiresManageProducts: true,
+      breadcrumb: [
+        { title: 'nav.products', to: '/products' },
+        { title: 'products.unitsAndPricing' },
+      ],
+    },
   },
   {
     path: 'products/new',
@@ -24,7 +33,14 @@ export const productsRoutes: RouteRecordRaw[] = [
       name: 'ProductWorkspace',
       query: { ...to.query, action: 'create' },
     }),
-    meta: { requiresManageProducts: true, enableBarcode: 'product' },
+    meta: {
+      requiresManageProducts: true,
+      enableBarcode: 'product',
+      breadcrumb: [
+        { title: 'nav.products', to: '/products' },
+        { title: 'products.new' },
+      ],
+    },
   },
   {
     path: 'products/:id',
@@ -33,7 +49,13 @@ export const productsRoutes: RouteRecordRaw[] = [
       name: 'ProductWorkspace',
       query: { ...to.query, productId: String(to.params.id) },
     }),
-    meta: { requiresManageProducts: true },
+    meta: {
+      requiresManageProducts: true,
+      breadcrumb: [
+        { title: 'nav.products', to: '/products' },
+        { title: 'common.details' },
+      ],
+    },
   },
   {
     path: 'products/:id/edit',
@@ -42,7 +64,14 @@ export const productsRoutes: RouteRecordRaw[] = [
       name: 'ProductWorkspace',
       query: { ...to.query, productId: String(to.params.id), action: 'edit' },
     }),
-    meta: { requiresManageProducts: true, enableBarcode: 'product' },
+    meta: {
+      requiresManageProducts: true,
+      enableBarcode: 'product',
+      breadcrumb: [
+        { title: 'nav.products', to: '/products' },
+        { title: 'products.edit' },
+      ],
+    },
   },
   {
     path: 'products/:id/barcode',
@@ -51,6 +80,12 @@ export const productsRoutes: RouteRecordRaw[] = [
       name: 'ProductWorkspace',
       query: { ...to.query, productId: String(to.params.id), tab: 'units', action: 'barcode' },
     }),
-    meta: { requiresManageProducts: true },
+    meta: {
+      requiresManageProducts: true,
+      breadcrumb: [
+        { title: 'nav.products', to: '/products' },
+        { title: 'products.unitsAndPricing' },
+      ],
+    },
   },
 ];

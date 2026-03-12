@@ -5,6 +5,7 @@ import { ref } from 'vue';
 
 export function useFileDownload() {
   const isDownloading = ref(false);
+  const progress = ref(0);
   const error = ref<string | null>(null);
 
   /**
@@ -33,10 +34,12 @@ export function useFileDownload() {
     filename: string,
   ): Promise<void> {
     isDownloading.value = true;
+    progress.value = 0;
     error.value = null;
 
     try {
       const blob = await fetchFn();
+      progress.value = 100;
       downloadBlob(blob, filename);
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Download failed';
@@ -45,5 +48,5 @@ export function useFileDownload() {
     }
   }
 
-  return { download, downloadBlob, isDownloading, error };
+  return { download, downloadBlob, isDownloading, progress, error };
 }

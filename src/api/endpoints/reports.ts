@@ -15,15 +15,14 @@ export interface ReportParams {
  * Download a sales report as CSV or JSON.
  */
 export async function downloadSalesReport(params?: ReportParams): Promise<Blob> {
-  const url = new URL(`${BASE_URL}/reports/sales`);
+  const url = new URL(`${BASE_URL}/reports/sales`, window.location.origin);
   if (params?.format) url.searchParams.set('format', params.format);
   if (params?.dateFrom) url.searchParams.set('dateFrom', params.dateFrom);
   if (params?.dateTo) url.searchParams.set('dateTo', params.dateTo);
+  const token = getAccessToken();
 
   const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${getAccessToken()}`,
-    },
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });
 
   if (!response.ok) {
@@ -37,13 +36,12 @@ export async function downloadSalesReport(params?: ReportParams): Promise<Blob> 
  * Download an inventory report as CSV or JSON.
  */
 export async function downloadInventoryReport(params?: { format?: 'csv' | 'json' }): Promise<Blob> {
-  const url = new URL(`${BASE_URL}/reports/inventory`);
+  const url = new URL(`${BASE_URL}/reports/inventory`, window.location.origin);
   if (params?.format) url.searchParams.set('format', params.format);
+  const token = getAccessToken();
 
   const response = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${getAccessToken()}`,
-    },
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });
 
   if (!response.ok) {

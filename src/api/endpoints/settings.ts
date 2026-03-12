@@ -5,7 +5,7 @@
  */
 import type { ApiResult } from '../contracts';
 import type { SettingsCurrencyResponse, CompanySettings } from '../../types/domain';
-import { apiGet, apiPut, apiPost, apiPatch } from '../http';
+import { apiGet, apiPut, apiPost } from '../http';
 
 export interface ModuleSettings {
   accountingEnabled: boolean;
@@ -47,15 +47,32 @@ interface SetupWizardPayload {
 }
 
 type TypedSettingValue = string | number | boolean;
+type TypedSettingsRecord<K extends string> = Partial<Record<K, TypedSettingValue>>;
 
 export const settingsClient = {
   get: (key: string): Promise<ApiResult<string | null>> =>
     apiGet<string | null>(`/settings/${key}`),
 
-  set: (key: string, value: string): Promise<ApiResult<{ ok: true }>> =>
+  set: (key: string, value: TypedSettingValue): Promise<ApiResult<{ ok: true }>> =>
     apiPut<{ ok: true }>(`/settings/${key}`, { value }),
 
-  getTyped: async () => apiGet('/settings/accounting'),
+  getTyped: async <K extends string>(
+    keys: readonly K[]
+  ): Promise<ApiResult<TypedSettingsRecord<K>>> => {
+    const values: TypedSettingsRecord<K> = {};
+
+    for (const key of keys) {
+      const result = await apiGet<TypedSettingValue | null>(`/settings/${key}`);
+      if (!result.ok) {
+        return result as ApiResult<TypedSettingsRecord<K>>;
+      }
+      if (result.data != null) {
+        values[key] = result.data;
+      }
+    }
+
+    return { ok: true as const, data: values };
+  },
 
   setTyped: async (values: Record<string, TypedSettingValue>): Promise<ApiResult<{ ok: true }>> => {
     for (const [key, value] of Object.entries(values)) {

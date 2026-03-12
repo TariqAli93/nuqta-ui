@@ -13,13 +13,12 @@
 
     <v-form ref="loginFormRef" @submit.prevent="submit">
       <div class="mb-4">
-        <label class="text-subtitle-2 font-weight-bold d-block mb-1 text-high-emphasis">{{}}</label>
         <v-text-field
           v-model="username"
           variant="outlined"
           color="primary"
           prepend-inner-icon="mdi-account-outline"
-          :rules="rules.username"
+          :rules="[rules.required]"
           hide-details
           :label="t('auth.username')"
           required
@@ -33,7 +32,7 @@
           variant="outlined"
           color="primary"
           prepend-inner-icon="mdi-lock-outline"
-          :rules="rules.password"
+          :rules="[rules.required]"
           hide-details
           :label="t('auth.password')"
           required
@@ -78,13 +77,10 @@ import { useRoute, useRouter } from 'vue-router';
 import { mapErrorToArabic, t } from '../../i18n/t';
 import { useAuthStore } from '../../stores/authStore';
 import { notifyError } from '@/utils/notify';
+import { useFormValidation } from '@/composables/useFormValidation';
 
-interface ValidationRule {
-  (v: string): boolean | string;
-}
-
-interface LoginForm {
-  validate(): boolean;
+interface LoginFormController {
+  validate(): Promise<{ valid: boolean }> | { valid: boolean } | boolean;
   resetValidation(): void;
 }
 
@@ -95,15 +91,11 @@ const route = useRoute();
 const username = ref<string | null>(import.meta.env.DEV ? 'admin' : null);
 const password = ref<string | null>(import.meta.env.DEV ? 'admin123' : null);
 const showPassword = ref<boolean>(false);
-const loginFormRef = ref<LoginForm>();
-
-const rules: Record<string, ValidationRule[]> = {
-  username: [(v: string) => !!v || t('validation.required')],
-  password: [(v: string) => !!v || t('validation.required')],
-};
+const loginFormRef = ref<LoginFormController>();
+const { rules, validate } = useFormValidation(loginFormRef);
 
 async function submit(): Promise<void> {
-  if (!loginFormRef.value?.validate()) return;
+  if (!(await validate())) return;
 
   try {
     await authStore.login({ username: username.value!, password: password.value! });

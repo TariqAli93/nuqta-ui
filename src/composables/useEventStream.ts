@@ -4,165 +4,249 @@
  * Connects to the backend's /events/stream endpoint and dispatches
  * domain events to registered handlers.
  */
-import { ref, onUnmounted } from 'vue';
+import { onUnmounted, ref } from 'vue';
 import { getAccessToken } from '@/api/http';
 
-export interface DomainEvent {
+export const DomainEventTypes = {
+  SALE_CREATED: 'sale:created',
+  SALE_CANCELLED: 'sale:cancelled',
+  SALE_REFUNDED: 'sale:refunded',
+  SALE_COMPLETED: 'sale.completed',
+  PRODUCT_CREATED: 'product:created',
+  PRODUCT_UPDATED: 'product:updated',
+  PRODUCT_DELETED: 'product:deleted',
+  INVENTORY_LOW_STOCK: 'inventory.low_stock',
+  INVENTORY_EXPIRY_WARNING: 'inventory.expiry_warning',
+  INVENTORY_MOVEMENT: 'inventory.movement',
+  INVENTORY_ADJUSTED: 'inventory:adjusted',
+  INVENTORY_RECONCILED: 'inventory:reconciled',
+  SETTINGS_CHANGED: 'settings:changed',
+} as const;
+
+export type DomainEventType = (typeof DomainEventTypes)[keyof typeof DomainEventTypes];
+
+export interface DomainEvent<TPayload = Record<string, unknown>> {
   type: string;
-  payload: Record<string, unknown>;
+  payload: TPayload;
   timestamp: string;
 }
 
 type EventHandler = (event: DomainEvent) => void;
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api/v1';
+function resolveEventBaseUrl(): string {
+  const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '/api/v1').replace(/\/$/, '');
 
-// Shared state — only one SSE connection per app
-let eventSource: EventSource | null = null;
+  if (!import.meta.env.DEV) {
+    return rawBaseUrl;
+  }
+
+  try {
+    const url = new URL(rawBaseUrl, window.location.origin);
+    const sameHostDifferentPort =
+      url.hostname === window.location.hostname && url.port !== window.location.port;
+
+    if (sameHostDifferentPort) {
+      return url.pathname.replace(/\/$/, '');
+    }
+  } catch {
+    return rawBaseUrl;
+  }
+
+  return rawBaseUrl;
+}
+
+const BASE_URL = resolveEventBaseUrl();
+const MAX_RECONNECT_DELAY_MS = 30_000;
+
+let activeController: AbortController | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let reconnectAttempt = 0;
-const MAX_RECONNECT_DELAY_MS = 30_000;
+let manualDisconnect = false;
+
 const handlers = new Map<string, Set<EventHandler>>();
 const globalHandlers = new Set<EventHandler>();
 
 const connected = ref(false);
+const connectionState = ref<'idle' | 'connecting' | 'connected' | 'reconnecting' | 'disconnected'>(
+  'idle'
+);
+const lastEventAt = ref<string | null>(null);
 
 function getReconnectDelay(): number {
   const delay = Math.min(1000 * Math.pow(2, reconnectAttempt), MAX_RECONNECT_DELAY_MS);
-  return delay + Math.random() * 500; // jitter
+  return Math.round(delay + Math.random() * 500);
 }
 
 function dispatchEvent(event: DomainEvent): void {
-  // Type-specific handlers
+  lastEventAt.value = event.timestamp ?? new Date().toISOString();
+
   const typeHandlers = handlers.get(event.type);
   if (typeHandlers) {
     typeHandlers.forEach((handler) => handler(event));
   }
 
-  // Global handlers (receive all events)
   globalHandlers.forEach((handler) => handler(event));
 }
 
-function connect(): void {
-  if (eventSource) return;
+function parseEventBlock(block: string): DomainEvent | null {
+  const lines = block
+    .split(/\r?\n/)
+    .map((line) => line.trimEnd())
+    .filter(Boolean);
 
-  const token = getAccessToken();
-  if (!token) return;
+  let type: string | null = null;
+  const dataLines: string[] = [];
 
-  // EventSource doesn't support custom headers, so pass token as query param.
-  // The SSE endpoint should accept ?token= as an alternative auth method.
-  // For now, we use a standard URL and rely on cookie-based auth or a proxy.
-  // Fallback: use fetch-based SSE for header support.
-  const url = `${BASE_URL}/events/stream`;
+  for (const line of lines) {
+    if (line.startsWith(':')) continue;
+    if (line.startsWith('event:')) {
+      type = line.slice(6).trim();
+      continue;
+    }
+    if (line.startsWith('data:')) {
+      dataLines.push(line.slice(5).trim());
+    }
+  }
+
+  if (!type || type === 'connected' || dataLines.length === 0) {
+    return null;
+  }
+
+  const rawPayload = dataLines.join('\n');
 
   try {
-    // Use fetch-based SSE to support Authorization header
-    const abortController = new AbortController();
-
-    fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: 'text/event-stream',
-      },
-      signal: abortController.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok || !response.body) {
-          throw new Error(`SSE connection failed: ${response.status}`);
-        }
-
-        connected.value = true;
-        reconnectAttempt = 0;
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          let currentEventType: string | null = null;
-
-          for (const line of lines) {
-            if (line.startsWith('event: ')) {
-              currentEventType = line.slice(7).trim();
-            } else if (line.startsWith('data: ')) {
-              const dataStr = line.slice(6);
-              if (currentEventType && currentEventType !== 'connected') {
-                try {
-                  const parsed = JSON.parse(dataStr) as DomainEvent;
-                  dispatchEvent(parsed);
-                } catch {
-                  // Ignore malformed events
-                }
-              }
-              currentEventType = null;
-            } else if (line.startsWith(':')) {
-              // Comment/heartbeat — ignore
-            }
-          }
-        }
-
-        // Stream ended — attempt reconnect
-        connected.value = false;
-        scheduleReconnect();
-      })
-      .catch(() => {
-        connected.value = false;
-        scheduleReconnect();
-      });
-
-    // Store abort controller so disconnect() can close it
-    (eventSource as unknown) = abortController;
+    const parsed = JSON.parse(rawPayload) as Partial<DomainEvent>;
+    return {
+      type: type || parsed.type || 'message',
+      payload: (parsed.payload as Record<string, unknown>) ?? {},
+      timestamp: parsed.timestamp ?? new Date().toISOString(),
+    };
   } catch {
-    scheduleReconnect();
+    return {
+      type,
+      payload: { raw: rawPayload },
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
+async function streamEvents(controller: AbortController, token: string): Promise<void> {
+  const response = await fetch(`${BASE_URL}/events/stream`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'text/event-stream',
+    },
+    signal: controller.signal,
+  });
+
+  if (!response.ok || !response.body) {
+    throw new Error(`SSE connection failed: ${response.status}`);
+  }
+
+  connected.value = true;
+  connectionState.value = 'connected';
+  reconnectAttempt = 0;
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const blocks = buffer.split(/\r?\n\r?\n/);
+      buffer = blocks.pop() ?? '';
+
+      for (const block of blocks) {
+        const event = parseEventBlock(block);
+        if (event) {
+          dispatchEvent(event);
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
   }
 }
 
 function scheduleReconnect(): void {
-  if (reconnectTimer) return;
+  if (manualDisconnect || reconnectTimer) return;
 
   reconnectAttempt++;
-  const delay = getReconnectDelay();
-
+  connectionState.value = 'reconnecting';
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;
-    eventSource = null;
     connect();
-  }, delay);
+  }, getReconnectDelay());
+}
+
+function connect(): void {
+  if (activeController) return;
+
+  const token = getAccessToken();
+  if (!token) {
+    connected.value = false;
+    reconnectAttempt = 0;
+    connectionState.value = 'idle';
+    return;
+  }
+
+  manualDisconnect = false;
+  connectionState.value = reconnectAttempt > 0 ? 'reconnecting' : 'connecting';
+
+  const controller = new AbortController();
+  activeController = controller;
+
+  void streamEvents(controller, token)
+    .catch(() => {
+      if (manualDisconnect) return;
+      connected.value = false;
+      scheduleReconnect();
+    })
+    .finally(() => {
+      if (activeController === controller) {
+        activeController = null;
+      }
+
+      if (manualDisconnect) {
+        connected.value = false;
+        connectionState.value = 'disconnected';
+        return;
+      }
+
+      if (connected.value) {
+        connected.value = false;
+        scheduleReconnect();
+      }
+    });
 }
 
 function disconnect(): void {
+  manualDisconnect = true;
+
   if (reconnectTimer) {
     clearTimeout(reconnectTimer);
     reconnectTimer = null;
   }
 
-  if (eventSource) {
-    if (eventSource instanceof AbortController) {
-      eventSource.abort();
-    }
-    eventSource = null;
+  if (activeController) {
+    activeController.abort();
+    activeController = null;
   }
 
   connected.value = false;
   reconnectAttempt = 0;
+  connectionState.value = 'disconnected';
 }
 
-/**
- * Register a handler for a specific event type.
- * Returns an unsubscribe function.
- */
 function onEvent(type: string, handler: EventHandler): () => void {
   if (!handlers.has(type)) {
     handlers.set(type, new Set());
   }
-  handlers.get(type)!.add(handler);
+  handlers.get(type)?.add(handler);
 
   return () => {
     handlers.get(type)?.delete(handler);
@@ -172,10 +256,6 @@ function onEvent(type: string, handler: EventHandler): () => void {
   };
 }
 
-/**
- * Register a handler that receives all events.
- * Returns an unsubscribe function.
- */
 function onAnyEvent(handler: EventHandler): () => void {
   globalHandlers.add(handler);
   return () => {
@@ -183,11 +263,6 @@ function onAnyEvent(handler: EventHandler): () => void {
   };
 }
 
-/**
- * Vue composable for SSE event stream.
- * Manages connection lifecycle and provides event subscription helpers.
- * Auto-disconnects handlers registered within the component on unmount.
- */
 export function useEventStream() {
   const unsubscribers: Array<() => void> = [];
 
@@ -200,11 +275,13 @@ export function useEventStream() {
   }
 
   onUnmounted(() => {
-    unsubscribers.forEach((unsub) => unsub());
+    unsubscribers.forEach((unsubscribe) => unsubscribe());
   });
 
   return {
     connected,
+    connectionState,
+    lastEventAt,
     connect,
     disconnect,
     on,
@@ -212,5 +289,4 @@ export function useEventStream() {
   };
 }
 
-// Export module-level functions for the event bridge
-export { connect as connectEventStream, disconnect as disconnectEventStream, onEvent, onAnyEvent };
+export { connect as connectEventStream, disconnect as disconnectEventStream, onAnyEvent, onEvent };

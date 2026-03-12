@@ -26,6 +26,6 @@ body,
   display: none;
 }
 
-::webkit-scrollbar-button {
+::-webkit-scrollbar-button {
   display: none !important;
 }

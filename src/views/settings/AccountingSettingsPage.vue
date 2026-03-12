@@ -127,6 +127,7 @@ const accountingModules = [
 
 const accountingForm = reactive({
   taxEnabled: false,
+  taxName: '',
   costingMethod: null as 'FIFO' | 'LIFO' | 'AVERAGE' | null,
   fiscalYearStart: null as string | null,
   exchangeRate: null as number | null,
@@ -152,6 +153,7 @@ onMounted(async () => {
 
   // Initialize reactive form properties
   accountingForm.taxEnabled = form.value.taxEnabled;
+  accountingForm.taxName = form.value.taxName ?? '';
   accountingForm.costingMethod = form.value.costingMethod;
   accountingForm.fiscalYearStart = form.value.fiscalYearStart;
   accountingForm.exchangeRate = form.value.exchangeRate;

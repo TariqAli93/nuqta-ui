@@ -22,30 +22,11 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-  },
-  build: {
-    outDir: 'dist',
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return;
-
-          if (id.includes('vuetify')) {
-            return 'vendor-vuetify';
-          }
-
-          if (id.includes('vue-router') || id.includes(`${path.sep}vue${path.sep}`) || id.includes('pinia')) {
-            return 'vendor-vue';
-          }
-
-          if (id.includes('axios')) {
-            return 'vendor-network';
-          }
-
-          if (id.includes('vue-toastflow')) {
-            return 'vendor-toastflow';
-          }
-        },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false,
       },
     },
   },

@@ -11,33 +11,41 @@ export const settingsRoutes: RouteRecordRaw[] = [
   {
     path: 'settings',
     component: SettingsLayout,
-    meta: { requiresManageSettings: true },
+    meta: {
+      requiresManageSettings: true,
+      breadcrumb: { title: 'nav.settings', to: '/settings/system' },
+    },
     redirect: { name: 'SettingsSystem' },
     children: [
       {
         path: 'system',
         name: 'SettingsSystem',
         component: SystemSettingsPage,
+        meta: { breadcrumb: { title: 'settings.companyInfo' } },
       },
       {
         path: 'pos',
         name: 'SettingsPOS',
         component: PosSettingsPage,
+        meta: { breadcrumb: { title: 'nav.pos' } },
       },
       {
         path: 'accounting',
         name: 'SettingsAccounting',
         component: AccountingSettingsPage,
+        meta: { breadcrumb: { title: 'nav.accounting' } },
       },
       {
         path: 'barcode',
         name: 'SettingsBarcode',
         component: BarcodeSettingsPage,
+        meta: { breadcrumb: { title: 'products.barcode' } },
       },
       {
         path: 'users',
         name: 'SettingsUsers',
         component: UsersTab,
+        meta: { breadcrumb: { title: 'nav.users' } },
       },
     ],
   },

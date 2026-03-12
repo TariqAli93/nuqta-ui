@@ -16,7 +16,7 @@
         <span class="text-body-2"> {{ t('pos.pay') }}</span>
       </template>
       <template #append>
-        <v-hotkey border="0" display-mode="icon" elevation="0" keys="f10" />
+        <v-hotkey border="0" display-mode="icon" elevation="0" keys="f5" />
       </template>
     </v-btn>
 

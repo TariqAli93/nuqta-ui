@@ -1,8 +1,8 @@
 ﻿import { createApp } from 'vue';
-import App from './App.vue';
-import { pinia } from './app/pinia';
-import router from './app/router';
-import { vuetify } from './app/bootstraps';
+import App from '@/App.vue';
+import { pinia } from '@/app/pinia';
+import router from '@/app/router';
+import { vuetify } from '@/app/bootstraps';
 import { createToastflow } from 'vue-toastflow';
 import 'vue-toastflow/dist/vue-toastflow.css';
 import '@/styles/main.css';

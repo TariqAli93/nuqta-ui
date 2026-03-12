@@ -10,30 +10,59 @@ export const customersRoutes: RouteRecordRaw[] = [
     path: 'customers',
     name: 'Customers',
     component: CustomersListView,
-    meta: { requiresManageCustomers: true },
+    meta: {
+      requiresManageCustomers: true,
+      breadcrumb: { title: 'nav.customers', to: '/customers' },
+    },
   },
   {
     path: 'customers/ledger',
     name: 'CustomerLedger',
     component: CustomerLedgerView,
-    meta: { requiresLedgers: true, requiresManageCustomers: true },
+    meta: {
+      requiresLedgers: true,
+      requiresManageCustomers: true,
+      breadcrumb: [
+        { title: 'nav.customers', to: '/customers' },
+        { title: 'nav.customerLedger' },
+      ],
+    },
   },
   {
     path: 'customers/new',
     name: 'CustomerCreate',
     component: CustomerFormView,
-    meta: { requiresManageCustomers: true },
+    meta: {
+      requiresManageCustomers: true,
+      breadcrumb: [
+        { title: 'nav.customers', to: '/customers' },
+        { title: 'common.add' },
+      ],
+    },
   },
   {
     path: 'customers/:id',
     name: 'CustomerProfile',
     component: CustomerProfileView,
-    meta: { requiresLedgers: true, requiresManageCustomers: true },
+    meta: {
+      requiresLedgers: true,
+      requiresManageCustomers: true,
+      breadcrumb: [
+        { title: 'nav.customers', to: '/customers' },
+        { title: 'common.details' },
+      ],
+    },
   },
   {
     path: 'customers/:id/edit',
     name: 'CustomerEdit',
     component: CustomerFormView,
-    meta: { requiresManageCustomers: true },
+    meta: {
+      requiresManageCustomers: true,
+      breadcrumb: [
+        { title: 'nav.customers', to: '/customers' },
+        { title: 'common.edit' },
+      ],
+    },
   },
 ];

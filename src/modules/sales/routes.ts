@@ -9,18 +9,34 @@ export const salesRoutes: RouteRecordRaw[] = [
     path: 'sales',
     name: 'Sales',
     component: SalesListView,
-    meta: { requiresCreateSales: true },
+    meta: {
+      requiresCreateSales: true,
+      breadcrumb: { title: 'nav.sales', to: '/sales' },
+    },
   },
   {
     path: 'sales/new',
     name: 'SaleCreate',
     component: SaleFormView,
-    meta: { requiresCreateSales: true, enableBarcode: 'pos' },
+    meta: {
+      requiresCreateSales: true,
+      enableBarcode: 'pos',
+      breadcrumb: [
+        { title: 'nav.sales', to: '/sales' },
+        { title: 'sales.new' },
+      ],
+    },
   },
   {
     path: 'sales/:id',
     name: 'SaleDetails',
     component: SaleDetailsView,
-    meta: { requiresCreateSales: true },
+    meta: {
+      requiresCreateSales: true,
+      breadcrumb: [
+        { title: 'nav.sales', to: '/sales' },
+        { title: 'sales.details' },
+      ],
+    },
   },
 ];

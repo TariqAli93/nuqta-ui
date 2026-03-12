@@ -74,12 +74,15 @@
       </v-navigation-drawer>
     </slot>
 
-    <div class="d-flex flex-column flex-grow-1">
+    <div class="d-flex flex-column grow">
       <slot name="header">
         <v-app-bar flat height="64" class="win-command-bar border-r-0">
           <v-toolbar-title class="text-subtitle-1">{{ t('layout.workspace') }}</v-toolbar-title>
           <v-spacer />
-          <v-tooltip :text="sseConnected ? t('layout.sseConnected') : t('layout.sseDisconnected')" location="bottom">
+          <v-tooltip
+            :text="sseConnected ? t('layout.sseConnected') : t('layout.sseDisconnected')"
+            location="bottom"
+          >
             <template #activator="{ props: tooltipProps }">
               <v-icon
                 v-bind="tooltipProps"

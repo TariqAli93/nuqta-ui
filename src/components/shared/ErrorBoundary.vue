@@ -1,12 +1,12 @@
 <template>
-  <slot v-if="!hasError" />
+  <div v-if="!hasError" :key="renderKey">
+    <slot />
+  </div>
   <v-alert
     v-else
     type="error"
     variant="tonal"
     class="ma-4"
-    closable
-    @click:close="reset"
   >
     <template #title>{{ t('errors.unexpected') }}</template>
     <template #text>
@@ -24,14 +24,15 @@ import { t } from '@/i18n/t';
 
 const hasError = ref(false);
 const errorMessage = ref('');
+const renderKey = ref(0);
 
-onErrorCaptured((err: Error) => {
+onErrorCaptured((err: Error, _instance, info) => {
   hasError.value = true;
   errorMessage.value = err.message || t('errors.unexpected');
 
   // Log for debugging
   // eslint-disable-next-line no-console
-  console.error('[ErrorBoundary]', err);
+  console.error('[ErrorBoundary]', { err, info });
 
   // Prevent error from propagating further
   return false;
@@ -40,6 +41,7 @@ onErrorCaptured((err: Error) => {
 function reset(): void {
   hasError.value = false;
   errorMessage.value = '';
+  renderKey.value += 1;
 }
 
 defineExpose({ reset, hasError });

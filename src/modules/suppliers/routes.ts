@@ -10,30 +10,64 @@ export const suppliersRoutes: RouteRecordRaw[] = [
     path: 'suppliers',
     name: 'Suppliers',
     component: SuppliersListView,
-    meta: { requiresPurchasing: true, requiresManageSuppliers: true },
+    meta: {
+      requiresPurchasing: true,
+      requiresManageSuppliers: true,
+      breadcrumb: { title: 'nav.suppliers', to: '/suppliers' },
+    },
   },
   {
     path: 'suppliers/ledger',
     name: 'SupplierLedger',
     component: SupplierLedgerView,
-    meta: { requiresPurchasing: true, requiresLedgers: true, requiresManageSuppliers: true },
+    meta: {
+      requiresPurchasing: true,
+      requiresLedgers: true,
+      requiresManageSuppliers: true,
+      breadcrumb: [
+        { title: 'nav.suppliers', to: '/suppliers' },
+        { title: 'nav.supplierLedger' },
+      ],
+    },
   },
   {
     path: 'suppliers/new',
     name: 'SupplierCreate',
     component: SupplierFormView,
-    meta: { requiresManageSuppliers: true, requiresPurchasing: true },
+    meta: {
+      requiresManageSuppliers: true,
+      requiresPurchasing: true,
+      breadcrumb: [
+        { title: 'nav.suppliers', to: '/suppliers' },
+        { title: 'common.add' },
+      ],
+    },
   },
   {
     path: 'suppliers/:id',
     name: 'SupplierDetails',
     component: SupplierDetailsView,
-    meta: { requiresPurchasing: true, requiresLedgers: true, requiresManageSuppliers: true },
+    meta: {
+      requiresPurchasing: true,
+      requiresLedgers: true,
+      requiresManageSuppliers: true,
+      breadcrumb: [
+        { title: 'nav.suppliers', to: '/suppliers' },
+        { title: 'common.details' },
+      ],
+    },
   },
   {
     path: 'suppliers/:id/edit',
     name: 'SupplierEdit',
     component: SupplierFormView,
-    meta: { requiresManageSuppliers: true, requiresPurchasing: true },
+    meta: {
+      requiresManageSuppliers: true,
+      requiresPurchasing: true,
+      breadcrumb: [
+        { title: 'nav.suppliers', to: '/suppliers' },
+        { title: 'common.edit' },
+      ],
+    },
   },
 ];

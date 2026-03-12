@@ -12,7 +12,13 @@ export interface ApiError {
   status?: number;
 }
 
-export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
+export interface ApiMeta {
+  durationMs?: number;
+}
+
+export type ApiResult<T> =
+  | { ok: true; data: T; meta?: ApiMeta }
+  | { ok: false; error: ApiError; meta?: ApiMeta };
 
 export interface PagedResult<T> {
   items: T[];
@@ -23,9 +29,11 @@ export interface PagedResult<T> {
 // Builders
 // ---------------------------------------------------------------------------
 
-export const createSuccess = <T>(data: T): ApiResult<T> => ({ ok: true, data });
+export const createSuccess = <T>(data: T, meta?: ApiMeta): ApiResult<T> =>
+  meta ? { ok: true, data, meta } : { ok: true, data };
 
-export const createFailure = (error: ApiError): ApiResult<never> => ({ ok: false, error });
+export const createFailure = (error: ApiError, meta?: ApiMeta): ApiResult<never> =>
+  meta ? { ok: false, error, meta } : { ok: false, error };
 
 // ---------------------------------------------------------------------------
 // Normalization
@@ -62,24 +70,28 @@ export const normalizeApiError = (error: unknown): ApiError => {
  *
  * Backend always returns { ok: true/false, data/error }.
  */
-export const normalizeApiResult = <T>(response: any, mapData?: (data: any) => T): ApiResult<T> => {
+export const normalizeApiResult = <T>(
+  response: any,
+  mapData?: (data: any) => T,
+  meta?: ApiMeta
+): ApiResult<T> => {
   if (response === null || response === undefined) {
-    return createFailure({ code: 'EMPTY_RESPONSE', message: 'Empty response' });
+    return createFailure({ code: 'EMPTY_RESPONSE', message: 'Empty response' }, meta);
   }
 
   // Standard envelope
   if (response.ok === true && 'data' in response) {
     const data = mapData ? mapData(response.data) : response.data;
-    return createSuccess(data as T);
+    return createSuccess(data as T, meta);
   }
 
   if (response.ok === false && response.error) {
-    return createFailure(normalizeApiError(response.error));
+    return createFailure(normalizeApiError(response.error), meta);
   }
 
   // Fallback: raw data without envelope
   const data = mapData ? mapData(response) : response;
-  return createSuccess(data as T);
+  return createSuccess(data as T, meta);
 };
 
 export const toPagedResult = <T>(input: any): PagedResult<T> => {

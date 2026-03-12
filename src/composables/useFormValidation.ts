@@ -2,9 +2,17 @@
  * Composable providing Vuetify-compatible validation rules
  * with Arabic error messages.
  */
+import { ref, type Ref } from 'vue';
 import { t } from '@/i18n/t';
 
 type ValidationRule = (value: unknown) => true | string;
+type ValidationResult = boolean | { valid: boolean };
+
+interface ValidatableForm {
+  validate: () => Promise<ValidationResult> | ValidationResult;
+  reset?: () => void;
+  resetValidation?: () => void;
+}
 
 function interpolate(key: string, vars: Record<string, string | number>): string {
   let text = t(key);
@@ -14,45 +22,69 @@ function interpolate(key: string, vars: Record<string, string | number>): string
   return text;
 }
 
-export function useFormValidation() {
+function hasValue(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0;
+  return value !== null && value !== undefined && value !== '';
+}
+
+export function useFormValidation(formRef?: Ref<ValidatableForm | undefined>) {
+  const isValid = ref(true);
+
   const rules = {
     required: ((v: unknown) =>
-      (v !== null && v !== undefined && v !== '') || t('validation.required')) as ValidationRule,
+      hasValue(v) || t('validation.required')) as ValidationRule,
 
     minLength: (min: number): ValidationRule =>
       (v: unknown) =>
-        (typeof v === 'string' && v.length >= min) ||
+        (!hasValue(v) || (typeof v === 'string' && v.length >= min)) ||
         interpolate('validation.minLength', { min }),
 
     maxLength: (max: number): ValidationRule =>
       (v: unknown) =>
-        (typeof v === 'string' && v.length <= max) ||
+        (!hasValue(v) || (typeof v === 'string' && v.length <= max)) ||
         interpolate('validation.maxLength', { max }),
 
     numeric: ((v: unknown) =>
-      v === '' || v === null || v === undefined || !isNaN(Number(v)) ||
+      !hasValue(v) || !isNaN(Number(v)) ||
       t('validation.invalid')) as ValidationRule,
 
     minValue: (min: number): ValidationRule =>
       (v: unknown) =>
-        v === '' || v === null || v === undefined || Number(v) >= min ||
+        !hasValue(v) || Number(v) >= min ||
         interpolate('validation.minValue', { min }),
 
     maxValue: (max: number): ValidationRule =>
       (v: unknown) =>
-        v === '' || v === null || v === undefined || Number(v) <= max ||
+        !hasValue(v) || Number(v) <= max ||
         interpolate('validation.maxValue', { max }),
 
     phone: ((v: unknown) =>
-      !v ||
+      !hasValue(v) ||
       /^[\d\s+\-()]{7,20}$/.test(String(v)) ||
       t('validation.invalidPhone')) as ValidationRule,
 
     email: ((v: unknown) =>
-      !v ||
+      !hasValue(v) ||
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v)) ||
       t('validation.invalid')) as ValidationRule,
   };
 
-  return { rules };
+  async function validate(target = formRef?.value): Promise<boolean> {
+    if (!target) {
+      isValid.value = true;
+      return true;
+    }
+
+    const result = await target.validate();
+    isValid.value = typeof result === 'boolean' ? result : result.valid;
+    return isValid.value;
+  }
+
+  function reset(target = formRef?.value): void {
+    target?.resetValidation?.();
+    target?.reset?.();
+    isValid.value = true;
+  }
+
+  return { rules, validate, isValid, reset };
 }

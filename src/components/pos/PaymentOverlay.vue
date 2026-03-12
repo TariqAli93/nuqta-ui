@@ -89,14 +89,23 @@
                 block
                 size="x-large"
                 rounded="lg"
-                class="text-h6 font-weight-black"
                 height="64"
                 color="primary"
                 :disabled="!canConfirm"
                 :loading="props.busy"
                 @click="confirmPayment"
               >
-                تأكيد
+                <template #default> طباعة الفاتورة </template>
+
+                <template #prepend>
+                  <v-hotkey
+                    border="0"
+                    display-mode="symbol"
+                    elevation="0"
+                    keys="enter"
+                    class="mx-0 my-0"
+                  />
+                </template>
               </v-btn>
             </div>
           </v-card>

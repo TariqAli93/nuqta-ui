@@ -169,7 +169,7 @@
               </template>
               <!-- Expandable row: per-item batch depletion (FIFO) -->
               <template #expanded-row="{ columns, item }">
-                <td :colspan="columns.length" class="pa-4 bg-grey-lighten-5">
+                <td :colspan="columns.length" class="pa-4">
                   <div class="text-caption font-weight-bold mb-2">تفاصيل الدفعات (FIFO)</div>
                   <v-table v-if="item.depletions?.length" density="compact">
                     <thead>
@@ -249,14 +249,14 @@
         </v-card>
 
         <!-- Audit Trail -->
-        <v-card class="win-card mt-4" flat>
+        <!-- <v-card class="win-card mt-4" flat>
           <AuditLogTab
             v-if="sale?.id"
             entity-type="sale"
             :entity-id="sale.id"
             title="سجل تدقيق الفاتورة"
           />
-        </v-card>
+        </v-card> -->
       </template>
     </div>
 

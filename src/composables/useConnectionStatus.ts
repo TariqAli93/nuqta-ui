@@ -25,15 +25,26 @@ async function checkBackendHealth(): Promise<boolean> {
   healthCheckRunning = true;
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
+    const endpoints = ['/health', '/system/health'];
 
-    const response = await http.get('/system/health', {
-      signal: controller.signal,
-    });
+    for (const endpoint of endpoints) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
 
-    clearTimeout(timeout);
-    return response.status === 200;
+      try {
+        const response = await http.get(endpoint, {
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+        if (response.status === 200) {
+          return true;
+        }
+      } catch {
+        clearTimeout(timeout);
+      }
+    }
+
+    return false;
   } catch {
     return false;
   } finally {

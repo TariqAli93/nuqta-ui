@@ -144,7 +144,8 @@
       <v-card>
         <v-card-title>{{ editMode ? 'تعديل المنتج' : 'إضافة منتج' }}</v-card-title>
         <v-card-text>
-          <v-form @submit.prevent="submitProduct">
+          <FormSkeleton :loading="workspaceStore.loading.product && editMode" :fields="8">
+            <v-form ref="productFormRef" @submit.prevent="submitProduct">
             <v-row dense>
               <v-col cols="12" md="6">
                 <v-text-field v-model="productForm.name" label="الاسم" required />
@@ -236,7 +237,8 @@
                 <v-textarea v-model="productForm.description" label="الوصف" rows="2" />
               </v-col>
             </v-row>
-          </v-form>
+            </v-form>
+          </FormSkeleton>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -287,6 +289,7 @@ import ProductSalesTab from '@/components/workspace/ProductSalesTab.vue';
 import ProductUnitsBarcodesTab from '@/components/workspace/ProductUnitsBarcodesTab.vue';
 import ProductBatchesTab from '@/components/workspace/ProductBatchesTab.vue';
 import StockAdjustDrawer from '@/components/workspace/StockAdjustDrawer.vue';
+import FormSkeleton from '@/components/shared/FormSkeleton.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -301,6 +304,7 @@ const adjustDrawer = ref(false);
 const productDialog = ref(false);
 const editMode = ref(false);
 const deleteDialog = ref(false);
+const productFormRef = ref<unknown>();
 
 const selectedProductId = computed(() => workspaceStore.selectedProductId);
 const showAdjustTab = computed(() => access.canAdjustStock.value);

@@ -10,7 +10,11 @@ export const inventoryRoutes: RouteRecordRaw[] = [
   {
     path: 'inventory',
     component: InventoryWorkspaceView,
-    meta: { requiresAccounting: true, requiresViewInventory: true },
+    meta: {
+      requiresAccounting: true,
+      requiresViewInventory: true,
+      breadcrumb: { title: 'nav.inventoryManagement', to: '/inventory/overview' },
+    },
     children: [
       {
         path: '',
@@ -21,21 +25,25 @@ export const inventoryRoutes: RouteRecordRaw[] = [
         path: 'overview',
         name: 'InventoryOverview',
         component: StockOverviewView,
+        meta: { breadcrumb: { title: 'nav.stockOverview' } },
       },
       {
         path: 'movements',
         name: 'InventoryMovements',
         component: StockMovementsView,
+        meta: { breadcrumb: { title: 'nav.stockMovements' } },
       },
       {
         path: 'reconciliation',
         name: 'InventoryReconciliation',
         component: StockReconciliationView,
+        meta: { breadcrumb: { title: 'nav.reconciliation' } },
       },
       {
         path: 'alerts',
         name: 'InventoryAlerts',
         component: StockAlertsView,
+        meta: { breadcrumb: { title: 'nav.stockAlerts' } },
       },
     ],
   },

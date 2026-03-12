@@ -7,5 +7,8 @@ export const aboutRoutes: RouteRecordRaw[] = [
     path: 'about',
     name: 'About',
     component: AboutView,
+    meta: {
+      breadcrumb: { title: 'nav.about', to: '/about' },
+    },
   },
 ];

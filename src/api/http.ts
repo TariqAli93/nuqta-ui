@@ -10,14 +10,14 @@ import axios, {
   type AxiosRequestConfig,
   type InternalAxiosRequestConfig,
 } from 'axios';
-import type { ApiError, ApiResult, PagedResult } from './contracts';
+import type { ApiError, ApiMeta, ApiResult, PagedResult } from './contracts';
 import { createFailure, normalizeApiError, normalizeApiResult, toPagedResult } from './contracts';
 
 // ---------------------------------------------------------------------------
 // Axios instance
 // ---------------------------------------------------------------------------
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000/api/v1';
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
 export const http: AxiosInstance = axios.create({
   baseURL,
@@ -172,7 +172,7 @@ function dedupKey(url: string, params?: Record<string, unknown>): string {
 // ---------------------------------------------------------------------------
 
 const MAX_RETRIES = 3;
-const BASE_DELAY_MS = 1_000;
+const BASE_DELAY_MS = 100;
 
 /** Circuit breaker state */
 let consecutiveFailures = 0;
@@ -202,12 +202,23 @@ function recordFailure(): void {
 }
 
 function isRetryable(err: AxiosError): boolean {
+  if (axios.isCancel(err)) {
+    return false;
+  }
+  if (err.code === 'ECONNABORTED') {
+    return false;
+  }
+  if (!err.response) {
+    return false;
+  }
+
   // Don't retry client errors (4xx) — they won't succeed on retry
   if (err.response && err.response.status >= 400 && err.response.status < 500) {
     return false;
   }
-  // Retry on 5xx, network errors, and timeouts
-  return true;
+
+  // Retry on transient server failures.
+  return err.response.status >= 500;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -268,6 +279,17 @@ interface ApiRequestOptions {
   signal?: AbortSignal;
 }
 
+function nowMs(): number {
+  if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+    return performance.now();
+  }
+  return Date.now();
+}
+
+function createMeta(startedAt: number): ApiMeta {
+  return { durationMs: Math.round(nowMs() - startedAt) };
+}
+
 export async function apiGet<T>(
   url: string,
   params?: Record<string, unknown>,
@@ -282,18 +304,22 @@ export async function apiGet<T>(
   }
 
   const request = (async (): Promise<ApiResult<T>> => {
+    const startedAt = nowMs();
     try {
       const config: AxiosRequestConfig = { params };
       if (options?.signal) config.signal = options.signal;
       const response = await withRetry(() => http.get(url, config));
-      return normalizeApiResult<T>(response.data);
+      return normalizeApiResult<T>(response.data, undefined, createMeta(startedAt));
     } catch (error) {
       if (axios.isCancel(error)) {
-        return createFailure({ code: 'CANCELLED', message: 'Request cancelled', status: 0 });
+        return createFailure(
+          { code: 'CANCELLED', message: 'Request cancelled', status: 0 },
+          createMeta(startedAt)
+        );
       }
       const apiError = axiosErrorToApiError(error as AxiosError);
       handleUnauthorized(apiError);
-      return createFailure(apiError);
+      return createFailure(apiError, createMeta(startedAt));
     } finally {
       inflightRequests.delete(key);
     }
@@ -316,18 +342,26 @@ export async function apiGetPaged<T>(
   }
 
   const request = (async (): Promise<ApiResult<PagedResult<T>>> => {
+    const startedAt = nowMs();
     try {
       const config: AxiosRequestConfig = { params };
       if (options?.signal) config.signal = options.signal;
       const response = await withRetry(() => http.get(url, config));
-      return normalizeApiResult<PagedResult<T>>(response.data, toPagedResult);
+      return normalizeApiResult<PagedResult<T>>(
+        response.data,
+        toPagedResult,
+        createMeta(startedAt)
+      );
     } catch (error) {
       if (axios.isCancel(error)) {
-        return createFailure({ code: 'CANCELLED', message: 'Request cancelled', status: 0 });
+        return createFailure(
+          { code: 'CANCELLED', message: 'Request cancelled', status: 0 },
+          createMeta(startedAt)
+        );
       }
       const apiError = axiosErrorToApiError(error as AxiosError);
       handleUnauthorized(apiError);
-      return createFailure(apiError);
+      return createFailure(apiError, createMeta(startedAt));
     } finally {
       inflightRequests.delete(key);
     }
@@ -342,18 +376,22 @@ export async function apiPost<T>(
   data?: unknown,
   options?: ApiRequestOptions
 ): Promise<ApiResult<T>> {
+  const startedAt = nowMs();
   try {
     const config: AxiosRequestConfig = {};
     if (options?.signal) config.signal = options.signal;
     const response = await http.post(url, data, config);
-    return normalizeApiResult<T>(response.data);
+    return normalizeApiResult<T>(response.data, undefined, createMeta(startedAt));
   } catch (error) {
     if (axios.isCancel(error)) {
-      return createFailure({ code: 'CANCELLED', message: 'Request cancelled', status: 0 });
+      return createFailure(
+        { code: 'CANCELLED', message: 'Request cancelled', status: 0 },
+        createMeta(startedAt)
+      );
     }
     const apiError = axiosErrorToApiError(error as AxiosError);
     handleUnauthorized(apiError);
-    return createFailure(apiError);
+    return createFailure(apiError, createMeta(startedAt));
   }
 }
 
@@ -362,18 +400,22 @@ export async function apiPut<T>(
   data?: unknown,
   options?: ApiRequestOptions
 ): Promise<ApiResult<T>> {
+  const startedAt = nowMs();
   try {
     const config: AxiosRequestConfig = {};
     if (options?.signal) config.signal = options.signal;
     const response = await http.put(url, data, config);
-    return normalizeApiResult<T>(response.data);
+    return normalizeApiResult<T>(response.data, undefined, createMeta(startedAt));
   } catch (error) {
     if (axios.isCancel(error)) {
-      return createFailure({ code: 'CANCELLED', message: 'Request cancelled', status: 0 });
+      return createFailure(
+        { code: 'CANCELLED', message: 'Request cancelled', status: 0 },
+        createMeta(startedAt)
+      );
     }
     const apiError = axiosErrorToApiError(error as AxiosError);
     handleUnauthorized(apiError);
-    return createFailure(apiError);
+    return createFailure(apiError, createMeta(startedAt));
   }
 }
 
@@ -382,18 +424,22 @@ export async function apiPatch<T>(
   data?: unknown,
   options?: ApiRequestOptions
 ): Promise<ApiResult<T>> {
+  const startedAt = nowMs();
   try {
     const config: AxiosRequestConfig = {};
     if (options?.signal) config.signal = options.signal;
     const response = await http.patch(url, data, config);
-    return normalizeApiResult<T>(response.data);
+    return normalizeApiResult<T>(response.data, undefined, createMeta(startedAt));
   } catch (error) {
     if (axios.isCancel(error)) {
-      return createFailure({ code: 'CANCELLED', message: 'Request cancelled', status: 0 });
+      return createFailure(
+        { code: 'CANCELLED', message: 'Request cancelled', status: 0 },
+        createMeta(startedAt)
+      );
     }
     const apiError = axiosErrorToApiError(error as AxiosError);
     handleUnauthorized(apiError);
-    return createFailure(apiError);
+    return createFailure(apiError, createMeta(startedAt));
   }
 }
 
@@ -401,18 +447,22 @@ export async function apiDelete<T>(
   url: string,
   options?: ApiRequestOptions
 ): Promise<ApiResult<T>> {
+  const startedAt = nowMs();
   try {
     const config: AxiosRequestConfig = {};
     if (options?.signal) config.signal = options.signal;
     const response = await http.delete(url, config);
-    return normalizeApiResult<T>(response.data);
+    return normalizeApiResult<T>(response.data, undefined, createMeta(startedAt));
   } catch (error) {
     if (axios.isCancel(error)) {
-      return createFailure({ code: 'CANCELLED', message: 'Request cancelled', status: 0 });
+      return createFailure(
+        { code: 'CANCELLED', message: 'Request cancelled', status: 0 },
+        createMeta(startedAt)
+      );
     }
     const apiError = axiosErrorToApiError(error as AxiosError);
     handleUnauthorized(apiError);
-    return createFailure(apiError);
+    return createFailure(apiError, createMeta(startedAt));
   }
 }
 
@@ -426,4 +476,7 @@ export function __resetForTests(): void {
   unauthorizedHandler = null;
   isRefreshing = false;
   refreshSubscribers = [];
+  inflightRequests.clear();
+  consecutiveFailures = 0;
+  circuitOpenUntil = 0;
 }

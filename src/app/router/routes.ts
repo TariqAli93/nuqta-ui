@@ -3,6 +3,7 @@
 // Layouts — kept eager (needed immediately on navigation)
 const PosLayout = () => import('../../layouts/PosLayout.vue');
 const AuthLayout = () => import('../../layouts/AuthLayout.vue');
+const MainLayout = () => import('../../layouts/MainLayout.vue');
 
 // Lazy-loaded views — each generates a separate chunk
 const PosView = () => import('../../views/pos/PosView.vue');
@@ -31,12 +32,13 @@ export const routes: RouteRecordRaw[] = [
   {
     path: '/auth',
     component: AuthLayout,
+    meta: { breadcrumb: { title: 'auth.loginTitle', to: '/auth/login' } },
     children: authRoutes,
   },
   {
     path: '/',
     component: PosLayout,
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, breadcrumb: { title: 'nav.dashboard', to: '/dashboard' } },
     children: [
       {
         path: '',
@@ -46,19 +48,30 @@ export const routes: RouteRecordRaw[] = [
         path: 'dashboard',
         name: 'Dashboard',
         component: DashboardView,
+        meta: { breadcrumb: { title: 'nav.dashboard', to: '/dashboard' } },
       },
       {
         path: 'backup',
         name: 'Backup',
         component: BackupView,
-        meta: { requiresRole: 'admin' },
+        meta: {
+          requiresRole: 'admin',
+          breadcrumb: [
+            { title: 'nav.dashboard', to: '/dashboard' },
+            { title: 'nav.reports', to: '/backup' },
+          ],
+        },
       },
 
       {
         path: 'pos',
         name: 'POS',
         component: PosView,
-        meta: { requiresCreateSales: true, enableBarcode: 'pos' },
+        meta: {
+          requiresCreateSales: true,
+          enableBarcode: 'pos',
+          breadcrumb: { title: 'nav.pos', to: '/pos' },
+        },
       },
       ...simpleModeRoutes,
       ...customersRoutes,
@@ -77,6 +90,7 @@ export const routes: RouteRecordRaw[] = [
         path: 'forbidden',
         name: 'Forbidden',
         component: ForbiddenView,
+        meta: { breadcrumb: { title: 'system.forbiddenTitle', to: '/forbidden' } },
       },
     ],
   },
@@ -84,5 +98,6 @@ export const routes: RouteRecordRaw[] = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFoundView,
+    meta: { breadcrumb: { title: 'system.notFoundTitle' } },
   },
 ];

@@ -95,6 +95,15 @@
       <v-spacer />
 
       <ConnectionStatus />
+      <v-tooltip :text="sseConnected ? t('layout.sseConnected') : t('layout.sseDisconnected')">
+        <template #activator="{ props }">
+          <v-btn v-bind="props" variant="text" icon size="small" class="mr-2">
+            <v-icon :color="sseConnected ? 'success' : 'grey'">
+              {{ sseConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+            </v-icon>
+          </v-btn>
+        </template>
+      </v-tooltip>
 
       <v-btn variant="text" class="win-ghost-btn" @click="toggleTheme">
         <v-icon> mdi-theme-light-dark </v-icon>
@@ -131,10 +140,10 @@ import { useAuthStore } from '@/stores/authStore';
 import { useVuetifyStore } from '@/stores/vuetify';
 import { t } from '@/i18n/t';
 import * as uiAccess from '@/auth/uiAccess';
-import { notifyWarn } from '@/utils/notify';
 import { useTheme } from 'vuetify';
 import { initEventBridge, destroyEventBridge } from '@/plugins/eventBridge';
 import ConnectionStatus from '@/components/shared/ConnectionStatus.vue';
+import { useInventoryAlerts } from '@/composables/useInventoryAlerts';
 
 // import logo from '../assets/logo.png';
 const logo = new URL('../assets/logo.png', import.meta.url).href;
@@ -153,6 +162,7 @@ function toggleTheme() {
 }
 
 const appNavigationDrawer = ref(true);
+const { connected: sseConnected } = useInventoryAlerts();
 
 const currentUser = computed(() => authStore.user?.username ?? t('common.none'));
 const currentDate = computed(() => {

@@ -55,6 +55,10 @@
         class="grow"
       />
 
+      <v-btn icon size="small" variant="text" class="mr-2" @click="showShortcutsHelp = true">
+        <v-icon>mdi-keyboard-outline</v-icon>
+      </v-btn>
+
       <v-btn-toggle
         :model-value="layoutStore.posLayout"
         @update:model-value="(v: any) => v && layoutStore.setPosLayout(v)"
@@ -364,10 +368,11 @@
     confirm-color="primary"
     @confirm="showStockAlert = false"
   />
+
+  <PosShortcutsHelp v-model="showShortcutsHelp" :shortcuts="shortcutHelpItems" />
 </template>
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
-import { useHotkey } from 'vuetify';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useProductsStore } from '@/stores/productsStore';
 import { useSalesStore } from '@/stores/salesStore';
@@ -391,6 +396,8 @@ import MoneyInput from '@/components/shared/MoneyInput.vue';
 import { generateIdempotencyKey } from '@/utils/idempotency';
 import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/notify';
 import { useLayoutStore } from '@/stores/layout';
+import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
+import PosShortcutsHelp from '@/components/pos/PosShortcutsHelp.vue';
 
 const productsStore = useProductsStore();
 const salesStore = useSalesStore();
@@ -447,6 +454,7 @@ const showHoldDialog = ref(false);
 const showResumeDialog = ref(false);
 const showMoreDialog = ref(false);
 const showStockAlert = ref(false);
+const showShortcutsHelp = ref(false);
 const stockAlertMessage = ref('');
 
 const pendingRemoveIndex = ref<number | null>(null);
@@ -570,7 +578,8 @@ const anyDialogOpen = computed(() => {
     showNoteDialog.value ||
     showHoldDialog.value ||
     showResumeDialog.value ||
-    showMoreDialog.value
+    showMoreDialog.value ||
+    showShortcutsHelp.value
   );
 });
 
@@ -1042,130 +1051,92 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
   }
 }
 
-useHotkey(
-  'f1',
-  () => {
-    if (anyDialogOpen.value) return;
-    if (cartItems.value.length > 0) {
-      resetSale();
-    } else {
-      focusSearchInput();
-    }
-  },
-  { preventDefault: true }
-);
+function handleEscapeShortcut(): void {
+  if (payOpen.value) {
+    payOpen.value = false;
+  } else if (showClearConfirm.value) {
+    showClearConfirm.value = false;
+  } else if (showRemoveConfirm.value) {
+    showRemoveConfirm.value = false;
+  } else if (showCustomerDialog.value) {
+    showCustomerDialog.value = false;
+  } else if (showDiscountDialog.value) {
+    showDiscountDialog.value = false;
+  } else if (showNoteDialog.value) {
+    showNoteDialog.value = false;
+  } else if (showHoldDialog.value) {
+    showHoldDialog.value = false;
+  } else if (showResumeDialog.value) {
+    showResumeDialog.value = false;
+  } else if (showMoreDialog.value) {
+    showMoreDialog.value = false;
+  } else if (showShortcutsHelp.value) {
+    showShortcutsHelp.value = false;
+  } else if (searchQuery.value) {
+    clearSearch();
+  } else {
+    searchInput.value?.blur();
+  }
+}
 
-useHotkey(
-  'f2',
-  () => {
-    if (anyDialogOpen.value) return;
-    handleHold();
-  },
-  { preventDefault: true }
-);
+const shortcutHelpItems = [
+  { key: 'F1', label: t('pos.shortcutHelp') },
+  { key: 'F2', label: t('pos.shortcutHoldSale') },
+  { key: 'F5', label: t('pos.shortcutPayment') },
+  { key: 'F8', label: t('pos.shortcutClear') },
+  { key: 'Esc', label: t('pos.shortcutCancel') },
+  { key: 'Enter', label: t('pos.shortcutAddItem') },
+];
 
-useHotkey(
-  'f3',
-  () => {
-    if (anyDialogOpen.value) return;
-    openResumeDialog();
+useKeyboardShortcuts([
+  {
+    key: 'F1',
+    label: t('pos.shortcutHelp'),
+    handler: () => {
+      showShortcutsHelp.value = true;
+    },
   },
-  { preventDefault: true }
-);
-
-useHotkey(
-  'f4',
-  () => {
-    if (anyDialogOpen.value) return;
-    openCustomerDialog();
+  {
+    key: 'F2',
+    label: t('pos.shortcutHoldSale'),
+    handler: () => {
+      if (anyDialogOpen.value) return;
+      handleHold();
+    },
   },
-  { preventDefault: true }
-);
-
-useHotkey(
-  'f8',
-  () => {
-    if (anyDialogOpen.value) return;
-    openDiscountDialog();
-  },
-  { preventDefault: true }
-);
-
-useHotkey(
-  'f9',
-  () => {
-    if (anyDialogOpen.value) return;
-    openClearConfirmDialog();
-  },
-  { preventDefault: true }
-);
-
-useHotkey(
-  'f10',
-  (e) => {
-    const target = e.target as HTMLElement;
-    if (
-      target === searchInput.value ||
-      target.tagName === 'INPUT' ||
-      target.tagName === 'TEXTAREA'
-    ) {
-      return;
-    }
-    if (anyDialogOpen.value) return;
-    if (cartItems.value.length > 0) {
+  {
+    key: 'F5',
+    label: t('pos.shortcutPayment'),
+    handler: () => {
+      if (anyDialogOpen.value || cartItems.value.length === 0) return;
       handlePay();
-    }
+    },
   },
-  { preventDefault: true }
-);
-
-useHotkey(
-  'escape',
-  () => {
-    if (payOpen.value) {
-      payOpen.value = false;
-    } else if (showClearConfirm.value) {
-      showClearConfirm.value = false;
-    } else if (showRemoveConfirm.value) {
-      showRemoveConfirm.value = false;
-    } else if (showCustomerDialog.value) {
-      showCustomerDialog.value = false;
-    } else if (showDiscountDialog.value) {
-      showDiscountDialog.value = false;
-    } else if (showNoteDialog.value) {
-      showNoteDialog.value = false;
-    } else if (showHoldDialog.value) {
-      showHoldDialog.value = false;
-    } else if (showResumeDialog.value) {
-      showResumeDialog.value = false;
-    } else if (showMoreDialog.value) {
-      showMoreDialog.value = false;
-    } else if (searchQuery.value) {
-      clearSearch();
-    } else {
-      searchInput.value?.blur();
-    }
+  {
+    key: 'F8',
+    label: t('pos.shortcutClear'),
+    handler: () => {
+      if (anyDialogOpen.value || cartItems.value.length === 0) return;
+      openClearConfirmDialog();
+    },
   },
-  { preventDefault: true }
-);
-
-useHotkey(
-  'm',
-  () => {
-    if (anyDialogOpen.value) return;
-    openMoreDialog();
+  {
+    key: 'Escape',
+    label: t('pos.shortcutCancel'),
+    handler: () => {
+      handleEscapeShortcut();
+    },
   },
-  { preventDefault: true }
-);
-
-useHotkey(
-  'n',
-  () => {
-    if (anyDialogOpen.value) return;
-    openNoteDialog();
+  {
+    key: 'Enter',
+    label: t('pos.shortcutAddItem'),
+    preventDefault: false,
+    handler: () => {
+      if (anyDialogOpen.value || !searchQuery.value.trim()) return;
+      void handleSearchSubmit();
+    },
   },
-  { preventDefault: true }
-);
+]);
 
 async function loadCategories() {
   const result = await categoriesClient.getAll({});

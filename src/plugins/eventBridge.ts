@@ -1,23 +1,21 @@
 /**
- * Event Bridge — maps SSE domain events to Pinia store invalidation.
- *
- * This module acts as the glue between the real-time event stream
- * (useEventStream) and the application's Pinia stores + query cache.
- *
- * Call `initEventBridge()` once after authentication succeeds.
+ * Event bridge that maps SSE domain events to cache invalidation hooks.
  */
-import { onEvent, connectEventStream, disconnectEventStream } from '@/composables/useEventStream';
+import { connectEventStream, disconnectEventStream, onEvent } from '@/composables/useEventStream';
 import { invalidateCacheByPrefix } from '@/composables/useQueryCache';
 
 type StoreRefresher = () => void;
 
-// Registry of store refreshers — populated lazily to avoid circular imports
 const refreshers: Record<string, StoreRefresher[]> = {};
+let initialized = false;
+let cleanupHandlers: Array<() => void> = [];
 
-/**
- * Register a store refresh callback for a given event type.
- * Call this from Pinia stores or components that need to react to SSE events.
- */
+function registerAliases(eventTypes: string[], handler: () => void): void {
+  eventTypes.forEach((eventType) => {
+    cleanupHandlers.push(onEvent(eventType, handler));
+  });
+}
+
 export function onDomainEvent(eventType: string, refresher: StoreRefresher): () => void {
   if (!refreshers[eventType]) {
     refreshers[eventType] = [];
@@ -33,13 +31,11 @@ export function onDomainEvent(eventType: string, refresher: StoreRefresher): () 
   };
 }
 
-/**
- * Initialize the event bridge.
- * Connects to SSE and sets up default event → cache invalidation mappings.
- */
 export function initEventBridge(): void {
-  // Sale events → invalidate sales, products (stock changed), dashboard caches
-  onEvent('sale:created', () => {
+  if (initialized) return;
+  initialized = true;
+
+  registerAliases(['sale:created', 'sale.completed'], () => {
     invalidateCacheByPrefix('sales');
     invalidateCacheByPrefix('products');
     invalidateCacheByPrefix('dashboard');
@@ -47,55 +43,54 @@ export function initEventBridge(): void {
     refreshers['sale:created']?.forEach((fn) => fn());
   });
 
-  onEvent('sale:cancelled', () => {
+  registerAliases(['sale:cancelled', 'sale.cancelled'], () => {
     invalidateCacheByPrefix('sales');
     invalidateCacheByPrefix('products');
     invalidateCacheByPrefix('dashboard');
     refreshers['sale:cancelled']?.forEach((fn) => fn());
   });
 
-  // Product events → invalidate products cache
-  onEvent('product:created', () => {
+  registerAliases(['product:created', 'product.created'], () => {
     invalidateCacheByPrefix('products');
     refreshers['product:created']?.forEach((fn) => fn());
   });
 
-  onEvent('product:updated', () => {
+  registerAliases(['product:updated', 'product.updated'], () => {
     invalidateCacheByPrefix('products');
     refreshers['product:updated']?.forEach((fn) => fn());
   });
 
-  onEvent('product:deleted', () => {
+  registerAliases(['product:deleted', 'product.deleted'], () => {
     invalidateCacheByPrefix('products');
     refreshers['product:deleted']?.forEach((fn) => fn());
   });
 
-  // Inventory events → invalidate inventory + products caches
-  onEvent('inventory:adjusted', () => {
-    invalidateCacheByPrefix('inventory');
-    invalidateCacheByPrefix('products');
-    refreshers['inventory:adjusted']?.forEach((fn) => fn());
-  });
+  registerAliases(
+    ['inventory:adjusted', 'inventory:movement', 'inventory.movement', 'inventory.low_stock'],
+    () => {
+      invalidateCacheByPrefix('inventory');
+      invalidateCacheByPrefix('products');
+      refreshers['inventory:adjusted']?.forEach((fn) => fn());
+    }
+  );
 
-  onEvent('inventory:reconciled', () => {
+  registerAliases(['inventory:reconciled', 'inventory:expiry_warning', 'inventory.expiry_warning'], () => {
     invalidateCacheByPrefix('inventory');
     invalidateCacheByPrefix('products');
     refreshers['inventory:reconciled']?.forEach((fn) => fn());
   });
 
-  // Settings events → invalidate settings cache
-  onEvent('settings:changed', () => {
+  registerAliases(['settings:changed', 'settings.changed'], () => {
     invalidateCacheByPrefix('settings');
     refreshers['settings:changed']?.forEach((fn) => fn());
   });
 
-  // Connect to the SSE stream
   connectEventStream();
 }
 
-/**
- * Tear down the event bridge (e.g., on logout).
- */
 export function destroyEventBridge(): void {
+  cleanupHandlers.forEach((cleanup) => cleanup());
+  cleanupHandlers = [];
+  initialized = false;
   disconnectEventStream();
 }
