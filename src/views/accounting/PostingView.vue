@@ -336,37 +336,46 @@ function batchStatusColor(status?: string): string {
 async function postPeriod() {
   posting.value = true;
 
-  const result = await postingClient.postPeriod({
-    periodType: postForm.periodType,
-    periodStart: postForm.periodStart,
-    periodEnd: postForm.periodEnd,
-    notes: postForm.notes || undefined,
-  });
+  try {
+    const result = await postingClient.postPeriod({
+      periodType: postForm.periodType,
+      periodStart: postForm.periodStart,
+      periodEnd: postForm.periodEnd,
+      notes: postForm.notes || undefined,
+    });
 
-  posting.value = false;
-
-  if (result.ok) {
-    notifySuccess(`تم ترحيل ${result.data.entriesCount ?? 0} قيد بنجاح`);
-    postForm.notes = '';
-    await loadBatches();
-  } else {
-    notifyError(result.error.message || 'فشل الترحيل');
+    if (result.ok) {
+      notifySuccess(`تم ترحيل ${result.data.entriesCount ?? 0} قيد بنجاح`);
+      postForm.notes = '';
+      await loadBatches();
+    } else {
+      notifyError(result.error.message || 'فشل الترحيل');
+    }
+  } catch {
+    notifyError('فشل الترحيل');
+  } finally {
+    posting.value = false;
   }
 }
 
 async function loadBatches() {
   loadingBatches.value = true;
-  const result = await postingClient.getBatches({
-    periodType: filterPeriodType.value || undefined,
-    dateFrom: filterDateFrom.value || undefined,
-    dateTo: filterDateTo.value || undefined,
-  });
-  loadingBatches.value = false;
+  try {
+    const result = await postingClient.getBatches({
+      periodType: filterPeriodType.value || undefined,
+      dateFrom: filterDateFrom.value || undefined,
+      dateTo: filterDateTo.value || undefined,
+    });
 
-  if (result.ok) {
-    batches.value = result.data.items || [];
-  } else {
-    notifyError(result.error.message || 'فشل تحميل الدفعات');
+    if (result.ok) {
+      batches.value = result.data.items || [];
+    } else {
+      notifyError(result.error.message || 'فشل تحميل الدفعات');
+    }
+  } catch {
+    notifyError('فشل تحميل الدفعات');
+  } finally {
+    loadingBatches.value = false;
   }
 }
 
@@ -393,14 +402,19 @@ async function executeLock() {
   lockingId.value = selectedBatch.value.id;
   lockDialog.value = false;
 
-  const result = await postingClient.lockBatch(selectedBatch.value.id);
-  lockingId.value = null;
+  try {
+    const result = await postingClient.lockBatch(selectedBatch.value.id);
 
-  if (result.ok) {
-    notifySuccess('تم قفل الدفعة بنجاح');
-    await loadBatches();
-  } else {
-    notifyError(result.error.message || 'فشل القفل');
+    if (result.ok) {
+      notifySuccess('تم قفل الدفعة بنجاح');
+      await loadBatches();
+    } else {
+      notifyError(result.error.message || 'فشل القفل');
+    }
+  } catch {
+    notifyError('فشل القفل');
+  } finally {
+    lockingId.value = null;
   }
 }
 
@@ -409,14 +423,19 @@ async function executeUnlock() {
   unlockingId.value = selectedBatch.value.id;
   unlockDialog.value = false;
 
-  const result = await postingClient.unlockBatch(selectedBatch.value.id);
-  unlockingId.value = null;
+  try {
+    const result = await postingClient.unlockBatch(selectedBatch.value.id);
 
-  if (result.ok) {
-    notifySuccess('تم فتح قفل الدفعة بنجاح');
-    await loadBatches();
-  } else {
-    notifyError(result.error.message || 'فشل فتح القفل');
+    if (result.ok) {
+      notifySuccess('تم فتح قفل الدفعة بنجاح');
+      await loadBatches();
+    } else {
+      notifyError(result.error.message || 'فشل فتح القفل');
+    }
+  } catch {
+    notifyError('فشل فتح القفل');
+  } finally {
+    unlockingId.value = null;
   }
 }
 
@@ -425,14 +444,19 @@ async function executeReverse() {
   reversingId.value = selectedBatch.value.id;
   reverseDialog.value = false;
 
-  const result = await postingClient.reverseBatch(selectedBatch.value.id);
-  reversingId.value = null;
+  try {
+    const result = await postingClient.reverseBatch(selectedBatch.value.id);
 
-  if (result.ok) {
-    notifySuccess('تم عكس الدفعة بنجاح');
-    await loadBatches();
-  } else {
-    notifyError(result.error.message || 'فشل عكس الدفعة');
+    if (result.ok) {
+      notifySuccess('تم عكس الدفعة بنجاح');
+      await loadBatches();
+    } else {
+      notifyError(result.error.message || 'فشل عكس الدفعة');
+    }
+  } catch {
+    notifyError('فشل عكس الدفعة');
+  } finally {
+    reversingId.value = null;
   }
 }
 

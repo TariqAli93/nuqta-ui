@@ -115,7 +115,7 @@ watch(
     accountingSettings.defaultCostMethod = s.defaultCostMethod;
     accountingSettings.fiscalYearStart = s.fiscalYearStart;
   },
-  { deep: true }
+  { deep: true, immediate: true }
 );
 
 async function save() {
@@ -136,8 +136,7 @@ async function save() {
 
 async function fetchSettings() {
   try {
-    const result = await accountingStore.fetchAccountingSettings();
-    console.log('fetch settings result', result);
+    await accountingStore.fetchAccountingSettings();
   } catch (err) {
     notifyError(toUserMessage(err));
   }

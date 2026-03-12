@@ -14,7 +14,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createPinia, setActivePinia } from 'pinia';
-import { useAccountingStore } from '@/stores/accountingStore';
+import { useAccountingStore, parseFiscalYearStartMonth } from '@/stores/accountingStore';
 import {
   createApiSuccess,
   createApiFailure,
@@ -481,5 +481,143 @@ describe('accountingStore — saveAccountingSettings', () => {
 
     expect(result.ok).toBe(false);
     expect(result.error).toBe('Network error');
+  });
+});
+
+describe('accountingStore — fetchAccountingSettings', () => {
+  let store: ReturnType<typeof useAccountingStore>;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    store = useAccountingStore();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('fetches settings from API and applies them', async () => {
+    const { settingsClient } = await import('@/api/endpoints/settings');
+    vi.mocked(settingsClient.getTyped).mockResolvedValue(
+      createApiSuccess({
+        'accounting.autoPostOnSale': false,
+        'accounting.autoPostOnPurchase': false,
+        'accounting.enforceBalancedEntries': false,
+        'accounting.defaultCostMethod': 'weighted_average',
+        'accounting.fiscalYearStart': 6,
+      })
+    );
+
+    await store.fetchAccountingSettings();
+
+    expect(store.settings.autoPostOnSale).toBe(false);
+    expect(store.settings.autoPostOnPurchase).toBe(false);
+    expect(store.settings.enforceBalancedEntries).toBe(false);
+    expect(store.settings.defaultCostMethod).toBe('weighted_average');
+    expect(store.settings.fiscalYearStart).toBe(6);
+    expect(store.settingsLoaded).toBe(true);
+  });
+
+  it('parses string fiscal year start from API (MM-DD format)', async () => {
+    const { settingsClient } = await import('@/api/endpoints/settings');
+    vi.mocked(settingsClient.getTyped).mockResolvedValue(
+      createApiSuccess({
+        'accounting.fiscalYearStart': '07-01',
+      })
+    );
+
+    await store.fetchAccountingSettings();
+
+    expect(store.settings.fiscalYearStart).toBe(7);
+  });
+
+  it('skips fetch when settingsLoaded is true and force is false', async () => {
+    const { settingsClient } = await import('@/api/endpoints/settings');
+    vi.mocked(settingsClient.getTyped).mockResolvedValue(createApiSuccess({}));
+
+    await store.fetchAccountingSettings();
+    expect(settingsClient.getTyped).toHaveBeenCalledTimes(1);
+
+    await store.fetchAccountingSettings(); // should be skipped
+    expect(settingsClient.getTyped).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-fetches when force is true even if settingsLoaded', async () => {
+    const { settingsClient } = await import('@/api/endpoints/settings');
+    vi.mocked(settingsClient.getTyped).mockResolvedValue(createApiSuccess({}));
+
+    await store.fetchAccountingSettings();
+    expect(settingsClient.getTyped).toHaveBeenCalledTimes(1);
+
+    await store.fetchAccountingSettings(true);
+    expect(settingsClient.getTyped).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps defaults on API failure', async () => {
+    const { settingsClient } = await import('@/api/endpoints/settings');
+    vi.mocked(settingsClient.getTyped).mockResolvedValue(
+      createApiFailure('SERVER_ERROR', 'Settings unavailable')
+    );
+
+    await store.fetchAccountingSettings();
+
+    expect(store.settings.autoPostOnSale).toBe(true);
+    expect(store.settings.defaultCostMethod).toBe('fifo');
+    expect(store.settingsLoaded).toBe(false);
+  });
+
+  it('keeps defaults when API throws', async () => {
+    const { settingsClient } = await import('@/api/endpoints/settings');
+    vi.mocked(settingsClient.getTyped).mockRejectedValue(new Error('Network error'));
+
+    await store.fetchAccountingSettings();
+
+    expect(store.settings.autoPostOnSale).toBe(true);
+    expect(store.settings.defaultCostMethod).toBe('fifo');
+    expect(store.settingsLoaded).toBe(false);
+  });
+});
+
+describe('parseFiscalYearStartMonth', () => {
+  it('parses MM-DD string format', () => {
+    expect(parseFiscalYearStartMonth('01-01')).toBe(1);
+    expect(parseFiscalYearStartMonth('07-01')).toBe(7);
+    expect(parseFiscalYearStartMonth('12-01')).toBe(12);
+  });
+
+  it('parses plain numeric string', () => {
+    expect(parseFiscalYearStartMonth('1')).toBe(1);
+    expect(parseFiscalYearStartMonth('6')).toBe(6);
+    expect(parseFiscalYearStartMonth('12')).toBe(12);
+  });
+
+  it('returns valid number input directly', () => {
+    expect(parseFiscalYearStartMonth(1)).toBe(1);
+    expect(parseFiscalYearStartMonth(7)).toBe(7);
+    expect(parseFiscalYearStartMonth(12)).toBe(12);
+  });
+
+  it('returns 1 for out-of-range values', () => {
+    expect(parseFiscalYearStartMonth(0)).toBe(1);
+    expect(parseFiscalYearStartMonth(13)).toBe(1);
+    expect(parseFiscalYearStartMonth(-1)).toBe(1);
+    expect(parseFiscalYearStartMonth('0')).toBe(1);
+    expect(parseFiscalYearStartMonth('13')).toBe(1);
+  });
+
+  it('returns 1 for non-numeric input', () => {
+    expect(parseFiscalYearStartMonth('abc')).toBe(1);
+    expect(parseFiscalYearStartMonth(null)).toBe(1);
+    expect(parseFiscalYearStartMonth(undefined)).toBe(1);
+    expect(parseFiscalYearStartMonth({})).toBe(1);
+  });
+
+  it('returns 1 for float values', () => {
+    expect(parseFiscalYearStartMonth(1.5)).toBe(1);
+    expect(parseFiscalYearStartMonth(6.9)).toBe(1);
+  });
+
+  it('handles string with whitespace', () => {
+    expect(parseFiscalYearStartMonth(' 07-01 ')).toBe(7);
   });
 });

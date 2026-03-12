@@ -37,17 +37,17 @@ const entryDisplay = computed((): JournalEntryDisplay => {
   }
   return {
     id: e.id,
-    entryNumber: (e as any).entryNumber ?? `#${e.id}`,
-    entryDate: (e as any).entryDate ?? '',
-    description: (e as any).description ?? '',
-    sourceType: (e as any).sourceType,
-    sourceId: (e as any).sourceId,
-    isPosted: (e as any).isPosted,
-    isReversed: (e as any).isReversed,
-    totalAmount: (e as any).totalAmount ?? 0,
-    currency: (e as any).currency,
-    notes: (e as any).notes,
-    lines: (e as any).lines ?? [],
+    entryNumber: e.entryNumber ?? `#${e.id}`,
+    entryDate: e.entryDate ?? '',
+    description: e.description ?? '',
+    sourceType: e.sourceType,
+    sourceId: e.sourceId,
+    isPosted: e.isPosted,
+    isReversed: e.isReversed,
+    totalAmount: e.totalAmount ?? 0,
+    currency: e.currency,
+    notes: e.notes,
+    lines: e.lines ?? [],
   };
 });
 

@@ -68,7 +68,6 @@ export const useAccountingStore = defineStore('accounting', () => {
         'accounting.fiscalYearStart',
       ]);
 
-      console.log('Fetched accounting settings:', result);
       if (result.ok && result.data) {
         const d = result.data;
         if (typeof d['accounting.autoPostOnSale'] === 'boolean')
@@ -80,14 +79,7 @@ export const useAccountingStore = defineStore('accounting', () => {
         if (typeof d['accounting.defaultCostMethod'] === 'string')
           settings.value.defaultCostMethod = d['accounting.defaultCostMethod'];
         if (d['accounting.fiscalYearStart'] != null) {
-          const raw = d['accounting.fiscalYearStart'];
-          const month =
-            typeof raw === 'number'
-              ? raw
-              : typeof raw === 'string'
-                ? Number.parseInt(raw, 10) || 1
-                : 1;
-          settings.value.fiscalYearStart = month >= 1 && month <= 12 ? month : 1;
+          settings.value.fiscalYearStart = parseFiscalYearStartMonth(d['accounting.fiscalYearStart']);
         }
         settingsLoaded.value = true;
       }
