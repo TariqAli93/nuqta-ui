@@ -16,10 +16,10 @@ type AfterPayPayload = {
 type AfterPayResponse = {
   queued: boolean;
   printed: boolean;
+  data: Record<string, unknown>;
 };
 
 export const posClient = {
-  /** TODO: Backend endpoint needed */
   afterPay: (payload: AfterPayPayload): Promise<ApiResult<AfterPayResponse>> =>
     apiPost<AfterPayResponse>('/pos/after-pay', payload),
 };

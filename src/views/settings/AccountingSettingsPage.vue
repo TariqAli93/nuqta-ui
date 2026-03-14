@@ -10,60 +10,86 @@
         <v-row>
           <v-col cols="12" md="4">
             <v-switch
-              v-model="accountingForm.taxEnabled"
+              v-model="form.taxEnabled"
               label="تفعيل الضريبة"
               color="primary"
               hint="تفعيل حساب الضريبة على الفواتير"
               persistent-hint
             />
           </v-col>
+
           <v-col cols="12" md="4">
             <v-text-field
-              v-model.number="form.taxRate"
+              v-model.number="form.defaultTaxRate"
               label="نسبة الضريبة (%)"
               type="number"
               min="0"
               max="100"
               variant="outlined"
               density="compact"
-              :disabled="!accountingForm.taxEnabled"
+              :disabled="!form.taxEnabled"
             />
           </v-col>
+
           <v-col cols="12" md="4">
             <v-text-field
-              v-model="accountingForm.taxName"
-              label="اسم الضريبة"
+              v-model="form.taxRegistrationNumber"
+              label="الرقم الضريبي"
               variant="outlined"
               density="compact"
-              :disabled="!accountingForm.taxEnabled"
+              :disabled="!form.taxEnabled"
             />
           </v-col>
 
           <v-divider class="my-4" />
 
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="4">
             <v-select
-              v-model="accountingForm.costingMethod"
+              v-model="form.costMethod"
               :items="costMethods"
               label="طريقة حساب التكلفة"
               variant="outlined"
               density="compact"
-              hint="FIFO: الوارد أولاً صادر أولاً"
-              persistent-hint
             />
           </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="accountingForm.fiscalYearStart"
-              label="بداية السنة المالية (MM-DD)"
-              variant="outlined"
-              density="compact"
-              placeholder="01-01"
-            />
-          </v-col>
+
           <v-col cols="12" md="4">
             <v-text-field
-              v-model.number="accountingForm.exchangeRate"
+              v-model.number="form.fiscalYearStartMonth"
+              label="شهر بداية السنة المالية"
+              type="number"
+              min="1"
+              max="12"
+              variant="outlined"
+              density="compact"
+            />
+          </v-col>
+
+          <v-col cols="12" md="4">
+            <v-text-field
+              v-model.number="form.fiscalYearStartDay"
+              label="يوم بداية السنة المالية"
+              type="number"
+              min="1"
+              max="31"
+              variant="outlined"
+              density="compact"
+            />
+          </v-col>
+
+          <v-col cols="12" md="4">
+            <v-select
+              v-model="form.currencyCode"
+              :items="currencies"
+              label="العملة"
+              variant="outlined"
+              density="compact"
+            />
+          </v-col>
+
+          <v-col cols="12" md="4">
+            <v-text-field
+              v-model.number="form.usdExchangeRate"
               label="سعر الصرف (USD → IQD)"
               type="number"
               min="0"
@@ -71,24 +97,24 @@
               density="compact"
             />
           </v-col>
+
           <v-col cols="12" md="4">
             <v-select
-              v-model="accountingForm.roundingMode"
-              :items="roundingModes"
-              label="نمط التقريب"
+              v-model="form.roundingMethod"
+              :items="roundingMethods"
+              label="طريقة التقريب"
               variant="outlined"
               density="compact"
             />
           </v-col>
+
           <v-col cols="12" md="4">
-            <v-text-field
-              v-model.number="accountingForm.roundingPrecision"
-              label="دقة التقريب"
-              type="number"
-              min="0"
-              max="8"
-              variant="outlined"
-              density="compact"
+            <v-switch
+              v-model="form.autoPosting"
+              label="الترحيل التلقائي"
+              color="primary"
+              hint="ترحيل القيود تلقائياً عند تنفيذ العمليات"
+              persistent-hint
             />
           </v-col>
         </v-row>
@@ -112,52 +138,28 @@
 import { useAccountingSettingsStore } from '../../stores/settings/useAccountingSettingsStore';
 import { useSettingsForm } from '../../composables/useSettingsForm';
 import type { AccountingSettings } from '../../types/settings/AccountingSettings';
-import { onMounted, reactive } from 'vue';
 
 const store = useAccountingSettingsStore();
-const { form, saving, isDirty, load, save } = useSettingsForm<AccountingSettings>(
-  store as any,
+
+const { form, saving, isDirty, save } = useSettingsForm<AccountingSettings>(
+  store,
   'تم حفظ إعدادات المحاسبة بنجاح'
 );
 
-const accountingModules = [
-  { title: 'نظام الحسابات', value: 'accounting' },
-  { title: 'الأقساط', value: 'installments' },
+const currencies = [
+  { title: 'الدينار العراقي (IQD)', value: 'IQD' },
+  { title: 'الدولار الأمريكي (USD)', value: 'USD' },
 ];
-
-const accountingForm = reactive({
-  taxEnabled: false,
-  taxName: '',
-  costingMethod: null as 'FIFO' | 'LIFO' | 'AVERAGE' | null,
-  fiscalYearStart: null as string | null,
-  exchangeRate: null as number | null,
-  roundingMode: null as 'up' | 'down' | 'nearest' | null,
-  roundingPrecision: null as number | null,
-});
 
 const costMethods = [
-  { title: 'FIFO — الوارد أولاً صادر أولاً', value: 'FIFO' },
-  { title: 'LIFO — الوارد أخيراً صادر أولاً', value: 'LIFO' },
-  { title: 'المتوسط المرجح', value: 'AVERAGE' },
+  { title: 'FIFO — الوارد أولاً صادر أولاً', value: 'fifo' },
+  { title: 'LIFO — الوارد أخيراً صادر أولاً', value: 'lifo' },
+  { title: 'المتوسط المرجح', value: 'average' },
 ];
 
-const roundingModes = [
-  { title: 'تقريب لأعلى', value: 'up' },
-  { title: 'تقريب لأسفل', value: 'down' },
-  { title: 'تقريب لأقرب', value: 'nearest' },
+const roundingMethods = [
+  { title: 'تقريب عادي', value: 'round' },
+  { title: 'تقريب لأعلى', value: 'ceil' },
+  { title: 'تقريب لأسفل', value: 'floor' },
 ];
-
-onMounted(async () => {
-  // Load settings when component mounts
-  await load();
-
-  // Initialize reactive form properties
-  accountingForm.taxEnabled = form.value.taxEnabled;
-  accountingForm.taxName = form.value.taxName ?? '';
-  accountingForm.costingMethod = form.value.costingMethod;
-  accountingForm.fiscalYearStart = form.value.fiscalYearStart;
-  accountingForm.exchangeRate = form.value.exchangeRate;
-  accountingForm.roundingMode = form.value.roundingMode;
-  accountingForm.roundingPrecision = form.value.roundingPrecision;
-});
 </script>

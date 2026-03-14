@@ -8,7 +8,7 @@
           >
           <v-card-text>
             <div class="text-h5 text-center mb-2">
-              {{ inventoryStore.dashboard?.lowStockCount || 0 }}
+              {{ inventoryStore.dashboard?.lowStockCount ?? 0 }}
             </div>
             <div class="text-caption text-center text-medium-emphasis">
               منتجات وصلت لحد إعادة الطلب
@@ -38,7 +38,7 @@
         تنبيهات الصلاحية
         <v-spacer />
         <v-text-field
-          v-model="daysAhead"
+          v-model.number="daysAhead"
           type="number"
           label="أيام للأمام"
           density="compact"
@@ -52,7 +52,7 @@
       <v-data-table
         :headers="expiryHeaders"
         :items="inventoryStore.expiryAlerts"
-        :loading="inventoryStore.loading"
+        :loading="inventoryStore.loadingAlerts"
         density="compact"
         :items-per-page="15"
       >
@@ -65,7 +65,7 @@
             {{ formatDate(item.expiryDate) }}
           </v-chip>
         </template>
-        <template #item.daysRemaining="{ item }">
+        <template #item.daysUntilExpiry="{ item }">
           <span :class="item.daysUntilExpiry <= 0 ? 'text-error font-weight-bold' : 'text-warning'">
             {{ item.daysUntilExpiry <= 0 ? 'منتهية' : `${item.daysUntilExpiry} يوم` }}
           </span>
@@ -98,8 +98,18 @@ const expiryHeaders = [
   { title: 'الكمية', key: 'quantityOnHand', align: 'center' as const, width: 80 },
 ];
 
+/**
+ * Compare dates at the day level only — normalise both to
+ * midnight local time so Baghdad timezone doesn't cause
+ * "today" to appear expired.
+ */
 function isExpired(expiryDate: string): boolean {
-  return new Date(expiryDate) <= new Date();
+  const expiry = new Date(expiryDate);
+  const today = new Date();
+  // Zero out the time portion for both
+  expiry.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return expiry <= today;
 }
 
 async function refreshAlerts(): Promise<void> {

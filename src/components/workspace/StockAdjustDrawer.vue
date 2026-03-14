@@ -13,7 +13,7 @@
           color="transparent"
         >
           <v-icon size="18">mdi-information-outline</v-icon>
-          <span>المنتج: {{ product.name }} | المخزون الحالي: {{ product.stock || 0 }}</span>
+          <span>المنتج: {{ product.name }} | المخزون الحالي: {{ product.stock ?? 0 }}</span>
         </v-sheet>
 
         <v-row>
@@ -38,7 +38,7 @@
           </v-col>
         </v-row>
 
-        <UnitSelector :units="units || []" v-model="selectedUnit" class="my-2" />
+        <UnitSelector :units="units" v-model="selectedUnitId" class="my-2" />
 
         <v-textarea v-model="notes" label="ملاحظات" rows="2" variant="outlined" />
       </v-card-text>
@@ -52,15 +52,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
-import type { Product } from '@/types/domain';
+import { ref, watch, computed } from 'vue';
+import type { Product, ProductUnit } from '@/types/domain';
 import UnitSelector from '@/components/shared/UnitSelector.vue';
-import type { ProductUnitInput } from '@/types/workspace';
-import { useProductWorkspaceStore } from '@/stores/productWorkspaceStore';
 
 const props = defineProps<{
   modelValue: boolean;
   product: Product | null;
+  units: ProductUnit[];
   loading: boolean;
 }>();
 
@@ -72,6 +71,8 @@ const emit = defineEmits<{
       quantityBase: number;
       reason: 'manual' | 'damage' | 'opening';
       unitName?: string;
+      unitFactor?: number;
+      batchId?: number;
       notes?: string;
     },
   ];
@@ -79,12 +80,8 @@ const emit = defineEmits<{
 
 const reason = ref<'manual' | 'damage' | 'opening'>('manual');
 const quantityBase = ref(0);
-const unitName = ref('');
 const notes = ref('');
-const selectedUnit = ref<number | undefined>(undefined);
-const units = ref<ProductUnitInput[]>([]);
-
-const productWorkspaceStore = useProductWorkspaceStore();
+const selectedUnitId = ref<number | undefined>(undefined);
 
 const reasonItems = [
   { title: 'تعديل يدوي', value: 'manual' },
@@ -92,22 +89,21 @@ const reasonItems = [
   { title: 'رصيد افتتاحي', value: 'opening' },
 ];
 
+/** Resolve the selected unit for name + factor. */
+const resolvedUnit = computed(() => {
+  if (!selectedUnitId.value) return null;
+  return props.units.find((u) => u.id === selectedUnitId.value) ?? null;
+});
+
+// Reset form fields when the drawer opens
 watch(
   () => props.modelValue,
   (opened) => {
     if (!opened) return;
     reason.value = 'manual';
     quantityBase.value = 0;
-    unitName.value = props.product?.unit || '';
     notes.value = '';
-    selectedUnit.value = undefined;
-    if (props.product?.id) {
-      productWorkspaceStore.fetchUnits(props.product.id).then((result) => {
-        if (result.ok) {
-          units.value = result.data;
-        }
-      });
-    }
+    selectedUnitId.value = undefined;
   }
 );
 
@@ -118,21 +114,14 @@ function close(value: boolean): void {
 function submit(): void {
   if (!props.product?.id) return;
   if (!Number.isFinite(quantityBase.value) || quantityBase.value === 0) return;
+
   emit('submit', {
     productId: props.product.id,
     quantityBase: quantityBase.value,
     reason: reason.value,
-    unitName: unitName.value || undefined,
+    unitName: resolvedUnit.value?.unitName ?? props.product.unit ?? undefined,
+    unitFactor: resolvedUnit.value?.factorToBase ?? undefined,
     notes: notes.value || undefined,
   });
 }
-
-onMounted(async () => {
-  if (props.product?.id) {
-    const result = await productWorkspaceStore.fetchUnits(props.product.id);
-    if (result.ok) {
-      units.value = result.data;
-    }
-  }
-});
 </script>

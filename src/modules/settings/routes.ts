@@ -4,7 +4,6 @@ const SettingsLayout = () => import('../../views/settings/SettingsLayout.vue');
 const SystemSettingsPage = () => import('../../views/settings/SystemSettingsPage.vue');
 const AccountingSettingsPage = () => import('../../views/settings/AccountingSettingsPage.vue');
 const PosSettingsPage = () => import('../../views/settings/PosSettingsPage.vue');
-const BarcodeSettingsPage = () => import('../../views/settings/BarcodeSettingsPage.vue');
 const UsersTab = () => import('../../components/settings/UsersTab.vue');
 
 export const settingsRoutes: RouteRecordRaw[] = [
@@ -34,12 +33,6 @@ export const settingsRoutes: RouteRecordRaw[] = [
         name: 'SettingsAccounting',
         component: AccountingSettingsPage,
         meta: { breadcrumb: { title: 'nav.accounting' } },
-      },
-      {
-        path: 'barcode',
-        name: 'SettingsBarcode',
-        component: BarcodeSettingsPage,
-        meta: { breadcrumb: { title: 'products.barcode' } },
       },
       {
         path: 'users',

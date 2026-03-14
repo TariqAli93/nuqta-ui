@@ -29,17 +29,15 @@
             <v-card variant="tonal" color="primary">
               <v-card-text class="text-center">
                 <div class="text-caption">المخزون الحالي</div>
-                <div class="text-body-1 font-weight-medium">{{ product.stock || 0 }}</div>
+                <div class="text-body-1 font-weight-medium">{{ product.stock ?? 0 }}</div>
               </v-card-text>
             </v-card>
           </v-col>
           <v-col cols="6">
-            <v-card variant="tonal" :color="productStockStatusColor">
+            <v-card variant="tonal" :color="stockStatusColor">
               <v-card-text class="text-center">
                 <div class="text-caption">حالة المخزون</div>
-                <div class="text-body-1 font-weight-medium">
-                  {{ productStockStatusText }}
-                </div>
+                <div class="text-body-1 font-weight-medium">{{ stockStatusText }}</div>
               </v-card-text>
             </v-card>
           </v-col>
@@ -114,25 +112,29 @@ defineEmits<{
   openAdjustStock: [];
 }>();
 
-const lowStock = computed(() => {
-  if (!props.product) return false;
+type StockStatus = 'out_of_stock' | 'low_stock' | 'available';
 
-  // bug fix: if ptoduct stock is 0, it should not be considered low stock, but out of stock
-  if (props.product.stock === 0) return false;
-  return (props.product.stock ?? 0) <= (props.product.minStock ?? 0);
+const stockStatus = computed<StockStatus>(() => {
+  if (!props.product || (props.product.stock ?? 0) === 0) return 'out_of_stock';
+  if ((props.product.stock ?? 0) <= (props.product.minStock ?? 0)) return 'low_stock';
+  return 'available';
 });
 
-const productStockStatusText = computed(() => {
-  if (!props.product) return 'نفذ المخزون';
-  if (props.product.stock === 0) return 'نفذ المخزون';
-  if ((props.product.stock ?? 0) <= (props.product.minStock ?? 0)) return 'مخزون منخفض';
-  return 'متوفر';
+const stockStatusText = computed(() => {
+  const labels: Record<StockStatus, string> = {
+    out_of_stock: 'نفذ المخزون',
+    low_stock: 'مخزون منخفض',
+    available: 'متوفر',
+  };
+  return labels[stockStatus.value];
 });
 
-const productStockStatusColor = computed(() => {
-  if (!props.product) return 'error';
-  if (props.product.stock === 0) return 'error';
-  if ((props.product.stock ?? 0) <= (props.product.minStock ?? 0)) return 'warning';
-  return 'success';
+const stockStatusColor = computed(() => {
+  const colors: Record<StockStatus, string> = {
+    out_of_stock: 'error',
+    low_stock: 'warning',
+    available: 'success',
+  };
+  return colors[stockStatus.value];
 });
 </script>

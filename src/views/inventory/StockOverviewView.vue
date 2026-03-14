@@ -6,7 +6,7 @@
           <v-card-text class="text-center">
             <div class="text-caption">قيمة المخزون</div>
             <div class="text-h6">
-              {{ (inventoryStore.dashboard?.totalValuation || 0).toLocaleString('en-US') }}
+              {{ (inventoryStore.dashboard?.totalValuation ?? 0).toLocaleString('en-US') }}
             </div>
           </v-card-text>
         </v-card>
@@ -15,7 +15,7 @@
         <v-card variant="tonal" color="warning">
           <v-card-text class="text-center">
             <div class="text-caption">منتجات منخفضة</div>
-            <div class="text-h6">{{ inventoryStore.dashboard?.lowStockCount || 0 }}</div>
+            <div class="text-h6">{{ inventoryStore.dashboard?.lowStockCount ?? 0 }}</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -23,7 +23,7 @@
         <v-card variant="tonal" color="error">
           <v-card-text class="text-center">
             <div class="text-caption">تنبيهات صلاحية</div>
-            <div class="text-h6">{{ inventoryStore.dashboard?.expiryAlertCount || 0 }}</div>
+            <div class="text-h6">{{ inventoryStore.dashboard?.expiryAlertCount ?? 0 }}</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -42,7 +42,7 @@
       <v-data-table
         :headers="movementHeaders"
         :items="inventoryStore.movements"
-        :loading="inventoryStore.loading"
+        :loading="inventoryStore.loadingMovements || inventoryStore.loadingDashboard"
         density="compact"
         :items-per-page="10"
       >
@@ -84,11 +84,10 @@
 import { onMounted } from 'vue';
 import { formatDate } from '@/utils/formatters';
 import { useInventoryStore } from '@/stores/inventoryStore';
-import { useProductsStore } from '@/stores/productsStore';
 import { useInventoryHelpers } from '@/composables/useInventoryHelpers';
+import { useMovementTable } from '@/composables/useMovementTable';
 
 const inventoryStore = useInventoryStore();
-const productsStore = useProductsStore();
 const {
   movementLabel,
   movementColor,
@@ -97,30 +96,13 @@ const {
   reasonLabel,
   reasonSignedColor,
 } = useInventoryHelpers();
-
-const movementHeaders = [
-  { title: 'المنتج', key: 'productName', width: 80 },
-  { title: 'التاريخ', key: 'createdAt', width: 130 },
-  { title: 'النوع', key: 'movementType', width: 80 },
-  { title: 'السبب', key: 'reason', width: 100 },
-  { title: 'المصدر', key: 'sourceType', width: 100 },
-  { title: 'الكمية', key: 'quantityBase', align: 'center' as const, width: 80 },
-  { title: 'قبل', key: 'stockBefore', align: 'center' as const, width: 70 },
-  { title: 'بعد', key: 'stockAfter', align: 'center' as const, width: 70 },
-];
-
-function getProductName(productId: number): string {
-  const product = productsStore.items.find((p) => p.id === productId);
-  return product ? product.name : `منتج #${productId}`;
-}
+const { movementHeaders, getProductName, ensureProducts } = useMovementTable();
 
 onMounted(async () => {
   await Promise.all([
     inventoryStore.fetchDashboard(),
     inventoryStore.fetchMovements({ limit: 10, offset: 0 }),
-    productsStore.items.length === 0
-      ? productsStore.fetchProducts({ limit: 100, page: 1 })
-      : Promise.resolve(),
+    ensureProducts(),
   ]);
 });
 </script>

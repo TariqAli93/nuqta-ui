@@ -94,7 +94,6 @@
 
       <v-spacer />
 
-      <ConnectionStatus />
       <v-tooltip :text="sseConnected ? t('layout.sseConnected') : t('layout.sseDisconnected')">
         <template #activator="{ props }">
           <v-btn v-bind="props" variant="text" icon size="small" class="mr-2">
@@ -142,8 +141,8 @@ import { t } from '@/i18n/t';
 import * as uiAccess from '@/auth/uiAccess';
 import { useTheme } from 'vuetify';
 import { initEventBridge, destroyEventBridge } from '@/plugins/eventBridge';
-import ConnectionStatus from '@/components/shared/ConnectionStatus.vue';
 import { useInventoryAlerts } from '@/composables/useInventoryAlerts';
+import { useSystemSettingsStore } from '@/stores/settings/useSystemSettingsStore';
 
 // import logo from '../assets/logo.png';
 const logo = new URL('../assets/logo.png', import.meta.url).href;
@@ -153,6 +152,9 @@ const router = useRouter();
 const route = useRoute();
 const vuetifyStore = useVuetifyStore();
 const vuetifyTheme = useTheme();
+
+// settings store for accessing notification settings in the POS layout
+const systemSettingsStore = useSystemSettingsStore();
 
 /** Toggle theme in both Vuetify runtime and the persisted store. */
 function toggleTheme() {
@@ -164,7 +166,7 @@ function toggleTheme() {
 const appNavigationDrawer = ref(true);
 const { connected: sseConnected } = useInventoryAlerts();
 
-const currentUser = computed(() => authStore.user?.username ?? t('common.none'));
+const currentUser = computed(() => authStore.user?.fullName ?? t('common.none'));
 const currentDate = computed(() => {
   const now = new Date();
   return now.toLocaleDateString('ar-IQ', {
@@ -198,6 +200,7 @@ interface NavSubGroup {
   icon: string;
   label: string;
   children: NavItem[];
+  visible?: boolean;
 }
 
 interface NavGroup {
@@ -310,7 +313,7 @@ const primaryNav = computed((): NavEntry[] => {
       to: '/purchases',
       icon: 'mdi-cart-arrow-down',
       label: t('nav.purchases'),
-      visible: uiAccess.canManagePurchases(role),
+      visible: uiAccess.canManagePurchases(role) && systemSettingsStore.data?.purchasesEnabled,
     },
     {
       type: 'item',
@@ -324,7 +327,7 @@ const primaryNav = computed((): NavEntry[] => {
       id: 'accounting',
       icon: 'mdi-calculator',
       label: t('nav.accounting'),
-      visible: uiAccess.canViewAccounting(role),
+      visible: uiAccess.canViewAccounting(role) && systemSettingsStore.data?.accountingEnabled,
       children: [
         {
           type: 'item',
@@ -383,6 +386,7 @@ const primaryNav = computed((): NavEntry[] => {
           to: '/customers/ledger',
           icon: 'mdi-book-account',
           label: t('nav.customerLedger'),
+          visible: systemSettingsStore.data?.ledgersEnabled,
         },
       ],
     },
@@ -405,12 +409,27 @@ const primaryNav = computed((): NavEntry[] => {
           to: '/suppliers/ledger',
           icon: 'mdi-book-account',
           label: t('nav.supplierLedger'),
+          visible: systemSettingsStore.data?.ledgersEnabled,
         },
       ],
     },
   ];
 
-  return entries.filter((entry) => entry.visible !== false) as NavEntry[];
+  // return entries.filter((entry) => entry.visible !== false) as NavEntry[];
+  return entries
+    .filter((entry) => entry.visible !== false)
+    .map((entry) => {
+      if (entry.type === 'group') {
+        return {
+          ...entry,
+          children: entry.children.filter((child) => child?.visible !== false),
+        };
+      }
+      return entry;
+    })
+    .filter(
+      (entry) => entry.type === 'item' || (entry as NavGroup).children.length > 0
+    ) as NavEntry[];
 });
 
 const footerNav = computed(() => {

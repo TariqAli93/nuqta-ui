@@ -1,8 +1,6 @@
 import type { RouteRecordRaw } from 'vue-router';
 
 const ProductWorkspaceView = () => import('../../views/products/ProductWorkspaceView.vue');
-const BarcodeTemplateBuilderView = () =>
-  import('../../views/products/BarcodeTemplateBuilderView.vue');
 
 export const productsRoutes: RouteRecordRaw[] = [
   {
@@ -14,18 +12,7 @@ export const productsRoutes: RouteRecordRaw[] = [
       breadcrumb: { title: 'nav.products', to: '/products' },
     },
   },
-  {
-    path: 'products/barcode-templates',
-    name: 'BarcodeTemplateBuilder',
-    component: BarcodeTemplateBuilderView,
-    meta: {
-      requiresManageProducts: true,
-      breadcrumb: [
-        { title: 'nav.products', to: '/products' },
-        { title: 'products.unitsAndPricing' },
-      ],
-    },
-  },
+
   {
     path: 'products/new',
     name: 'ProductCreate',
@@ -36,10 +23,7 @@ export const productsRoutes: RouteRecordRaw[] = [
     meta: {
       requiresManageProducts: true,
       enableBarcode: 'product',
-      breadcrumb: [
-        { title: 'nav.products', to: '/products' },
-        { title: 'products.new' },
-      ],
+      breadcrumb: [{ title: 'nav.products', to: '/products' }, { title: 'products.new' }],
     },
   },
   {
@@ -51,10 +35,7 @@ export const productsRoutes: RouteRecordRaw[] = [
     }),
     meta: {
       requiresManageProducts: true,
-      breadcrumb: [
-        { title: 'nav.products', to: '/products' },
-        { title: 'common.details' },
-      ],
+      breadcrumb: [{ title: 'nav.products', to: '/products' }, { title: 'common.details' }],
     },
   },
   {
@@ -67,10 +48,7 @@ export const productsRoutes: RouteRecordRaw[] = [
     meta: {
       requiresManageProducts: true,
       enableBarcode: 'product',
-      breadcrumb: [
-        { title: 'nav.products', to: '/products' },
-        { title: 'products.edit' },
-      ],
+      breadcrumb: [{ title: 'nav.products', to: '/products' }, { title: 'products.edit' }],
     },
   },
   {

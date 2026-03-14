@@ -22,10 +22,6 @@
             <v-icon start>mdi-calculator</v-icon>
             المحاسبة
           </v-tab>
-          <v-tab v-if="canPrintBarcodes" value="barcode" @click="navigateTo('barcode')">
-            <v-icon start>mdi-barcode</v-icon>
-            الباركود
-          </v-tab>
           <v-tab v-if="canManageUsers" value="users" @click="navigateTo('users')">
             <v-icon start>mdi-account-group</v-icon>
             المستخدمين
@@ -49,7 +45,7 @@ import { t } from '../../i18n/t';
 import { useAuthStore } from '../../stores/authStore';
 import { useAccess } from '../../composables/useAccess';
 
-type SettingsTab = 'system' | 'pos' | 'accounting' | 'barcode' | 'users';
+type SettingsTab = 'system' | 'pos' | 'accounting' | 'users';
 
 const route = useRoute();
 const router = useRouter();
@@ -66,26 +62,21 @@ const canManageUsers = computed(() => {
   );
 });
 
-const canPrintBarcodes = computed(() => access.canPrintBarcodes.value);
-
 const tabToRoute: Record<SettingsTab, string> = {
   system: '/settings/system',
   pos: '/settings/pos',
   accounting: '/settings/accounting',
-  barcode: '/settings/barcode',
   users: '/settings/users',
 };
 
 function getTabFromPath(path: string): SettingsTab {
   if (path.includes('/settings/pos')) return 'pos';
   if (path.includes('/settings/accounting')) return 'accounting';
-  if (path.includes('/settings/barcode')) return 'barcode';
   if (path.includes('/settings/users')) return 'users';
   return 'system';
 }
 
 function resolveAllowedTab(tab: SettingsTab): SettingsTab {
-  if (tab === 'barcode' && !canPrintBarcodes.value) return 'system';
   if (tab === 'users' && !canManageUsers.value) return 'system';
   return tab;
 }

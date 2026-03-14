@@ -3,7 +3,7 @@
     <v-row dense>
       <v-card class="w-full">
         <v-col cols="12">
-          <v-card variant="tonal">
+          <v-card>
             <v-card-title class="text-subtitle-2 font-weight-bold">الوحدات</v-card-title>
             <v-card-text>
               <v-row dense>
@@ -109,72 +109,6 @@
           </v-data-table>
         </v-col>
       </v-card>
-
-      <v-card class="w-full mt-4">
-        <v-col cols="12">
-          <v-card variant="tonal">
-            <v-card-title class="text-subtitle-2 font-weight-bold">طباعة الباركود</v-card-title>
-            <v-card-text>
-              <v-select
-                v-model="printTemplateId"
-                :items="templates"
-                item-title="name"
-                item-value="id"
-                label="قالب الطباعة"
-                variant="outlined"
-                density="compact"
-                class="mb-2"
-                hide-details
-              />
-              <v-text-field
-                v-model.number="printQuantity"
-                label="عدد الملصقات"
-                type="number"
-                min="1"
-                variant="outlined"
-                density="compact"
-                class="mb-2"
-                hide-details
-              />
-              <v-btn color="primary" prepend-icon="mdi-printer" @click="createPrintJob">
-                إنشاء مهمة طباعة
-              </v-btn>
-            </v-card-text>
-          </v-card>
-        </v-col>
-
-        <v-col cols="12">
-          <v-data-table
-            :headers="jobHeaders"
-            :items="printJobs"
-            :loading="loading"
-            density="compact"
-            :items-per-page="10"
-          >
-            <template #item.status="{ item }">
-              <v-chip
-                size="x-small"
-                variant="tonal"
-                :color="
-                  item.status === 'printed'
-                    ? 'success'
-                    : item.status === 'failed'
-                      ? 'error'
-                      : 'warning'
-                "
-              >
-                {{ statusLabel(item.status) }}
-              </v-chip>
-            </template>
-            <template #item.createdAt="{ item }">
-              {{ formatDate(item.createdAt) }}
-            </template>
-            <template #no-data>
-              <div class="text-center py-6 text-medium-emphasis">لا توجد مهام طباعة بعد</div>
-            </template>
-          </v-data-table>
-        </v-col>
-      </v-card>
     </v-row>
   </div>
 </template>
@@ -182,15 +116,13 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue';
 import { formatDate } from '@/utils/formatters';
-import type { BarcodePrintJob, BarcodeTemplate, Product, ProductUnit } from '@/types/domain';
+import type { Product, ProductUnit } from '@/types/domain';
 import type { ProductUnitInput } from '@/types/workspace';
 import { notifyInfo } from '@/utils/notify';
 
 const props = defineProps<{
   product: Product | null;
   units: ProductUnit[];
-  templates: BarcodeTemplate[];
-  printJobs: BarcodePrintJob[];
   loading: boolean;
 }>();
 

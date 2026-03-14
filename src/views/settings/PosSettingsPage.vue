@@ -44,54 +44,8 @@
               density="compact"
             />
           </v-col>
-          <v-col cols="12" md="6">
-            <v-select
-              v-model="form.printerType"
-              :items="printerTypes"
-              label="نوع الطابعة"
-              variant="outlined"
-              density="compact"
-            />
-          </v-col>
 
           <v-divider class="my-4" />
-
-          <v-col cols="12" md="6">
-            <v-switch
-              v-model="form.showQrCode"
-              label="إظهار رمز QR"
-              color="primary"
-              hide-details
-              class="mb-3"
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-switch
-              v-model="form.showBarcode"
-              label="إظهار الباركود"
-              color="primary"
-              hide-details
-              class="mb-3"
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-switch
-              v-model="form.autoPrint"
-              label="طباعة تلقائية"
-              color="primary"
-              hide-details
-              class="mb-3"
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-switch
-              v-model="form.showLogo"
-              label="إظهار الشعار"
-              color="primary"
-              hide-details
-              class="mb-3"
-            />
-          </v-col>
 
           <v-divider class="my-4" />
 
@@ -134,26 +88,20 @@ import { useSettingsForm } from '../../composables/useSettingsForm';
 import type { PosSettings } from '../../types/settings/PosSettings';
 
 const store = usePosSettingsStore();
+
 const { form, saving, isDirty, save } = useSettingsForm<PosSettings>(
-  store as any,
+  store,
   'تم حفظ إعدادات نقاط البيع'
 );
 
 const paperSizes = [
   { title: 'A4', value: 'A4' },
   { title: 'A5', value: 'A5' },
-  { title: '80mm (حراري)', value: '80mm' },
-  { title: '58mm (حراري)', value: '58mm' },
-];
+  { title: 'حراري', value: 'thermal' },
+] as const;
 
 const layoutDirections = [
   { title: 'من اليمين لليسار (RTL)', value: 'rtl' },
   { title: 'من اليسار لليمين (LTR)', value: 'ltr' },
-];
-
-const printerTypes = [
-  { title: 'حرارية', value: 'thermal' },
-  { title: 'ليزر', value: 'laser' },
-  { title: 'نفث الحبر', value: 'inkjet' },
 ];
 </script>

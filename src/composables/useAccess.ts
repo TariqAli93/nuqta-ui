@@ -11,7 +11,7 @@ import type { UserRole } from '../types/domain';
  * don't need to pass role manually.
  *
  * Usage:
- * const { canAdjustStock, canPrintBarcodes, canManageProducts } = useAccess();
+ * const {  canManageProducts } = useAccess();
  */
 export function useAccess() {
   const authStore = useAuthStore();
@@ -51,9 +51,6 @@ export function useAccess() {
     // Feature-specific actions (currently unused, but now available)
     canAdjustStock: computed(() =>
       role.value ? uiAccessHelpers.canAdjustStock(role.value) : false
-    ),
-    canPrintBarcodes: computed(() =>
-      role.value ? uiAccessHelpers.canPrintBarcodes(role.value) : false
     ),
   };
 }

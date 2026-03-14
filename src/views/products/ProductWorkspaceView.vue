@@ -47,7 +47,7 @@
             <v-tab value="movements">المخزون والحركات</v-tab>
             <v-tab value="purchases">سجل المشتريات</v-tab>
             <v-tab value="sales">سجل المبيعات</v-tab>
-            <v-tab value="units">الوحدات والباركود</v-tab>
+            <v-tab v-if="showUnitsTab" value="units">الوحدات</v-tab>
             <v-tab value="batches">الدفعات والصلاحية</v-tab>
             <v-tab v-if="showAdjustTab" value="adjust">تعديل المخزون</v-tab>
           </v-tabs>
@@ -67,13 +67,7 @@
               </v-card-text>
             </v-window-item>
 
-            <v-window-item
-              value="purchases"
-              @reload="
-                !workspaceStore.purchaseHistory.length &&
-                workspaceStore.fetchPurchaseHistory(selectedProductId!)
-              "
-            >
+            <v-window-item value="purchases">
               <v-card-text>
                 <ProductPurchasesTab
                   :items="workspaceStore.purchaseHistory"
@@ -97,15 +91,13 @@
             <v-window-item value="units">
               <v-card-text>
                 <ProductUnitsBarcodesTab
+                  v-if="showUnitsTab"
                   :product="workspaceStore.selectedProduct"
                   :units="workspaceStore.units"
-                  :templates="workspaceStore.barcodeTemplates"
-                  :print-jobs="workspaceStore.barcodeJobs"
                   :loading="workspaceStore.loading.units || workspaceStore.loading.barcode"
                   @save-unit="onSaveUnit"
                   @delete-unit="onDeleteUnit"
                   @set-default-unit="onSetDefaultUnit"
-                  @create-print-job="onCreatePrintJob"
                 />
               </v-card-text>
             </v-window-item>
@@ -136,6 +128,7 @@
     <StockAdjustDrawer
       v-model="adjustDrawer"
       :product="workspaceStore.selectedProduct"
+      :units="workspaceStore.units"
       :loading="workspaceStore.loading.adjust"
       @submit="onSubmitAdjustment"
     />
@@ -145,98 +138,90 @@
         <v-card-title>{{ editMode ? 'تعديل المنتج' : 'إضافة منتج' }}</v-card-title>
         <v-card-text>
           <FormSkeleton :loading="workspaceStore.loading.product && editMode" :fields="8">
-            <v-form ref="productFormRef" @submit.prevent="submitProduct">
-            <v-row dense>
-              <v-col cols="12" md="6">
-                <v-text-field v-model="productForm.name" label="الاسم" required />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field v-model="productForm.sku" label="SKU" />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-text-field v-model="productForm.barcode" label="الباركود" />
-              </v-col>
-              <v-col cols="12" md="6">
-                <v-select
-                  v-model="productForm.categoryId"
-                  :items="categories"
-                  item-title="name"
-                  item-value="id"
-                  label="الفئة"
-                  clearable
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model.number="productForm.costPrice"
-                  label="سعر التكلفة"
-                  type="number"
-                  min="0"
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model.number="productForm.sellingPrice"
-                  label="سعر البيع"
-                  type="number"
-                  min="0"
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field v-model="productForm.unit" label="الوحدة" />
-              </v-col>
-              <!-- <v-col cols="12" md="4">
-                <v-text-field
-                  v-model.number="productForm.stock"
-                  label="الرصيد الابتدائي"
-                  type="number"
-                  min="0"
-                />
-              </v-col> -->
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model.number="productForm.minStock"
-                  label="حد التنبيه"
-                  type="number"
-                  min="0"
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-select
-                  v-model="productForm.supplierId"
-                  :items="suppliers"
-                  item-title="name"
-                  item-value="id"
-                  label="المورد"
-                  clearable
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-select
-                  v-model="productForm.status"
-                  :items="statusOptions"
-                  item-title="title"
-                  item-value="value"
-                  label="الحالة"
-                />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-switch v-model="productForm.isActive" label="نشط" color="primary" />
-              </v-col>
-              <v-col cols="12" md="4">
-                <v-switch v-model="productForm.isExpire" label="يتتبع الصلاحية" color="primary" />
-              </v-col>
-              <v-col cols="12" md="8" v-if="productForm.isExpire">
-                <v-text-field
-                  v-model="productForm.expireDate"
-                  label="تاريخ الانتهاء الافتراضي"
-                  type="date"
-                />
-              </v-col>
-              <v-col cols="12">
-                <v-textarea v-model="productForm.description" label="الوصف" rows="2" />
-              </v-col>
-            </v-row>
+            <v-form @submit.prevent="submitProduct">
+              <v-row dense>
+                <v-col cols="12" md="6">
+                  <v-text-field v-model="productForm.name" label="الاسم" required />
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field v-model="productForm.sku" label="SKU" />
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-text-field v-model="productForm.barcode" label="الباركود" />
+                </v-col>
+                <v-col cols="12" md="6">
+                  <v-select
+                    v-model="productForm.categoryId"
+                    :items="categories"
+                    item-title="name"
+                    item-value="id"
+                    label="الفئة"
+                    clearable
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model.number="productForm.costPrice"
+                    label="سعر التكلفة"
+                    type="number"
+                    min="0"
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model.number="productForm.sellingPrice"
+                    label="سعر البيع"
+                    type="number"
+                    min="0"
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field v-model="productForm.unit" label="الوحدة" />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-text-field
+                    v-model.number="productForm.minStock"
+                    label="حد التنبيه"
+                    type="number"
+                    min="0"
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-select
+                    v-model="productForm.supplierId"
+                    :items="suppliers"
+                    item-title="name"
+                    item-value="id"
+                    label="المورد"
+                    clearable
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-select
+                    v-model="productForm.status"
+                    :items="statusOptions"
+                    item-title="title"
+                    item-value="value"
+                    label="الحالة"
+                  />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-switch v-model="productForm.isActive" label="نشط" color="primary" />
+                </v-col>
+                <v-col cols="12" md="4">
+                  <v-switch v-model="productForm.isExpire" label="يتتبع الصلاحية" color="primary" />
+                </v-col>
+                <v-col cols="12" md="8" v-if="productForm.isExpire">
+                  <v-text-field
+                    v-model="productForm.expireDate"
+                    label="تاريخ الانتهاء الافتراضي"
+                    type="date"
+                  />
+                </v-col>
+                <v-col cols="12">
+                  <v-textarea v-model="productForm.description" label="الوصف" rows="2" />
+                </v-col>
+              </v-row>
             </v-form>
           </FormSkeleton>
         </v-card-text>
@@ -273,7 +258,7 @@ import { categoriesClient, suppliersClient } from '@/api';
 import { useProductWorkspaceStore } from '@/stores/productWorkspaceStore';
 import { useAccess } from '@/composables/useAccess';
 import { generateIdempotencyKey } from '@/utils/idempotency';
-import { notifyError, notifyInfo } from '@/utils/notify';
+import { notifyError } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
 import type { ProductInput } from '@/types/domain';
 import type {
@@ -290,11 +275,15 @@ import ProductUnitsBarcodesTab from '@/components/workspace/ProductUnitsBarcodes
 import ProductBatchesTab from '@/components/workspace/ProductBatchesTab.vue';
 import StockAdjustDrawer from '@/components/workspace/StockAdjustDrawer.vue';
 import FormSkeleton from '@/components/shared/FormSkeleton.vue';
+import { useSystemSettingsStore } from '@/stores/settings';
 
 const route = useRoute();
 const router = useRouter();
 const workspaceStore = useProductWorkspaceStore();
 const access = useAccess();
+
+// Load system settings to determine feature availability (e.g. stock adjustment)
+const settingsStore = useSystemSettingsStore();
 
 const categories = ref<Array<{ id: number; name: string }>>([]);
 const suppliers = ref<Array<{ id: number; name: string }>>([]);
@@ -304,10 +293,13 @@ const adjustDrawer = ref(false);
 const productDialog = ref(false);
 const editMode = ref(false);
 const deleteDialog = ref(false);
-const productFormRef = ref<unknown>();
 
 const selectedProductId = computed(() => workspaceStore.selectedProductId);
 const showAdjustTab = computed(() => access.canAdjustStock.value);
+const showUnitsTab = computed(() => settingsStore.data?.unitsEnabled);
+
+/* ── Barcode polling ───────────────────────────────────────────── */
+
 let barcodePollingTimer: ReturnType<typeof setInterval> | null = null;
 
 function stopBarcodePolling(): void {
@@ -319,10 +311,9 @@ function stopBarcodePolling(): void {
 
 function startBarcodePolling(productId: number): void {
   stopBarcodePolling();
-  barcodePollingTimer = setInterval(() => {
-    void workspaceStore.fetchBarcodeContext(productId);
-  }, 2500);
 }
+
+/* ── Tab → route sync ──────────────────────────────────────────── */
 
 const statusOptions = [
   { title: 'متوفر', value: 'available' },
@@ -350,12 +341,7 @@ const productForm = reactive<ProductInput>({
 });
 
 watch(activeTab, (tab) => {
-  router.replace({
-    query: {
-      ...route.query,
-      tab,
-    },
-  });
+  router.replace({ query: { ...route.query, tab } });
 });
 
 watch(
@@ -377,16 +363,23 @@ watch(
   }
 );
 
-watch([activeTab, selectedProductId], ([tab, productId]) => {
+/**
+ * Lazy-load tab data only when the tab is activated AND the data is
+ * for the current product. `loadProductWorkspace` already fetches
+ * everything on product selection, so this watcher only matters when
+ * the user switches tabs (to pick up data that wasn't loaded upfront
+ * or to start/stop barcode polling).
+ */
+watch(activeTab, (tab) => {
+  const productId = selectedProductId.value;
   if (!productId) return;
-  const fetchMap: Record<string, () => void> = {
-    movements: () => workspaceStore.fetchMovements({ productId }),
-    purchases: () => workspaceStore.fetchPurchaseHistory(productId),
-    sales: () => workspaceStore.fetchSalesHistory(productId),
-    units: () => workspaceStore.fetchBarcodeContext(productId),
-    batches: () => workspaceStore.fetchBatches(productId),
-  };
-  fetchMap[tab]?.();
+
+  // Start/stop barcode polling based on active tab
+  if (tab === 'units') {
+    startBarcodePolling(productId);
+  } else {
+    stopBarcodePolling();
+  }
 });
 
 watch(
@@ -397,14 +390,22 @@ watch(
   }
 );
 
+/* ── Lifecycle ─────────────────────────────────────────────────── */
+
 onMounted(async () => {
-  await Promise.all([loadLookups(), workspaceStore.fetchProducts({ limit: 25, offset: 0 })]);
+  await Promise.all([
+    loadLookups(),
+    workspaceStore.fetchProducts({ limit: 25, offset: 0 }),
+    settingsStore.fetch(),
+  ]);
   await applyRouteSelection();
 });
 
 onUnmounted(() => {
   stopBarcodePolling();
 });
+
+/* ── Lookups ───────────────────────────────────────────────────── */
 
 async function loadLookups(): Promise<void> {
   const [categoryResult, supplierResult] = await Promise.all([
@@ -428,6 +429,8 @@ async function loadLookups(): Promise<void> {
   }
 }
 
+/* ── Route-driven selection ────────────────────────────────────── */
+
 async function applyRouteSelection(): Promise<void> {
   const queryProductId = Number(route.query.productId);
   const defaultProductId = workspaceStore.products[0]?.id;
@@ -449,6 +452,9 @@ async function applyRouteSelection(): Promise<void> {
 }
 
 async function selectProduct(productId: number): Promise<void> {
+  // Stop any existing polling for previous product
+  stopBarcodePolling();
+
   await workspaceStore.loadProductWorkspace(productId);
   await router.replace({
     query: {
@@ -457,12 +463,18 @@ async function selectProduct(productId: number): Promise<void> {
       action: undefined,
     },
   });
+
+  // Re-start polling if we're already on the units tab
+  if (activeTab.value === 'units') {
+    startBarcodePolling(productId);
+  }
 }
 
-async function onFiltersChange(filters: ProductWorkspaceFilters): Promise<void> {
-  const result = await workspaceStore.fetchProducts({
-    ...workspaceStore.filters,
+/* ── Filters & pagination ──────────────────────────────────────── */
 
+async function onFiltersChange(filters: ProductWorkspaceFilters): Promise<void> {
+  await workspaceStore.fetchProducts({
+    ...workspaceStore.filters,
     ...filters,
     offset: 0,
   });
@@ -475,6 +487,8 @@ async function onPaginationChange(pagination: { limit: number; offset: number })
     offset: pagination.offset,
   });
 }
+
+/* ── Product form ──────────────────────────────────────────────── */
 
 function resetProductForm(): void {
   productForm.name = '';
@@ -561,6 +575,8 @@ async function confirmDelete(): Promise<void> {
   }
 }
 
+/* ── Adjust stock ──────────────────────────────────────────────── */
+
 function openAdjustDrawer(): void {
   if (!workspaceStore.selectedProductId) return;
   adjustDrawer.value = true;
@@ -571,6 +587,8 @@ async function onSubmitAdjustment(payload: {
   quantityBase: number;
   reason: 'manual' | 'damage' | 'opening';
   unitName?: string;
+  unitFactor?: number;
+  batchId?: number;
   notes?: string;
 }): Promise<void> {
   const result = await workspaceStore.adjustStock({
@@ -582,6 +600,8 @@ async function onSubmitAdjustment(payload: {
     activeTab.value = 'movements';
   }
 }
+
+/* ── Tab delegates ─────────────────────────────────────────────── */
 
 async function onSaveUnit(payload: { unitId?: number; input: ProductUnitInput }): Promise<void> {
   if (!workspaceStore.selectedProductId) return;
@@ -601,19 +621,5 @@ async function onSetDefaultUnit(unitId: number): Promise<void> {
 async function onCreateBatch(payload: ProductBatchInput): Promise<void> {
   if (!workspaceStore.selectedProductId) return;
   await workspaceStore.createBatch(workspaceStore.selectedProductId, payload);
-}
-
-async function onCreatePrintJob(payload: { templateId: number; quantity: number }): Promise<void> {
-  const product = workspaceStore.selectedProduct;
-  if (!product?.id) return;
-  await workspaceStore.createBarcodePrintJob({
-    templateId: payload.templateId,
-    productId: product.id,
-    productName: product.name,
-    barcode: product.barcode ?? undefined,
-    price: product.sellingPrice,
-    expiryDate: product.expireDate ?? undefined,
-    quantity: payload.quantity,
-  });
 }
 </script>

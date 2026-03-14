@@ -31,7 +31,12 @@
         style="max-width: 180px"
         clearable
       />
-      <v-btn color="primary" variant="tonal" :loading="inventoryStore.loading" @click="refresh">
+      <v-btn
+        color="primary"
+        variant="tonal"
+        :loading="inventoryStore.loadingMovements"
+        @click="refresh"
+      >
         تصفية
       </v-btn>
     </v-card-text>
@@ -39,7 +44,7 @@
     <v-data-table
       :headers="movementHeaders"
       :items="inventoryStore.movements"
-      :loading="inventoryStore.loading"
+      :loading="inventoryStore.loadingMovements"
       density="compact"
       :items-per-page="25"
     >
@@ -78,11 +83,10 @@
 import { onMounted, ref } from 'vue';
 import { formatDate } from '@/utils/formatters';
 import { useInventoryStore } from '@/stores/inventoryStore';
-import { useProductsStore } from '@/stores/productsStore';
 import { useInventoryHelpers } from '@/composables/useInventoryHelpers';
+import { useMovementTable } from '@/composables/useMovementTable';
 
 const inventoryStore = useInventoryStore();
-const productsStore = useProductsStore();
 const {
   movementLabel,
   movementColor,
@@ -91,6 +95,7 @@ const {
   reasonLabel,
   reasonSignedColor,
 } = useInventoryHelpers();
+const { movementHeaders, getProductName, ensureProducts } = useMovementTable();
 
 const dateFrom = ref<string | null>(null);
 const dateTo = ref<string | null>(null);
@@ -103,22 +108,6 @@ const movementTypes = [
   { title: 'تعديل', value: 'adjust' },
 ];
 
-const movementHeaders = [
-  { title: 'المنتج', key: 'productName', width: 80 },
-  { title: 'التاريخ', key: 'createdAt', width: 130 },
-  { title: 'النوع', key: 'movementType', width: 80 },
-  { title: 'السبب', key: 'reason', width: 100 },
-  { title: 'المصدر', key: 'sourceType', width: 100 },
-  { title: 'الكمية', key: 'quantityBase', align: 'center' as const, width: 80 },
-  { title: 'قبل', key: 'stockBefore', align: 'center' as const, width: 70 },
-  { title: 'بعد', key: 'stockAfter', align: 'center' as const, width: 70 },
-];
-
-function getProductName(productId: number): string {
-  const product = productsStore.items.find((p) => p.id === productId);
-  return product ? product.name : `منتج #${productId}`;
-}
-
 async function refresh(): Promise<void> {
   await inventoryStore.fetchMovements({
     movementType: movementTypeFilter.value || undefined,
@@ -130,11 +119,6 @@ async function refresh(): Promise<void> {
 }
 
 onMounted(async () => {
-  await Promise.all([
-    inventoryStore.fetchMovements({ limit: 50, offset: 0 }),
-    productsStore.items.length === 0
-      ? productsStore.fetchProducts({ limit: 100, page: 1 })
-      : Promise.resolve(),
-  ]);
+  await Promise.all([inventoryStore.fetchMovements({ limit: 50, offset: 0 }), ensureProducts()]);
 });
 </script>

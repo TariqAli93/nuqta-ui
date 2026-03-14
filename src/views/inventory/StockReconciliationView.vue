@@ -5,12 +5,12 @@
         <v-btn
           color="primary"
           variant="tonal"
-          :loading="inventoryStore.loading"
-          @click="runReconciliation(false)"
+          :loading="inventoryStore.loadingReconciliation"
+          @click="runCheck"
         >
           فحص فقط
         </v-btn>
-        <v-btn color="warning" :loading="inventoryStore.loading" @click="runReconciliation(true)">
+        <v-btn color="warning" :loading="inventoryStore.loadingReconciliation" @click="runRepair">
           إصلاح الفروقات
         </v-btn>
       </v-card-text>
@@ -21,7 +21,7 @@
         <v-card variant="tonal">
           <v-card-text class="text-center">
             <div class="text-caption">منتجات مفحوصة</div>
-            <div class="text-h6">{{ inventoryStore.reconciliation?.totalProducts || 0 }}</div>
+            <div class="text-h6">{{ inventoryStore.reconciliation?.total ?? 0 }}</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -30,7 +30,7 @@
           <v-card-text class="text-center">
             <div class="text-caption">منتجات بها فرق</div>
             <div class="text-h6">
-              {{ inventoryStore.reconciliation?.driftItems.length || 0 }}
+              {{ inventoryStore.reconciliation?.items?.length ?? 0 }}
             </div>
           </v-card-text>
         </v-card>
@@ -39,7 +39,7 @@
         <v-card variant="tonal" color="warning">
           <v-card-text class="text-center">
             <div class="text-caption">إجمالي الفروقات</div>
-            <div class="text-h6">{{ inventoryStore.reconciliation?.totalDrift || 0 }}</div>
+            <div class="text-h6">{{ inventoryStore.reconciliation?.totalDrift ?? 0 }}</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -47,7 +47,7 @@
         <v-card variant="tonal" color="info">
           <v-card-text class="text-center">
             <div class="text-caption">تم إصلاحها</div>
-            <div class="text-h6">{{ inventoryStore.reconciliation?.repairedCount || 0 }}</div>
+            <div class="text-h6">{{ inventoryStore.repairedCount }}</div>
           </v-card-text>
         </v-card>
       </v-col>
@@ -55,8 +55,8 @@
 
     <v-data-table
       :headers="reconciliationHeaders"
-      :items="inventoryStore.reconciliation?.driftItems || []"
-      :loading="inventoryStore.loading"
+      :items="inventoryStore.reconciliation?.items ?? []"
+      :loading="inventoryStore.loadingReconciliation"
       density="compact"
       :items-per-page="25"
     >
@@ -85,8 +85,12 @@ const reconciliationHeaders = [
   { title: 'الفرق', key: 'drift', align: 'center' as const, width: 80 },
 ];
 
-async function runReconciliation(repair: boolean): Promise<void> {
-  await inventoryStore.reconcileStock(repair);
+async function runCheck(): Promise<void> {
+  await inventoryStore.reconcileStock(false);
+}
+
+async function runRepair(): Promise<void> {
+  await inventoryStore.repairDrift();
 }
 
 onMounted(async () => {

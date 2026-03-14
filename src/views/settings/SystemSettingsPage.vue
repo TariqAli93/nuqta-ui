@@ -25,15 +25,7 @@
           </v-col>
           <v-col cols="12" md="6">
             <v-text-field
-              v-model="form.companyNameAr"
-              label="اسم الشركة (عربي)"
-              variant="outlined"
-              density="comfortable"
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-text-field
-              v-model="form.email"
+              v-model="form.companyEmail"
               :label="t('settings.companyEmail')"
               variant="outlined"
               density="comfortable"
@@ -42,7 +34,7 @@
           </v-col>
           <v-col cols="12" md="6">
             <v-text-field
-              v-model="form.phone"
+              v-model="form.companyPhone"
               :label="t('settings.companyPhone')"
               variant="outlined"
               density="comfortable"
@@ -50,7 +42,7 @@
           </v-col>
           <v-col cols="12">
             <v-textarea
-              v-model="form.address"
+              v-model="form.companyAddress"
               :label="t('settings.companyAddress')"
               variant="outlined"
               density="comfortable"
@@ -91,25 +83,7 @@
         <v-row>
           <v-col cols="12" md="6">
             <v-switch
-              v-model="form.enabledModules.pos"
-              label="نقاط البيع"
-              color="primary"
-              hide-details
-              class="mb-3"
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-switch
-              v-model="form.enabledModules.inventory"
-              label="المخزون"
-              color="primary"
-              hide-details
-              class="mb-3"
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-switch
-              v-model="form.enabledModules.accounting"
+              v-model="form.accountingEnabled"
               label="المحاسبة"
               color="primary"
               hide-details
@@ -118,8 +92,35 @@
           </v-col>
           <v-col cols="12" md="6">
             <v-switch
-              v-model="form.enabledModules.installments"
-              label="الأقساط"
+              v-model="form.purchasesEnabled"
+              label="المشتريات"
+              color="primary"
+              hide-details
+              class="mb-3"
+            />
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-switch
+              v-model="form.ledgersEnabled"
+              label="دفاتر الأستاذ"
+              color="primary"
+              hide-details
+              class="mb-3"
+            />
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-switch
+              v-model="form.unitsEnabled"
+              label="وحدات القياس"
+              color="primary"
+              hide-details
+              class="mb-3"
+            />
+          </v-col>
+          <v-col cols="12" md="6">
+            <v-switch
+              v-model="form.paymentsOnInvoicesEnabled"
+              label="المدفوعات على الفواتير"
               color="primary"
               hide-details
               class="mb-3"
@@ -136,30 +137,33 @@
 
         <v-row>
           <v-col cols="12" md="4">
-            <v-switch
-              v-model="form.notifications.lowStock"
-              label="تنبيه نقص المخزون"
-              color="primary"
-              hide-details
-              class="mb-3"
+            <v-text-field
+              v-model.number="form.expiryAlertDays"
+              label="أيام تنبيه انتهاء الصلاحية"
+              variant="outlined"
+              density="comfortable"
+              type="number"
+              min="0"
             />
           </v-col>
           <v-col cols="12" md="4">
-            <v-switch
-              v-model="form.notifications.dailyReport"
-              label="التقرير اليومي"
-              color="primary"
-              hide-details
-              class="mb-3"
+            <v-text-field
+              v-model.number="form.debtReminderCount"
+              label="عدد تذكيرات الديون"
+              variant="outlined"
+              density="comfortable"
+              type="number"
+              min="0"
             />
           </v-col>
           <v-col cols="12" md="4">
-            <v-switch
-              v-model="form.notifications.installmentDue"
-              label="استحقاق الأقساط"
-              color="primary"
-              hide-details
-              class="mb-3"
+            <v-text-field
+              v-model.number="form.debtReminderIntervalDays"
+              label="فترة تذكير الديون (أيام)"
+              variant="outlined"
+              density="comfortable"
+              type="number"
+              min="0"
             />
           </v-col>
         </v-row>
@@ -186,23 +190,11 @@ import { useSettingsForm } from '../../composables/useSettingsForm';
 import type { SystemSettings } from '../../types/settings/SystemSettings';
 
 const store = useSystemSettingsStore();
+
 const { form, saving, isDirty, load, save } = useSettingsForm<SystemSettings>(
-  store as any,
+  store,
   t('settings.companySaved')
 );
-
-// Ensure nested objects exist for v-model binding
-if (!form.value.enabledModules) {
-  form.value.enabledModules = {
-    pos: true,
-    inventory: true,
-    accounting: false,
-    installments: false,
-  };
-}
-if (!form.value.notifications) {
-  form.value.notifications = { lowStock: true, dailyReport: false, installmentDue: false };
-}
 
 const currencyOptions = [
   { title: 'USD - US Dollar', value: 'USD' },

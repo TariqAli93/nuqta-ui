@@ -22,7 +22,6 @@ export { inventoryClient } from './endpoints/inventory';
 export { accountingClient } from './endpoints/accounting';
 export { customerLedgerClient } from './endpoints/customerLedger';
 export { supplierLedgerClient } from './endpoints/supplierLedger';
-export { barcodeClient } from './endpoints/barcode';
 export { postingClient } from './endpoints/posting';
 export { auditClient } from './endpoints/audit';
 export { backupClient } from './endpoints/backup';

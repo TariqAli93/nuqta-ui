@@ -356,38 +356,6 @@ export interface ProductBatch {
   createdAt?: string;
 }
 
-// ── Barcode ─────────────────────────────────────────────────────────────────
-export interface BarcodeTemplate {
-  id?: number;
-  name: string;
-  width: number;
-  height: number;
-  barcodeType?: 'CODE128' | 'EAN13' | 'QR';
-  showPrice?: boolean;
-  showName?: boolean;
-  showBarcode?: boolean;
-  showExpiry?: boolean;
-  layoutJson?: string | null;
-  isDefault?: boolean;
-  createdAt?: string;
-}
-
-export interface BarcodePrintJob {
-  id?: number;
-  templateId: number;
-  productId: number;
-  productName: string;
-  barcode?: string | null;
-  price?: number;
-  expiryDate?: string | null;
-  quantity?: number;
-  status?: 'pending' | 'printing' | 'printed' | 'failed';
-  printedAt?: string | null;
-  printError?: string | null;
-  createdAt?: string;
-  createdBy?: number;
-}
-
 export type UserPublic = Omit<User, 'password'>;
 
 export type CustomerInput = Pick<Customer, 'name' | 'phone' | 'address' | 'city' | 'notes'>;

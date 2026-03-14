@@ -10,15 +10,6 @@
         <v-row>
           <v-col cols="12" md="6">
             <v-switch
-              v-model="posSettings.enableBarcodeScanner"
-              label="تفعيل ماسح الباركود"
-              color="primary"
-              hide-details
-              class="mb-3"
-            />
-          </v-col>
-          <v-col cols="12" md="6">
-            <v-switch
               v-model="posSettings.autoAddOnScan"
               label="إضافة تلقائية عند المسح"
               color="primary"
@@ -74,7 +65,6 @@ import { toUserMessage } from '@/utils/errorMessage';
 const saving = ref(false);
 
 const TYPED_POS_KEYS = [
-  'pos.enableBarcodeScanner',
   'pos.autoAddOnScan',
   'pos.showStockWarning',
   'pos.defaultTaxRateBps',
@@ -100,9 +90,6 @@ async function loadSettings() {
     const result = await settingsClient.getTyped([...TYPED_POS_KEYS]);
     if (result.ok && result.data) {
       const data = result.data;
-      if (typeof data['pos.enableBarcodeScanner'] === 'boolean') {
-        posSettings.enableBarcodeScanner = data['pos.enableBarcodeScanner'];
-      }
       if (typeof data['pos.autoAddOnScan'] === 'boolean') {
         posSettings.autoAddOnScan = data['pos.autoAddOnScan'];
       } else if (typeof data['pos.autoGenerateInvoice'] === 'boolean') {

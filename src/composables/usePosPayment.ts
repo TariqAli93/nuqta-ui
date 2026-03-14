@@ -142,7 +142,7 @@ export function usePosPayment() {
 
       if (result.ok) {
         const saleData = result.ok && 'data' in result ? result.data : null;
-        notifySuccess(t('pos.saleCompleted'));
+        // notifySuccess(t('pos.saleCompleted'));
         void productsStore.fetchProducts();
         if (saleData?.id) {
           void triggerAfterPay(saleData.id, saleData.journalEntryId);

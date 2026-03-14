@@ -398,6 +398,8 @@ import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/noti
 import { useLayoutStore } from '@/stores/layout';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import PosShortcutsHelp from '@/components/pos/PosShortcutsHelp.vue';
+import { usePosSettingsStore, useSystemSettingsStore } from '@/stores/settings';
+import { createReceiptPrintData, printReceiptModern } from '@/modules/pos/receiptPrint';
 
 const productsStore = useProductsStore();
 const salesStore = useSalesStore();
@@ -406,6 +408,8 @@ const settingsStore = useSettingsStore();
 const authStore = useAuthStore();
 const { currency, formatCurrency: currencyFormatter } = useCurrency();
 const layoutStore = useLayoutStore();
+const posSettingsStore = usePosSettingsStore();
+const systemSettingsStore = useSystemSettingsStore();
 
 type TextFieldRef = {
   focus?: () => void;
@@ -949,20 +953,82 @@ function handlePay() {
   payOpen.value = true;
 }
 
-function triggerAfterPay(saleId: number) {
-  void posClient
-    .afterPay({
+async function triggerAfterPay(saleId: number): Promise<string | undefined> {
+  let receiptText: string | undefined;
+
+  try {
+    const result = await posClient.afterPay({
       saleId,
       printerName: settingsStore.selectedPrinter || undefined,
-    })
-    .then((result) => {
-      if (!result.ok) {
-        notifyError(mapErrorToArabic(result.error, 'errors.unexpected'));
-      }
-    })
-    .catch(() => {
-      notifyError(t('errors.unexpected'));
     });
+
+    if (!result.ok) {
+      notifyError(mapErrorToArabic(result.error, 'errors.unexpected'));
+    } else {
+      const responseData = result.data as Record<string, unknown>;
+      const payload = result.data?.data;
+      const rawReceipt =
+        (typeof responseData.receipt === 'string' ? responseData.receipt : undefined) ??
+        (payload && typeof payload === 'object' && typeof payload.receipt === 'string'
+          ? payload.receipt
+          : undefined);
+
+      receiptText = rawReceipt;
+    }
+  } catch (error) {
+    console.error(error);
+    notifyError(t('errors.unexpected'));
+  }
+
+  return receiptText;
+}
+
+async function ensureReceiptSettingsLoaded(): Promise<void> {
+  await Promise.allSettled([
+    settingsStore.fetchCompanySettings(),
+    systemSettingsStore.fetch(),
+    posSettingsStore.fetch(),
+  ]);
+}
+
+function getSelectedCustomerName(): string | undefined {
+  if (selectedCustomerId.value === null) return undefined;
+
+  return customersStore.items.find((customer) => customer.id === selectedCustomerId.value)?.name;
+}
+
+function buildReceiptPrintModel(
+  sale: SaleInput & { id?: number; createdAt?: string; items: SaleItem[] },
+  fallbackText?: string
+) {
+  return createReceiptPrintData({
+    sale,
+    customerName: getSelectedCustomerName(),
+    cashierName:
+      authStore.currentUser?.fullName || authStore.currentUser?.username || cashierName.value,
+    companySettings: settingsStore.companySettings,
+    systemSettings: systemSettingsStore.data,
+    posSettings: posSettingsStore.data,
+    fallbackText,
+  });
+}
+
+async function printSaleReceipt(
+  saleId: number | undefined,
+  sale: SaleInput & { id?: number; createdAt?: string; items: SaleItem[] }
+): Promise<void> {
+  await ensureReceiptSettingsLoaded();
+
+  let fallbackText: string | undefined;
+  if (saleId) {
+    fallbackText = await triggerAfterPay(saleId);
+  }
+
+  const printed = printReceiptModern(buildReceiptPrintModel(sale, fallbackText));
+
+  if (!printed) {
+    notifyWarn(t('errors.unexpected'));
+  }
 }
 
 async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
@@ -1024,6 +1090,23 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
 
     if (result.ok) {
       const saleData = result.ok && 'data' in result ? result.data : null;
+      const saleForReceipt = {
+        ...payload,
+        id: saleData?.id,
+        createdAt: saleData?.createdAt ?? new Date().toISOString(),
+        invoiceNumber: saleData?.invoiceNumber || payload.invoiceNumber,
+        customerId: saleData?.customerId ?? payload.customerId,
+        subtotal: saleData?.subtotal ?? payload.subtotal,
+        discount: saleData?.discount ?? payload.discount,
+        tax: saleData?.tax ?? payload.tax,
+        total: saleData?.total ?? payload.total,
+        currency: saleData?.currency ?? payload.currency,
+        notes: saleData?.notes ?? payload.notes,
+        items:
+          Array.isArray(saleData?.items) && saleData.items.length > 0
+            ? saleData.items
+            : itemsWithSubtotals,
+      };
 
       cartItems.value = [];
       discount.value = 0;
@@ -1032,15 +1115,12 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
       saleNote.value = null;
       payOpen.value = false;
 
-      showPaymentMessage(t('pos.saleCompleted'), 'success');
       setTimeout(() => focusSearchInput(), 100);
 
       // Refresh product stock from backend
       void productsStore.fetchProducts();
 
-      if (saleData?.id) {
-        triggerAfterPay(saleData.id);
-      }
+      void printSaleReceipt(saleData?.id, saleForReceipt);
     } else if (!result.ok && 'error' in result) {
       showPaymentMessage(mapErrorToArabic(result.error, 'errors.unexpected'), 'error');
     }
@@ -1155,7 +1235,13 @@ onMounted(async () => {
   focusSearchInput();
 
   // Load products and categories in parallel for faster startup
-  await Promise.all([productsStore.fetchProducts(), loadCategories()]);
+  await Promise.all([
+    productsStore.fetchProducts(),
+    loadCategories(),
+    settingsStore.fetchCompanySettings(),
+    systemSettingsStore.fetch(),
+    posSettingsStore.fetch(),
+  ]);
 
   // Start global barcode scanner
   scanner.start();

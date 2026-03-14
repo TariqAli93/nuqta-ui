@@ -1,22 +1,20 @@
 export interface SystemSettings {
   companyName: string;
-  companyNameAr: string;
-  address: string;
-  phone: string;
-  email: string;
-  logo?: string;
+  companyAddress: string | null;
+  companyPhone: string | null;
+  companyPhone2: string | null;
+  companyEmail: string | null;
+  companyTaxId: string | null;
+  companyLogo: string | null;
   defaultCurrency: 'IQD' | 'USD';
   lowStockThreshold: number;
-  enabledModules: {
-    pos: boolean;
-    inventory: boolean;
-    accounting: boolean;
-    installments: boolean;
-  };
-  notifications: {
-    lowStock: boolean;
-    dailyReport: boolean;
-    installmentDue: boolean;
-  };
+  accountingEnabled: boolean;
+  purchasesEnabled: boolean;
+  ledgersEnabled: boolean;
+  unitsEnabled: boolean;
+  paymentsOnInvoicesEnabled: boolean;
+  expiryAlertDays: number;
+  debtReminderCount: number;
+  debtReminderIntervalDays: number;
   setupWizardCompleted: boolean;
 }

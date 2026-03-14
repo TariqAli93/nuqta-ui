@@ -1,15 +1,15 @@
 export interface AccountingSettings {
+  id: number;
   taxEnabled: boolean;
-  taxRate: number;
-  taxName: string;
-  taxReportFrequency: 'monthly' | 'quarterly' | 'annually';
-  taxReportEmail: string;
-  taxReportTemplate: string;
-  taxReportIncludeDetails: boolean;
-  taxReportIncludeSummary: boolean;
-  fiscalYearStart: string; // MM-DD
-  costingMethod: 'FIFO' | 'LIFO' | 'AVERAGE';
-  exchangeRate: number; // USD to IQD
-  roundingMode: 'up' | 'down' | 'nearest';
-  roundingPrecision: number;
+  defaultTaxRate: number;
+  taxRegistrationNumber: string | null;
+  fiscalYearStartMonth: number;
+  fiscalYearStartDay: number;
+  autoPosting: boolean;
+  costMethod: 'fifo' | 'lifo' | 'average';
+  currencyCode: string;
+  usdExchangeRate: number;
+  roundingMethod: 'round' | 'ceil' | 'floor';
+  updatedAt: string | null;
+  updatedBy: number | null;
 }

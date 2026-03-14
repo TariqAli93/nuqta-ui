@@ -1,16 +1,8 @@
 import { defineStore } from 'pinia';
 import { computed, reactive, ref } from 'vue';
-import { barcodeClient, inventoryClient, productsClient } from '../api';
-import type {
-  BarcodePrintJob,
-  BarcodeTemplate,
-  InventoryMovement,
-  Product,
-  ProductBatch,
-  ProductUnit,
-} from '../types/domain';
+import { inventoryClient, productsClient } from '../api';
+import type { InventoryMovement, Product, ProductBatch, ProductUnit } from '../types/domain';
 import type { ProductInput } from '../types/domain';
-import type { PrintJobInput } from '../api/endpoints/barcode';
 import type {
   ProductBatchInput,
   ProductMovementFilters,
@@ -46,6 +38,15 @@ const initialLoading = (): LoadingState => ({
   adjust: false,
 });
 
+/** Type-safe error result for catch blocks. */
+function failResult(code: string, message: string) {
+  return { ok: false as const, error: { code, message } };
+}
+
+function extractErrorMessage(err: unknown, fallback: string): string {
+  return err instanceof Error ? err.message : fallback;
+}
+
 export const useProductWorkspaceStore = defineStore('productWorkspace', () => {
   const products = ref<Product[]>([]);
   const productsTotal = ref(0);
@@ -63,9 +64,6 @@ export const useProductWorkspaceStore = defineStore('productWorkspace', () => {
 
   const units = ref<ProductUnit[]>([]);
   const batches = ref<ProductBatch[]>([]);
-  const barcodeTemplates = ref<BarcodeTemplate[]>([]);
-  const barcodeJobs = ref<BarcodePrintJob[]>([]);
-  const barcodeJobsTotal = ref(0);
 
   const filters = ref<ProductWorkspaceFilters>({
     search: '',
@@ -91,267 +89,330 @@ export const useProductWorkspaceStore = defineStore('productWorkspace', () => {
     error.value = message || 'Unknown workspace error';
   }
 
+  /* ── Products list ──────────────────────────────────────────── */
+
   async function fetchProducts(next?: ProductWorkspaceFilters) {
     loading.products = true;
     resetError();
+    try {
+      filters.value = { ...filters.value, ...(next || {}) };
+      const limit = filters.value.limit || 50;
+      const offset = filters.value.offset || 0;
+      const page = Math.floor(offset / limit) + 1;
 
-    filters.value = { ...filters.value, ...(next || {}) };
-    const limit = filters.value.limit || 50;
-    const offset = filters.value.offset || 0;
-    const page = Math.floor(offset / limit) + 1;
+      const result = await productsClient.getAll({
+        ...filters.value,
+        expiringSoonOnly: filters.value.expiringSoonOnly || false,
+        page,
+      });
 
-    const result = await productsClient.getAll({
-      ...filters.value,
-      expiringSoonOnly: filters.value.expiringSoonOnly || false,
-      page,
-    });
-
-    if (result.ok) {
-      products.value = result.data.items;
-      productsTotal.value = result.data.total;
-    } else {
-      setError(result.error.message);
+      if (result.ok) {
+        products.value = result.data.items;
+        productsTotal.value = result.data.total;
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في تحميل المنتجات');
+      setError(msg);
+      return failResult('FETCH_FAILED', msg);
+    } finally {
+      loading.products = false;
     }
-
-    loading.products = false;
-    return result;
   }
+
+  /* ── Single product ─────────────────────────────────────────── */
 
   async function fetchProductById(productId: number) {
     loading.product = true;
     resetError();
-
-    const result = await productsClient.getById(productId);
-    if (result.ok) {
-      selectedProductId.value = productId;
-      selectedProduct.value = result.data;
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await productsClient.getById(productId);
+      if (result.ok) {
+        selectedProductId.value = productId;
+        selectedProduct.value = result.data;
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في تحميل المنتج');
+      setError(msg);
+      return failResult('FETCH_FAILED', msg);
+    } finally {
+      loading.product = false;
     }
-
-    loading.product = false;
-    return result;
   }
+
+  /* ── Movements ──────────────────────────────────────────────── */
 
   async function fetchMovements(params: ProductMovementFilters) {
     loading.movements = true;
     resetError();
-
-    const result = await inventoryClient.getMovements(params);
-    if (result.ok) {
-      movements.value = result.data.items;
-      movementsTotal.value = result.data.total;
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await inventoryClient.getMovements(params);
+      if (result.ok) {
+        movements.value = result.data.items;
+        movementsTotal.value = result.data.total;
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في تحميل الحركات');
+      setError(msg);
+      return failResult('FETCH_FAILED', msg);
+    } finally {
+      loading.movements = false;
     }
-
-    loading.movements = false;
-    return result;
   }
+
+  /* ── Purchase history ───────────────────────────────────────── */
 
   async function fetchPurchaseHistory(productId: number, limit = 50, offset = 0) {
     loading.purchases = true;
     resetError();
-
-    const result = await productsClient.getPurchaseHistory(productId, { limit, offset });
-    if (result.ok) {
-      purchaseHistory.value = result.data.items;
-      purchaseHistoryTotal.value = result.data.total;
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await productsClient.getPurchaseHistory(productId, { limit, offset });
+      if (result.ok) {
+        purchaseHistory.value = result.data.items;
+        purchaseHistoryTotal.value = result.data.total;
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في تحميل سجل المشتريات');
+      setError(msg);
+      return failResult('FETCH_FAILED', msg);
+    } finally {
+      loading.purchases = false;
     }
-
-    loading.purchases = false;
-    return result;
   }
+
+  /* ── Sales history ──────────────────────────────────────────── */
 
   async function fetchSalesHistory(productId: number, limit = 50, offset = 0) {
     loading.sales = true;
     resetError();
-
-    const result = await productsClient.getSalesHistory(productId, { limit, offset });
-    if (result.ok) {
-      salesHistory.value = result.data.items;
-      salesHistoryTotal.value = result.data.total;
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await productsClient.getSalesHistory(productId, { limit, offset });
+      if (result.ok) {
+        salesHistory.value = result.data.items;
+        salesHistoryTotal.value = result.data.total;
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في تحميل سجل المبيعات');
+      setError(msg);
+      return failResult('FETCH_FAILED', msg);
+    } finally {
+      loading.sales = false;
     }
-
-    loading.sales = false;
-    return result;
   }
+
+  /* ── Units ──────────────────────────────────────────────────── */
 
   async function fetchUnits(productId: number) {
     loading.units = true;
     resetError();
-
-    const result = await productsClient.getUnits(productId);
-    if (result.ok) {
-      units.value = result.data;
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await productsClient.getUnits(productId);
+      if (result.ok) {
+        units.value = result.data;
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في تحميل الوحدات');
+      setError(msg);
+      return failResult('FETCH_FAILED', msg);
+    } finally {
+      loading.units = false;
     }
-
-    loading.units = false;
-    return result;
   }
 
   async function upsertUnit(productId: number, input: ProductUnitInput, unitId?: number) {
     loading.units = true;
     resetError();
+    try {
+      const result = unitId
+        ? await productsClient.updateUnit(unitId, input)
+        : await productsClient.createUnit({
+            ...input,
+            productId,
+            factorToBase: input.factorToBase ?? 1,
+          });
 
-    const result = unitId
-      ? await productsClient.updateUnit(unitId, input)
-      : await productsClient.createUnit({ ...input, productId, factorToBase: input.factorToBase ?? 1 });
-
-    if (result.ok) {
-      await fetchUnits(productId);
-    } else {
-      setError(result.error.message);
+      if (result.ok) {
+        await fetchUnits(productId);
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في حفظ الوحدة');
+      setError(msg);
+      return failResult('UPSERT_FAILED', msg);
+    } finally {
+      loading.units = false;
     }
-
-    loading.units = false;
-    return result;
   }
 
   async function setDefaultUnit(productId: number, unitId: number) {
     loading.units = true;
     resetError();
-    const result = await productsClient.setDefaultUnit(productId, unitId);
-    if (result.ok) {
-      await fetchUnits(productId);
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await productsClient.setDefaultUnit(productId, unitId);
+      if (result.ok) {
+        await fetchUnits(productId);
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في تعيين الوحدة الافتراضية');
+      setError(msg);
+      return failResult('SET_DEFAULT_FAILED', msg);
+    } finally {
+      loading.units = false;
     }
-    loading.units = false;
-    return result;
   }
 
   async function deleteUnit(productId: number, unitId: number) {
     loading.units = true;
     resetError();
-    const result = await productsClient.deleteUnit(unitId);
-    if (result.ok) {
-      await fetchUnits(productId);
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await productsClient.deleteUnit(unitId);
+      if (result.ok) {
+        await fetchUnits(productId);
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في حذف الوحدة');
+      setError(msg);
+      return failResult('DELETE_FAILED', msg);
+    } finally {
+      loading.units = false;
     }
-    loading.units = false;
-    return result;
   }
+
+  /* ── Batches ────────────────────────────────────────────────── */
 
   async function fetchBatches(productId: number) {
     loading.batches = true;
     resetError();
-
-    const result = await productsClient.getBatches(productId);
-    if (result.ok) {
-      batches.value = result.data;
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await productsClient.getBatches(productId);
+      if (result.ok) {
+        batches.value = result.data;
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في تحميل الدفعات');
+      setError(msg);
+      return failResult('FETCH_FAILED', msg);
+    } finally {
+      loading.batches = false;
     }
-
-    loading.batches = false;
-    return result;
   }
 
   async function createBatch(productId: number, input: ProductBatchInput) {
     loading.batches = true;
     resetError();
-
-    const result = await productsClient.createBatch({ ...input, productId });
-    if (result.ok) {
-      await Promise.all([fetchBatches(productId), fetchProductById(productId)]);
-      await fetchMovements({ productId, limit: 50, offset: 0 });
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await productsClient.createBatch({ ...input, productId });
+      if (result.ok) {
+        await Promise.all([fetchBatches(productId), fetchProductById(productId)]);
+        await fetchMovements({ productId, limit: 50, offset: 0 });
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في إنشاء الدفعة');
+      setError(msg);
+      return failResult('CREATE_FAILED', msg);
+    } finally {
+      loading.batches = false;
     }
-
-    loading.batches = false;
-    return result;
   }
 
-  async function fetchBarcodeContext(productId: number) {
-    loading.barcode = true;
-    resetError();
-
-    const [templatesResult, jobsResult] = await Promise.all([
-      barcodeClient.getTemplates(),
-      barcodeClient.getPrintJobs({ productId, limit: 25, offset: 0 }),
-    ]);
-
-    if (templatesResult.ok) {
-      barcodeTemplates.value = templatesResult.data;
-    } else {
-      setError(templatesResult.error.message);
-    }
-
-    if (jobsResult.ok) {
-      barcodeJobs.value = jobsResult.data.items;
-      barcodeJobsTotal.value = jobsResult.data.total;
-    } else {
-      setError(jobsResult.error.message);
-    }
-
-    loading.barcode = false;
-    return { templatesResult, jobsResult };
-  }
-
-  async function createBarcodePrintJob(input: PrintJobInput) {
-    loading.barcode = true;
-    resetError();
-    const result = await barcodeClient.createPrintJob(input);
-    if (result.ok) {
-      await fetchBarcodeContext(input.productId);
-    } else {
-      setError(result.error.message);
-    }
-    loading.barcode = false;
-    return result;
-  }
+  /* ── CRUD ───────────────────────────────────────────────────── */
 
   async function createProduct(payload: ProductInput) {
     loading.save = true;
     resetError();
-    const result = await productsClient.create(payload);
-    if (result.ok) {
-      await fetchProducts();
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await productsClient.create(payload);
+      if (result.ok) {
+        await fetchProducts();
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في إنشاء المنتج');
+      setError(msg);
+      return failResult('CREATE_FAILED', msg);
+    } finally {
+      loading.save = false;
     }
-    loading.save = false;
-    return result;
   }
 
   async function updateProduct(productId: number, payload: ProductInput) {
     loading.save = true;
     resetError();
-    const result = await productsClient.update(productId, payload);
-    if (result.ok) {
-      await Promise.all([fetchProducts(), fetchProductById(productId)]);
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await productsClient.update(productId, payload);
+      if (result.ok) {
+        await Promise.all([fetchProducts(), fetchProductById(productId)]);
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في تحديث المنتج');
+      setError(msg);
+      return failResult('UPDATE_FAILED', msg);
+    } finally {
+      loading.save = false;
     }
-    loading.save = false;
-    return result;
   }
 
   async function deleteProduct(productId: number) {
     loading.save = true;
     resetError();
-    const result = await productsClient.delete(productId);
-    if (result.ok) {
-      if (selectedProductId.value === productId) {
-        selectedProductId.value = null;
-        selectedProduct.value = null;
+    try {
+      const result = await productsClient.delete(productId);
+      if (result.ok) {
+        if (selectedProductId.value === productId) {
+          selectedProductId.value = null;
+          selectedProduct.value = null;
+        }
+        await fetchProducts();
+      } else {
+        setError(result.error.message);
       }
-      await fetchProducts();
-    } else {
-      setError(result.error.message);
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في حذف المنتج');
+      setError(msg);
+      return failResult('DELETE_FAILED', msg);
+    } finally {
+      loading.save = false;
     }
-    loading.save = false;
-    return result;
   }
+
+  /* ── Stock adjustment ───────────────────────────────────────── */
 
   async function adjustStock(payload: {
     productId: number;
@@ -365,31 +426,41 @@ export const useProductWorkspaceStore = defineStore('productWorkspace', () => {
   }) {
     loading.adjust = true;
     resetError();
-
-    const result = await inventoryClient.adjustStock(payload);
-    if (result.ok) {
-      await Promise.all([
-        fetchProductById(payload.productId),
-        fetchMovements({ productId: payload.productId, limit: 50, offset: 0 }),
-        fetchBatches(payload.productId),
-      ]);
-    } else {
-      setError(result.error.message);
+    try {
+      const result = await inventoryClient.adjustStock(payload);
+      if (result.ok) {
+        await Promise.all([
+          fetchProductById(payload.productId),
+          fetchMovements({ productId: payload.productId, limit: 50, offset: 0 }),
+          fetchBatches(payload.productId),
+        ]);
+      } else {
+        setError(result.error.message);
+      }
+      return result;
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'فشل في تعديل المخزون');
+      setError(msg);
+      return failResult('ADJUST_FAILED', msg);
+    } finally {
+      loading.adjust = false;
     }
-
-    loading.adjust = false;
-    return result;
   }
 
+  /* ── Full workspace load ────────────────────────────────────── */
+
   async function loadProductWorkspace(productId: number) {
-    await fetchProductById(productId);
+    const productResult = await fetchProductById(productId);
+
+    // Don't fire 6 parallel requests if the product itself failed to load
+    if (!productResult.ok) return;
+
     await Promise.all([
       fetchMovements({ productId, limit: 50, offset: 0 }),
       fetchPurchaseHistory(productId, 50, 0),
       fetchSalesHistory(productId, 50, 0),
       fetchUnits(productId),
       fetchBatches(productId),
-      fetchBarcodeContext(productId),
     ]);
   }
 
@@ -407,9 +478,6 @@ export const useProductWorkspaceStore = defineStore('productWorkspace', () => {
     salesHistoryTotal,
     units,
     batches,
-    barcodeTemplates,
-    barcodeJobs,
-    barcodeJobsTotal,
     loading,
     isBusy,
     error,
@@ -424,8 +492,6 @@ export const useProductWorkspaceStore = defineStore('productWorkspace', () => {
     deleteUnit,
     fetchBatches,
     createBatch,
-    fetchBarcodeContext,
-    createBarcodePrintJob,
     createProduct,
     updateProduct,
     deleteProduct,

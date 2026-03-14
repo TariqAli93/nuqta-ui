@@ -1,11 +1,4 @@
-import type {
-  Product,
-  ProductBatch,
-  ProductUnit,
-  InventoryMovement,
-  BarcodePrintJob,
-  BarcodeTemplate,
-} from './domain';
+import type { ProductBatch, ProductUnit } from './domain';
 
 export interface ProductWorkspaceFilters {
   search?: string;

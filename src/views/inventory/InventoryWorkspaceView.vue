@@ -63,7 +63,6 @@ async function refreshAll(): Promise<void> {
     inventoryStore.fetchDashboard(),
     inventoryStore.fetchMovements({ limit: 30, offset: 0 }),
     inventoryStore.fetchExpiryAlerts(),
-    inventoryStore.reconcileStock(false),
   ]);
 }
 </script>

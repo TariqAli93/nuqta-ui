@@ -13,7 +13,6 @@
           <v-tab value="system">إعدادات النظام</v-tab>
           <v-tab value="pos">نقطة البيع</v-tab>
           <v-tab value="accounting">المحاسبة</v-tab>
-          <v-tab v-if="canPrintBarcodes" value="barcode">الباركود</v-tab>
           <v-tab v-if="canManageUsers" value="users">المستخدمين</v-tab>
         </v-tabs>
 
@@ -38,12 +37,6 @@
             </v-card-text>
           </v-window-item>
 
-          <v-window-item v-if="canPrintBarcodes" value="barcode">
-            <v-card-text>
-              <BarcodeSettingsTab />
-            </v-card-text>
-          </v-window-item>
-
           <v-window-item v-if="canManageUsers" value="users">
             <v-card-text>
               <UsersTab />
@@ -64,10 +57,9 @@ import { useAccess } from '../../composables/useAccess';
 import SystemSettingsTab from '@/components/settings/SystemSettingsTab.vue';
 import PosSettingsTab from '@/components/settings/PosSettingsTab.vue';
 import AccountingSettingsTab from '@/components/settings/AccountingSettingsTab.vue';
-import BarcodeSettingsTab from '@/components/settings/BarcodeSettingsTab.vue';
 import UsersTab from '@/components/settings/UsersTab.vue';
 
-type SettingsTab = 'system' | 'pos' | 'accounting' | 'barcode' | 'users';
+type SettingsTab = 'system' | 'pos' | 'accounting' | 'users';
 
 const route = useRoute();
 const router = useRouter();
@@ -85,9 +77,7 @@ const canManageUsers = computed(() => {
   );
 });
 
-const canPrintBarcodes = computed(() => access.canPrintBarcodes.value);
-
-const validTabs: SettingsTab[] = ['system', 'pos', 'accounting', 'barcode', 'users'];
+const validTabs: SettingsTab[] = ['system', 'pos', 'accounting', 'users'];
 
 function normalizeQueryTab(value: unknown): SettingsTab {
   if (typeof value === 'string' && validTabs.includes(value as SettingsTab)) {
@@ -97,7 +87,6 @@ function normalizeQueryTab(value: unknown): SettingsTab {
 }
 
 function resolveAllowedTab(tab: SettingsTab): SettingsTab {
-  if (tab === 'barcode' && !canPrintBarcodes.value) return 'system';
   if (tab === 'users' && !canManageUsers.value) return 'system';
   return tab;
 }

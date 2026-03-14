@@ -30,7 +30,6 @@ export interface InvoiceSettings {
   footerNotes: string;
   layoutDirection: 'rtl' | 'ltr';
   showQr: boolean;
-  showBarcode: boolean;
 }
 
 export interface AllModuleSettings {

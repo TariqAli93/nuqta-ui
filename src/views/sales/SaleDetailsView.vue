@@ -153,7 +153,7 @@
               density="comfortable"
               class="ds-table-enhanced ds-table-striped"
               :hide-default-footer="true"
-              show-expand
+              :show-expand="paymentsOnInvoicesEnabled"
             >
               <template #item.productName="{ item }">
                 <span class="font-weight-medium">{{ item.productName }}</span>
@@ -168,9 +168,9 @@
                 <span class="font-weight-bold">{{ formatAmount(item.subtotal) }}</span>
               </template>
               <!-- Expandable row: per-item batch depletion (FIFO) -->
-              <template #expanded-row="{ columns, item }">
+              <template v-if="paymentsOnInvoicesEnabled" #expanded-row="{ columns, item }">
                 <td :colspan="columns.length" class="pa-4">
-                  <div class="text-caption font-weight-bold mb-2">تفاصيل الدفعات (FIFO)</div>
+                  <div class="text-caption font-weight-bold mb-2">تفاصيل الدفعات</div>
                   <v-table v-if="item.depletions?.length" density="compact">
                     <thead>
                       <tr>
@@ -301,6 +301,7 @@ import EmptyState from '../../components/emptyState.vue';
 import AuditLogTab from '../../components/shared/AuditLogTab.vue';
 import type { Sale } from '../../types/domain';
 import { notifyError, notifySuccess } from '@/utils/notify';
+import { useSystemSettingsStore } from '@/stores/settings';
 
 const store = useSalesStore();
 const route = useRoute();
@@ -312,9 +313,13 @@ const cancelling = ref(false);
 const refundDialog = ref(false);
 const cancelDialog = ref(false);
 
+const settingsStore = useSystemSettingsStore();
+
 const localizedError = computed(() =>
   store.error ? mapErrorToArabic(store.error, 'errors.loadFailed') : null
 );
+
+const paymentsOnInvoicesEnabled = computed(() => settingsStore.data?.paymentsOnInvoicesEnabled);
 
 watch(localizedError, (value) => {
   if (!value) return;
@@ -369,6 +374,7 @@ function formatAmount(value: number): string {
   return new Intl.NumberFormat('ar-IQ', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
+    numberingSystem: 'latn',
   }).format(normalized);
 }
 
@@ -438,5 +444,6 @@ async function loadSale() {
 
 onMounted(() => {
   void loadSale();
+  settingsStore.fetch();
 });
 </script>
