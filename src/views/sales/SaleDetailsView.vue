@@ -405,12 +405,20 @@ async function executeRefund() {
   refundDialog.value = false;
   store.error = null;
 
-  const result = await store.refundSale(sale.value.id);
-  refunding.value = false;
-
-  if (result.ok) {
-    sale.value = result.data;
-    notifySuccess('تم الاسترجاع بنجاح');
+  try {
+    const result = await store.refundSale(
+      sale.value.id,
+      sale.value.paidAmount ?? 0,
+      'Refund from sale details view'
+    );
+    if (result.ok) {
+      sale.value = result.data;
+      notifySuccess('تم استرجاع الفاتورة');
+    } else {
+      notifyError(mapErrorToArabic(result.error, 'errors.refundFailed'));
+    }
+  } finally {
+    refunding.value = false;
   }
 }
 

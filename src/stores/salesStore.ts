@@ -112,11 +112,11 @@ export const useSalesStore = defineStore('sales', () => {
     }
   }
 
-  async function refundSale(id: number) {
+  async function refundSale(id: number, amount: number, reason: string) {
     loading.value = true;
     error.value = null;
     try {
-      const result = await salesClient.refund(id);
+      const result = await salesClient.refund(id, amount, reason);
       if (!result.ok) {
         error.value = result.error.message;
       }

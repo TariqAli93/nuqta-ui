@@ -22,7 +22,11 @@ export const salesClient = {
   cancel: (id: number): Promise<ApiResult<Sale>> => apiPost<Sale>(`/sales/${id}/cancel`),
 
   /** TODO: Backend endpoint not in current spec — add when available */
-  refund: (id: number): Promise<ApiResult<Sale>> => apiPost<Sale>(`/sales/${id}/refund`),
+  refund: (id: number, amount: number, reason: string): Promise<ApiResult<Sale>> =>
+    apiPost<Sale>(`/sales/${id}/refund`, {
+      amount,
+      reason,
+    }),
 
   /** TODO: Backend endpoint not in current spec — add when available */
   generateReceipt: (id: number): Promise<ApiResult<{ receiptHtml: string }>> =>

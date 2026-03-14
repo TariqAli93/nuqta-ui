@@ -3,6 +3,10 @@
  *
  * Every HTTP call in the UI goes through this module.
  * baseURL is read from VITE_API_BASE_URL (set in .env / .env.development).
+ *
+ * NOTE: Module-level mutable state (circuit breaker counters, inflight map, etc.)
+ * is safe in a single-threaded browser context. Do not use in a multi-threaded
+ * environment without synchronization.
  */
 import axios, {
   type AxiosInstance,
@@ -23,6 +27,7 @@ export const http: AxiosInstance = axios.create({
   baseURL,
   timeout: 30_000,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true, // FIX #1: Send cookies (refresh token) with every request
 });
 
 // ---------------------------------------------------------------------------
@@ -33,8 +38,6 @@ let _accessToken: string | null = null;
 
 /**
  * Store the access token used for Bearer auth.
- * FIX: Previously the parameter shadowed the module-level variable,
- * causing `token = token` (noop) — the token was never stored.
  */
 export function setAccessToken(newToken: string | null): void {
   _accessToken = newToken;
@@ -74,7 +77,9 @@ function addRefreshSubscriber(cb: (token: string) => void): void {
  * On 401 → attempt token refresh via /auth/refresh.
  * Queue concurrent requests and retry them after refresh.
  * Prevent infinite loops by not retrying refresh requests.
- * Logout on refresh failure.
+ *
+ * FIX #5: Only logout on auth-related refresh failures (401/403),
+ * not on transient server errors (5xx).
  */
 http.interceptors.response.use(
   (response) => response,
@@ -117,16 +122,19 @@ http.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           return http(originalRequest);
         }
-      } catch {
-        // Refresh failed — trigger logout
-        setAccessToken(null);
-        try {
-          localStorage.removeItem('token');
-        } catch {
-          /* noop */
-        }
-        if (unauthorizedHandler) {
-          unauthorizedHandler();
+      } catch (refreshErr) {
+        // FIX #5: Only logout if refresh was truly an auth failure, not a server hiccup
+        const status = (refreshErr as AxiosError)?.response?.status;
+        if (!status || status === 401 || status === 403) {
+          setAccessToken(null);
+          try {
+            localStorage.removeItem('token');
+          } catch {
+            /* noop */
+          }
+          if (unauthorizedHandler) {
+            unauthorizedHandler();
+          }
         }
       } finally {
         isRefreshing = false;
@@ -148,19 +156,24 @@ export function registerUnauthorizedHandler(handler: UnauthorizedHandler): void 
   unauthorizedHandler = handler;
 }
 
-function handleUnauthorized(error: ApiError): void {
-  const isUnauthorized =
-    error.status === 401 || error.code === 'UNAUTHORIZED' || error.code === 'AUTH_ERROR';
-  if (isUnauthorized && unauthorizedHandler) {
-    unauthorizedHandler();
-  }
-}
+// FIX #6: Removed `handleUnauthorized` from HTTP helpers.
+// The 401 interceptor already handles refresh + logout. Calling it again
+// in every helper was either redundant (interceptor already dealt with it)
+// or a double-fire (interceptor logged out, then helper fires handler again).
 
 // ---------------------------------------------------------------------------
-// Request deduplication (Strategy 5)
+// Request deduplication
 // ---------------------------------------------------------------------------
 
-/** In-flight GET requests — identical requests share the same Promise. */
+/**
+ * In-flight GET requests — identical requests share the same Promise.
+ *
+ * NOTE (FIX #3): If a request is cancelled via AbortSignal, all callers
+ * sharing the deduped promise receive CANCELLED. This is acceptable because
+ * dedup only applies to GET requests with identical params. If callers need
+ * independent cancellation, pass a unique param (e.g. `_dedupKey`) to
+ * differentiate them.
+ */
 const inflightRequests = new Map<string, Promise<unknown>>();
 
 function dedupKey(url: string, params?: Record<string, unknown>): string {
@@ -168,7 +181,7 @@ function dedupKey(url: string, params?: Record<string, unknown>): string {
 }
 
 // ---------------------------------------------------------------------------
-// Retry with exponential backoff (Strategy 6)
+// Retry with exponential backoff + jitter
 // ---------------------------------------------------------------------------
 
 const MAX_RETRIES = 3;
@@ -202,23 +215,38 @@ function recordFailure(): void {
 }
 
 function isRetryable(err: AxiosError): boolean {
-  if (axios.isCancel(err)) {
-    return false;
-  }
-  if (err.code === 'ECONNABORTED') {
-    return false;
-  }
-  if (!err.response) {
-    return false;
-  }
+  if (axios.isCancel(err)) return false;
+  if (err.code === 'ECONNABORTED') return false;
 
-  // Don't retry client errors (4xx) — they won't succeed on retry
-  if (err.response && err.response.status >= 400 && err.response.status < 500) {
-    return false;
-  }
+  // FIX #4: Network errors (no response) are transient — retry them
+  if (!err.response) return true;
 
-  // Retry on transient server failures.
+  // FIX #8: 429 Too Many Requests is retryable
+  if (err.response.status === 429) return true;
+
+  // Don't retry other client errors (4xx) — they won't succeed on retry
+  if (err.response.status >= 400 && err.response.status < 500) return false;
+
+  // Retry on transient server failures (5xx)
   return err.response.status >= 500;
+}
+
+/**
+ * Parse the Retry-After header value into milliseconds.
+ * Supports both delta-seconds and HTTP-date formats.
+ */
+function parseRetryAfter(err: AxiosError): number | null {
+  const header = err.response?.headers?.['retry-after'];
+  if (!header) return null;
+
+  const seconds = Number(header);
+  if (!Number.isNaN(seconds)) return seconds * 1000;
+
+  // Try HTTP-date format
+  const date = Date.parse(header);
+  if (!Number.isNaN(date)) return Math.max(0, date - Date.now());
+
+  return null;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -237,13 +265,26 @@ async function withRetry<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promis
       return result;
     } catch (error) {
       const axErr = error as AxiosError;
+
       if (attempt < retries && isRetryable(axErr)) {
+        // FIX #2: Only record circuit-breaker failure for retryable errors
         recordFailure();
-        const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+
+        // FIX #8: Respect Retry-After header for 429 responses
+        const retryAfterMs = parseRetryAfter(axErr);
+        // FIX #7: Add jitter to prevent thundering herd
+        const jitter = Math.random() * BASE_DELAY_MS;
+        const delay = retryAfterMs ?? BASE_DELAY_MS * Math.pow(2, attempt) + jitter;
+
         await sleep(delay);
         continue;
       }
-      recordFailure();
+
+      // FIX #2: Only trip circuit breaker on retryable errors that exhausted retries
+      if (isRetryable(axErr)) {
+        recordFailure();
+      }
+
       throw error;
     }
   }
@@ -290,6 +331,40 @@ function createMeta(startedAt: number): ApiMeta {
   return { durationMs: Math.round(nowMs() - startedAt) };
 }
 
+// ---------------------------------------------------------------------------
+// FIX #9: Internal mutation helper to eliminate duplication
+// ---------------------------------------------------------------------------
+
+type HttpMethod = 'post' | 'put' | 'patch';
+
+async function apiMutate<T>(
+  method: HttpMethod,
+  url: string,
+  data?: unknown,
+  options?: ApiRequestOptions
+): Promise<ApiResult<T>> {
+  const startedAt = nowMs();
+  try {
+    const config: AxiosRequestConfig = {};
+    if (options?.signal) config.signal = options.signal;
+    const response = await http[method](url, data ?? {}, config);
+    return normalizeApiResult<T>(response.data, undefined, createMeta(startedAt));
+  } catch (error) {
+    if (axios.isCancel(error)) {
+      return createFailure(
+        { code: 'CANCELLED', message: 'Request cancelled', status: 0 },
+        createMeta(startedAt)
+      );
+    }
+    const apiError = axiosErrorToApiError(error as AxiosError);
+    return createFailure(apiError, createMeta(startedAt));
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
 export async function apiGet<T>(
   url: string,
   params?: Record<string, unknown>,
@@ -297,11 +372,8 @@ export async function apiGet<T>(
 ): Promise<ApiResult<T>> {
   const key = dedupKey(url, params);
 
-  // Dedup: return in-flight request if one exists for the same key
   const inflight = inflightRequests.get(key);
-  if (inflight) {
-    return inflight as Promise<ApiResult<T>>;
-  }
+  if (inflight) return inflight as Promise<ApiResult<T>>;
 
   const request = (async (): Promise<ApiResult<T>> => {
     const startedAt = nowMs();
@@ -318,7 +390,6 @@ export async function apiGet<T>(
         );
       }
       const apiError = axiosErrorToApiError(error as AxiosError);
-      handleUnauthorized(apiError);
       return createFailure(apiError, createMeta(startedAt));
     } finally {
       inflightRequests.delete(key);
@@ -337,9 +408,7 @@ export async function apiGetPaged<T>(
   const key = dedupKey(url + ':paged', params);
 
   const inflight = inflightRequests.get(key);
-  if (inflight) {
-    return inflight as Promise<ApiResult<PagedResult<T>>>;
-  }
+  if (inflight) return inflight as Promise<ApiResult<PagedResult<T>>>;
 
   const request = (async (): Promise<ApiResult<PagedResult<T>>> => {
     const startedAt = nowMs();
@@ -360,7 +429,6 @@ export async function apiGetPaged<T>(
         );
       }
       const apiError = axiosErrorToApiError(error as AxiosError);
-      handleUnauthorized(apiError);
       return createFailure(apiError, createMeta(startedAt));
     } finally {
       inflightRequests.delete(key);
@@ -376,23 +444,7 @@ export async function apiPost<T>(
   data?: unknown,
   options?: ApiRequestOptions
 ): Promise<ApiResult<T>> {
-  const startedAt = nowMs();
-  try {
-    const config: AxiosRequestConfig = {};
-    if (options?.signal) config.signal = options.signal;
-    const response = await http.post(url, data, config);
-    return normalizeApiResult<T>(response.data, undefined, createMeta(startedAt));
-  } catch (error) {
-    if (axios.isCancel(error)) {
-      return createFailure(
-        { code: 'CANCELLED', message: 'Request cancelled', status: 0 },
-        createMeta(startedAt)
-      );
-    }
-    const apiError = axiosErrorToApiError(error as AxiosError);
-    handleUnauthorized(apiError);
-    return createFailure(apiError, createMeta(startedAt));
-  }
+  return apiMutate<T>('post', url, data, options);
 }
 
 export async function apiPut<T>(
@@ -400,23 +452,7 @@ export async function apiPut<T>(
   data?: unknown,
   options?: ApiRequestOptions
 ): Promise<ApiResult<T>> {
-  const startedAt = nowMs();
-  try {
-    const config: AxiosRequestConfig = {};
-    if (options?.signal) config.signal = options.signal;
-    const response = await http.put(url, data, config);
-    return normalizeApiResult<T>(response.data, undefined, createMeta(startedAt));
-  } catch (error) {
-    if (axios.isCancel(error)) {
-      return createFailure(
-        { code: 'CANCELLED', message: 'Request cancelled', status: 0 },
-        createMeta(startedAt)
-      );
-    }
-    const apiError = axiosErrorToApiError(error as AxiosError);
-    handleUnauthorized(apiError);
-    return createFailure(apiError, createMeta(startedAt));
-  }
+  return apiMutate<T>('put', url, data, options);
 }
 
 export async function apiPatch<T>(
@@ -424,23 +460,7 @@ export async function apiPatch<T>(
   data?: unknown,
   options?: ApiRequestOptions
 ): Promise<ApiResult<T>> {
-  const startedAt = nowMs();
-  try {
-    const config: AxiosRequestConfig = {};
-    if (options?.signal) config.signal = options.signal;
-    const response = await http.patch(url, data, config);
-    return normalizeApiResult<T>(response.data, undefined, createMeta(startedAt));
-  } catch (error) {
-    if (axios.isCancel(error)) {
-      return createFailure(
-        { code: 'CANCELLED', message: 'Request cancelled', status: 0 },
-        createMeta(startedAt)
-      );
-    }
-    const apiError = axiosErrorToApiError(error as AxiosError);
-    handleUnauthorized(apiError);
-    return createFailure(apiError, createMeta(startedAt));
-  }
+  return apiMutate<T>('patch', url, data, options);
 }
 
 export async function apiDelete<T>(
@@ -461,7 +481,6 @@ export async function apiDelete<T>(
       );
     }
     const apiError = axiosErrorToApiError(error as AxiosError);
-    handleUnauthorized(apiError);
     return createFailure(apiError, createMeta(startedAt));
   }
 }

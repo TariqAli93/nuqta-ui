@@ -2,7 +2,7 @@ import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
 import { ar } from 'vuetify/locale';
-import { codelBlueprint, fluentBlueprint } from './blueprints';
+import { codelBlueprint } from './blueprints';
 import '@mdi/font/css/materialdesignicons.css';
 import 'vuetify/styles';
 
