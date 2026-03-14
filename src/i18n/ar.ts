@@ -63,6 +63,8 @@
   'errors.stockBelowZero': 'لا يمكن أن يكون المخزون أقل من الصفر',
   'errors.initializeFailed': 'فشل تهيئة النظام',
   'errors.rateLimited': 'تم تجاوز الحد المسموح من الطلبات، يرجى الانتظار',
+  'errors.invalidCredentials': 'اسم المستخدم أو كلمة المرور غير صحيحة',
+  'errors.outOfStockMessage': 'عذراً، لا يوجد مخزون كافٍ لهذا المنتج',
 
   'pos.keyboardShortcuts': 'اختصارات لوحة المفاتيح',
   'pos.shortcutHelp': 'عرض المساعدة',

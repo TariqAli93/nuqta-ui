@@ -8,7 +8,7 @@
 
       <v-form @submit.prevent="save">
         <v-row>
-          <v-col cols="12" md="6">
+          <!-- <v-col cols="12" md="6">
             <v-text-field
               v-model="form.invoicePrefix"
               label="بادئة الفاتورة"
@@ -25,7 +25,7 @@
               variant="outlined"
               density="compact"
             />
-          </v-col>
+          </v-col> -->
           <v-col cols="12" md="6">
             <v-select
               v-model="form.paperSize"
@@ -95,8 +95,8 @@ const { form, saving, isDirty, save } = useSettingsForm<PosSettings>(
 );
 
 const paperSizes = [
-  { title: 'A4', value: 'A4' },
-  { title: 'A5', value: 'A5' },
+  { title: 'A4', value: 'a4' },
+  { title: 'A5', value: 'a5' },
   { title: 'حراري', value: 'thermal' },
 ] as const;
 

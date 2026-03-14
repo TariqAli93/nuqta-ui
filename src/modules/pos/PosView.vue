@@ -1122,10 +1122,13 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
 
       void printSaleReceipt(saleData?.id, saleForReceipt);
     } else if (!result.ok && 'error' in result) {
-      showPaymentMessage(mapErrorToArabic(result.error, 'errors.unexpected'), 'error');
+      if (result.error.code === 'INSUFFICIENT_STOCK') {
+        stockAlertMessage.value = t('errors.outOfStockMessage');
+        showStockAlert.value = true;
+      }
     }
   } catch {
-    showPaymentMessage(t('errors.unexpected'), 'error');
+    // Error is handled in the store action, so we just ensure the UI state is reset here
   } finally {
     isProcessingPayment.value = false;
   }
