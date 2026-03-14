@@ -79,7 +79,10 @@ export function usePosCart() {
     );
 
     if (existingIndex >= 0) {
-      cartItems.value[existingIndex].quantity += 1;
+      const existing = cartItems.value[existingIndex];
+      existing.quantity += 1;
+      existing.quantityBase = existing.quantity * (existing.unitFactor ?? 1);
+      existing.subtotal = existing.quantity * existing.unitPrice - (existing.discount || 0);
     } else {
       cartItems.value.push({
         productId,
@@ -90,6 +93,7 @@ export function usePosCart() {
         subtotal: unitPrice,
         unitName,
         unitFactor,
+        quantityBase: unitFactor,
       });
     }
 
@@ -102,17 +106,23 @@ export function usePosCart() {
     item.unitName = payload.unit.unitName;
     item.unitFactor = payload.unit.factorToBase;
     item.unitPrice = payload.unit.sellingPrice ?? item.unitPrice;
+    item.quantityBase = item.quantity * (payload.unit.factorToBase ?? 1);
     item.subtotal = item.quantity * item.unitPrice - (item.discount || 0);
   }
 
   function increaseQuantity(index: number) {
-    cartItems.value[index].quantity += 1;
+    const item = cartItems.value[index];
+    item.quantity += 1;
+    item.quantityBase = item.quantity * (item.unitFactor ?? 1);
+    item.subtotal = item.quantity * item.unitPrice - (item.discount || 0);
   }
 
   function decreaseQuantity(index: number) {
     const item = cartItems.value[index];
     if (item.quantity > 1) {
       item.quantity -= 1;
+      item.quantityBase = item.quantity * (item.unitFactor ?? 1);
+      item.subtotal = item.quantity * item.unitPrice - (item.discount || 0);
     } else {
       removeFromCart(index);
     }

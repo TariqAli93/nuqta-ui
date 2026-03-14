@@ -113,6 +113,7 @@ export function usePosPayment() {
       const itemsWithSubtotals = cartItems.map((item) => ({
         ...item,
         subtotal: item.quantity * item.unitPrice - (item.discount || 0),
+        quantityBase: item.quantity * (item.unitFactor ?? 1),
       }));
       const remainingAmount = Math.max(payableTotal - paidAmount, 0);
 
