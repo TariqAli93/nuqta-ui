@@ -105,5 +105,30 @@ export function useApiError() {
     return { message, isAuth: false };
   }
 
-  return { getErrorMessage, handleError };
+  function handleErrorWithForbidden(
+    result: ApiResult<unknown>,
+    options?: {
+      notify?: boolean;
+      dedupeKey?: string;
+    }
+  ): {
+    message: string;
+    details?: unknown;
+    isAuth: boolean;
+  } {
+    if (result?.error?.code === ErrorCodes.FORBIDDEN) {
+      const patchedResult: ApiResult<unknown> = {
+        ...result,
+        error: {
+          ...result.error,
+          code: ErrorCodes.PERMISSION_DENIED,
+        },
+      };
+      return handleError(patchedResult, options);
+    }
+
+    return handleError(result, options);
+  }
+
+  return { getErrorMessage, handleError: handleErrorWithForbidden };
 }
