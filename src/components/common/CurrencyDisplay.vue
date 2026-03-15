@@ -65,6 +65,7 @@ const formattedAmount = computed(() => {
     return new Intl.NumberFormat(resolvedLocale.value, {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
+      numberingSystem: 'latn',
     }).format(absAmount);
   } catch {
     return absAmount.toLocaleString();
