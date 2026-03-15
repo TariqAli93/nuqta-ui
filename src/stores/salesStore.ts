@@ -21,6 +21,7 @@ export const useSalesStore = defineStore('sales', () => {
       } else {
         error.value = result.error.message;
       }
+      console.log('Fetched sales:', result);
       return result;
     } catch (err: unknown) {
       error.value = err instanceof Error ? err.message : 'فشل في تحميل المبيعات';
@@ -34,18 +35,17 @@ export const useSalesStore = defineStore('sales', () => {
     loading.value = true;
     error.value = null;
     try {
-      // userId is resolved by UserContextService at the IPC boundary — never sent from UI
       const result = await salesClient.create(payload);
       if (!result.ok) {
         error.value = result.error.message;
       }
-      loading.value = false;
       return result;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'فشل في إنشاء عملية البيع';
       error.value = message;
-      loading.value = false;
       return { ok: false as const, error: { code: 'CREATE_FAILED', message } };
+    } finally {
+      loading.value = false;
     }
   }
 

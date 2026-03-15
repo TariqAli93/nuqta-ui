@@ -15,9 +15,12 @@ export function usePosCart() {
   // Cache of product units keyed by productId
   const productUnitsCache = ref<Map<number, ProductUnit[]>>(new Map());
 
+  // Cache of product base selling price (per base unit) keyed by productId
+  const productBasePrices = ref<Map<number, number>>(new Map());
+
   // Map of available units for each cart item index
   const cartItemUnitsMap = computed(() => {
-    const map = new Map<number, ProductUnit[]>();
+    const map = new Map<any, ProductUnit[]>();
     cartItems.value.forEach((item, idx) => {
       const units = productUnitsCache.value.get(item.productId);
       if (units && units.length > 0) {
@@ -69,6 +72,8 @@ export function usePosCart() {
     const unitName = defaultUnit?.unitName ?? product.unit ?? 'pcs';
     const unitFactor = defaultUnit?.factorToBase ?? 1;
 
+    productBasePrices.value.set(productId, product.sellingPrice);
+
     if (unitPrice <= 0) {
       const proceed = confirm(t('pos.zeroPriceWarning'));
       if (!proceed) return false;
@@ -103,10 +108,15 @@ export function usePosCart() {
   function handleUnitChange(payload: { index: number; unit: ProductUnit }) {
     const item = cartItems.value[payload.index];
     if (!item) return;
+
+    const newFactor = payload.unit.factorToBase ?? 1;
+    const basePrice = productBasePrices.value.get(item.productId);
+
     item.unitName = payload.unit.unitName;
-    item.unitFactor = payload.unit.factorToBase;
-    item.unitPrice = payload.unit.sellingPrice ?? item.unitPrice;
-    item.quantityBase = item.quantity * (payload.unit.factorToBase ?? 1);
+    item.unitFactor = newFactor;
+    item.unitPrice =
+      payload.unit.sellingPrice ?? (basePrice != null ? basePrice * newFactor : item.unitPrice);
+    item.quantityBase = item.quantity * newFactor;
     item.subtotal = item.quantity * item.unitPrice - (item.discount || 0);
   }
 
@@ -154,6 +164,42 @@ export function usePosCart() {
     }
   }
 
+  async function trackProductPrice(productId: number, basePrice?: number): Promise<number | null> {
+    // Allow manual base-price registration (e.g. when resuming a held sale)
+    if (basePrice != null) {
+      productBasePrices.value.set(productId, basePrice);
+      return basePrice;
+    }
+
+    try {
+      const result = await productsClient.getById(productId);
+      if (result.ok && result.data != null) {
+        const price = result.data.sellingPrice ?? null;
+        if (price != null) {
+          productBasePrices.value.set(productId, price);
+        }
+        return price;
+      }
+    } catch {
+      // Ignore errors and return null
+    } finally {
+      // Invalidate cached price for this product
+      if (productUnitsCache.value.has(productId)) {
+        const units = productUnitsCache.value.get(productId);
+        if (units) {
+          // Clear sellingPrice for all units of this product to force refetch
+          units.forEach((u) => (u.sellingPrice = undefined));
+        }
+      }
+    }
+    return null;
+  }
+
+  async function ensureUnitsCached(): Promise<void> {
+    const productIds = Array.from(new Set(cartItems.value.map((item) => item.productId)));
+    await Promise.all(productIds.map((id) => fetchProductUnits(id)));
+  }
+
   return {
     cartItems,
     cartItemUnitsMap,
@@ -171,5 +217,7 @@ export function usePosCart() {
     confirmRemoveAt,
     resetCart,
     applyDiscount,
+    trackProductPrice,
+    ensureUnitsCached,
   };
 }

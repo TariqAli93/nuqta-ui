@@ -11,6 +11,14 @@
         <div v-if="details" class="text-body-2 text-medium-emphasis mt-2">
           {{ details }}
         </div>
+        <v-list v-if="products.length" density="compact" class="mt-3 pa-0" bg-color="transparent">
+          <v-list-item v-for="(name, i) in products" :key="i" class="px-0" min-height="32">
+            <template #prepend>
+              <v-icon size="16" color="error" class="ml-2">mdi-package-variant</v-icon>
+            </template>
+            <v-list-item-title class="text-body-2">{{ name }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
       </v-card-text>
 
       <v-card-actions class="pa-4 pt-0">
@@ -34,6 +42,7 @@ interface Props {
   title?: string;
   message: string;
   details?: string;
+  products?: string[];
   showCancel?: boolean;
   cancelText?: string;
   confirmText?: string;
@@ -42,6 +51,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   title: 'تنبيه',
+  products: () => [],
   showCancel: true,
   cancelText: 'إلغاء',
   confirmText: 'حسناً',

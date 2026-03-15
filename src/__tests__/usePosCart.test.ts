@@ -470,10 +470,8 @@ describe('usePosCart — resetCart', () => {
     const { productsClient } = await import('@/api');
     vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([]));
 
-    const {
-      cartItems, discount, tax, selectedCustomerId, saleNote,
-      addToCart, resetCart,
-    } = usePosCart();
+    const { cartItems, discount, tax, selectedCustomerId, saleNote, addToCart, resetCart } =
+      usePosCart();
 
     await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
     discount.value = 100;
@@ -488,5 +486,379 @@ describe('usePosCart — resetCart', () => {
     expect(tax.value).toBe(0);
     expect(selectedCustomerId.value).toBeNull();
     expect(saleNote.value).toBeNull();
+  });
+});
+
+// ── Unit Change — price fallback and factor normalization ───────────────────
+
+describe('usePosCart — handleUnitChange price fallback', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('falls back to product base price when unit has null sellingPrice', async () => {
+    const { productsClient } = await import('@/api');
+    const boxUnit = createMockProductUnit({
+      unitName: 'box',
+      sellingPrice: 12000,
+      factorToBase: 12,
+      isDefault: true,
+      isActive: true,
+    });
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([boxUnit]));
+
+    const { cartItems, addToCart, handleUnitChange } = usePosCart();
+    // Product base price = 1000
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
+
+    // Cart item starts at box price (12000)
+    expect(cartItems.value[0].unitPrice).toBe(12000);
+
+    // Switch to a unit with null sellingPrice → should use product base price (1000), NOT box price (12000)
+    handleUnitChange({
+      index: 0,
+      unit: createMockProductUnit({ unitName: 'piece', sellingPrice: null, factorToBase: 1 }),
+    });
+
+    expect(cartItems.value[0].unitPrice).toBe(1000);
+    expect(cartItems.value[0].unitName).toBe('piece');
+  });
+
+  it('falls back to product base price when unit has undefined sellingPrice', async () => {
+    const { productsClient } = await import('@/api');
+    const boxUnit = createMockProductUnit({
+      unitName: 'box',
+      sellingPrice: 5000,
+      factorToBase: 6,
+      isDefault: true,
+      isActive: true,
+    });
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([boxUnit]));
+
+    const { cartItems, addToCart, handleUnitChange } = usePosCart();
+    await addToCart(createMockProduct({ id: 2, sellingPrice: 800 }));
+
+    handleUnitChange({
+      index: 0,
+      unit: createMockProductUnit({ unitName: 'piece', sellingPrice: undefined, factorToBase: 1 }),
+    });
+
+    expect(cartItems.value[0].unitPrice).toBe(800);
+  });
+
+  it('preserves product base price across multiple unit switches', async () => {
+    const { productsClient } = await import('@/api');
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([]));
+
+    const { cartItems, addToCart, handleUnitChange } = usePosCart();
+    await addToCart(createMockProduct({ id: 3, sellingPrice: 500, unit: 'pcs' }));
+    // base price→500, unit price→500
+
+    // Switch to carton (price=6000, factor=12)
+    handleUnitChange({
+      index: 0,
+      unit: createMockProductUnit({ unitName: 'carton', sellingPrice: 6000, factorToBase: 12 }),
+    });
+    expect(cartItems.value[0].unitPrice).toBe(6000);
+
+    // Switch to pack (price=2500, factor=6)
+    handleUnitChange({
+      index: 0,
+      unit: createMockProductUnit({ unitName: 'pack', sellingPrice: 2500, factorToBase: 6 }),
+    });
+    expect(cartItems.value[0].unitPrice).toBe(2500);
+
+    // Switch to unit with NO price → should fall back to base (500), not pack (2500)
+    handleUnitChange({
+      index: 0,
+      unit: createMockProductUnit({ unitName: 'piece', sellingPrice: null, factorToBase: 1 }),
+    });
+    expect(cartItems.value[0].unitPrice).toBe(500);
+  });
+});
+
+describe('usePosCart — handleUnitChange factor normalization', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('normalizes undefined factorToBase to 1', async () => {
+    const { productsClient } = await import('@/api');
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([]));
+
+    const { cartItems, addToCart, handleUnitChange } = usePosCart();
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
+
+    handleUnitChange({
+      index: 0,
+      unit: createMockProductUnit({
+        unitName: 'piece',
+        sellingPrice: 1000,
+        factorToBase: undefined,
+      }),
+    });
+
+    expect(cartItems.value[0].unitFactor).toBe(1);
+    expect(cartItems.value[0].quantityBase).toBe(1);
+  });
+
+  it('stores normalized factor that persists through quantity changes', async () => {
+    const { productsClient } = await import('@/api');
+    const unit = createMockProductUnit({
+      unitName: 'box',
+      sellingPrice: 3000,
+      isDefault: true,
+      isActive: true,
+      factorToBase: 6,
+    });
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([unit]));
+
+    const { cartItems, addToCart, handleUnitChange, increaseQuantity } = usePosCart();
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 500 }));
+
+    // Change to unit with factor 24
+    handleUnitChange({
+      index: 0,
+      unit: createMockProductUnit({ unitName: 'carton', sellingPrice: 12000, factorToBase: 24 }),
+    });
+
+    expect(cartItems.value[0].unitFactor).toBe(24);
+    expect(cartItems.value[0].quantityBase).toBe(24); // 1 × 24
+
+    // Increase quantity — factor should persist
+    increaseQuantity(0);
+    expect(cartItems.value[0].unitFactor).toBe(24);
+    expect(cartItems.value[0].quantityBase).toBe(48); // 2 × 24
+    expect(cartItems.value[0].subtotal).toBe(24000); // 2 × 12000
+  });
+});
+
+// ── decreaseQuantity return values ──────────────────────────────────────────
+
+describe('usePosCart — decreaseQuantity return status', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('returns "decreased" when quantity is above 1', async () => {
+    const { productsClient } = await import('@/api');
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([]));
+
+    const { addToCart, increaseQuantity, decreaseQuantity } = usePosCart();
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
+    increaseQuantity(0); // qty=2
+
+    const result = decreaseQuantity(0);
+    expect(result).toBe('decreased');
+  });
+
+  it('returns "removed" when last item in multi-item cart reaches qty 1', async () => {
+    const { productsClient } = await import('@/api');
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([]));
+
+    const { addToCart, decreaseQuantity } = usePosCart();
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
+    await addToCart(createMockProduct({ id: 2, sellingPrice: 2000 }));
+
+    const result = decreaseQuantity(0); // qty=1, multi-item → removes
+    expect(result).toBe('removed');
+  });
+
+  it('returns "confirm-needed" when only item at qty 1', async () => {
+    const { productsClient } = await import('@/api');
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([]));
+
+    const { cartItems, addToCart, decreaseQuantity } = usePosCart();
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
+
+    const result = decreaseQuantity(0);
+    expect(result).toBe('confirm-needed');
+    expect(cartItems.value).toHaveLength(1); // item stays
+  });
+});
+
+// ── Cache management ────────────────────────────────────────────────────────
+
+describe('usePosCart — clearUnitCache', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('forces fresh fetch after clearing cache for a specific product', async () => {
+    const { productsClient } = await import('@/api');
+    const unit = createMockProductUnit({
+      unitName: 'box',
+      sellingPrice: 5000,
+      isDefault: true,
+      isActive: true,
+      factorToBase: 12,
+    });
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([unit]));
+
+    const { addToCart, clearUnitCache } = usePosCart();
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
+
+    expect(productsClient.getUnits).toHaveBeenCalledTimes(1);
+
+    // Second add uses cache — no new API call
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
+    expect(productsClient.getUnits).toHaveBeenCalledTimes(1);
+
+    // Clear cache → next add should refetch
+    clearUnitCache(1);
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
+    expect(productsClient.getUnits).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears all cached units when called without productId', async () => {
+    const { productsClient } = await import('@/api');
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([]));
+
+    const { addToCart, clearUnitCache } = usePosCart();
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
+    await addToCart(createMockProduct({ id: 2, sellingPrice: 2000 }));
+    expect(productsClient.getUnits).toHaveBeenCalledTimes(2);
+
+    clearUnitCache(); // clear all
+
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 1000 }));
+    await addToCart(createMockProduct({ id: 2, sellingPrice: 2000 }));
+    expect(productsClient.getUnits).toHaveBeenCalledTimes(4);
+  });
+});
+
+// ── trackProductPrice ───────────────────────────────────────────────────────
+
+describe('usePosCart — trackProductPrice', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('allows manual base price registration for held sale items', async () => {
+    const { productsClient } = await import('@/api');
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([]));
+
+    const { cartItems, handleUnitChange, trackProductPrice } = usePosCart();
+
+    // Simulate a resumed held sale item
+    cartItems.value.push({
+      productId: 42,
+      productName: 'Restored Item',
+      quantity: 3,
+      unitPrice: 6000,
+      unitName: 'box',
+      unitFactor: 12,
+      quantityBase: 36,
+      discount: 0,
+      subtotal: 18000,
+    });
+
+    // Register the product's base price
+    trackProductPrice(42, 500);
+
+    // Now switching to a priceless unit should use the tracked base price
+    handleUnitChange({
+      index: 0,
+      unit: createMockProductUnit({ unitName: 'piece', sellingPrice: null, factorToBase: 1 }),
+    });
+
+    expect(cartItems.value[0].unitPrice).toBe(500);
+    expect(cartItems.value[0].unitFactor).toBe(1);
+    expect(cartItems.value[0].quantityBase).toBe(3);
+  });
+});
+
+// ── Full unit workflow scenarios ────────────────────────────────────────────
+
+describe('usePosCart — full workflow scenarios', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('complete flow: add → change unit → increase → change unit → pay', async () => {
+    const { productsClient } = await import('@/api');
+    const pieceUnit = createMockProductUnit({
+      unitName: 'piece',
+      sellingPrice: 500,
+      factorToBase: 1,
+      isDefault: true,
+      isActive: true,
+    });
+    const boxUnit = createMockProductUnit({
+      unitName: 'box',
+      sellingPrice: 5500,
+      factorToBase: 12,
+      isDefault: false,
+      isActive: true,
+    });
+    vi.mocked(productsClient.getUnits).mockResolvedValue(createApiSuccess([pieceUnit, boxUnit]));
+
+    const { cartItems, subtotal, addToCart, handleUnitChange, increaseQuantity } = usePosCart();
+
+    // Step 1: Add product (default = piece, price=500, factor=1)
+    await addToCart(createMockProduct({ id: 1, sellingPrice: 500 }));
+    expect(cartItems.value[0].unitName).toBe('piece');
+    expect(cartItems.value[0].unitPrice).toBe(500);
+    expect(cartItems.value[0].quantityBase).toBe(1);
+
+    // Step 2: Switch to box (price=5500, factor=12)
+    handleUnitChange({ index: 0, unit: boxUnit });
+    expect(cartItems.value[0].unitPrice).toBe(5500);
+    expect(cartItems.value[0].unitFactor).toBe(12);
+    expect(cartItems.value[0].quantityBase).toBe(12);
+    expect(cartItems.value[0].subtotal).toBe(5500);
+
+    // Step 3: Increase to 3 boxes
+    increaseQuantity(0);
+    increaseQuantity(0);
+    expect(cartItems.value[0].quantity).toBe(3);
+    expect(cartItems.value[0].quantityBase).toBe(36); // 3 × 12
+    expect(cartItems.value[0].subtotal).toBe(16500); // 3 × 5500
+
+    // Step 4: Switch back to piece (price=500, factor=1)
+    handleUnitChange({ index: 0, unit: pieceUnit });
+    expect(cartItems.value[0].unitPrice).toBe(500);
+    expect(cartItems.value[0].unitFactor).toBe(1);
+    expect(cartItems.value[0].quantityBase).toBe(3); // 3 × 1
+    expect(cartItems.value[0].subtotal).toBe(1500); // 3 × 500
+
+    // Step 5: Verify subtotal reflects all items
+    expect(subtotal.value).toBe(1500);
+  });
+
+  it('multiple products with different units in same cart', async () => {
+    const { productsClient } = await import('@/api');
+    // Product A has box unit
+    const boxUnit = createMockProductUnit({
+      unitName: 'box',
+      sellingPrice: 6000,
+      factorToBase: 12,
+      isDefault: true,
+      isActive: true,
+    });
+    // Product B has no units
+    vi.mocked(productsClient.getUnits)
+      .mockResolvedValueOnce(createApiSuccess([boxUnit]))
+      .mockResolvedValueOnce(createApiSuccess([]));
+
+    const { cartItems, subtotal, addToCart, increaseQuantity } = usePosCart();
+
+    await addToCart(createMockProduct({ id: 1, name: 'Water', sellingPrice: 500 }));
+    await addToCart(createMockProduct({ id: 2, name: 'Chips', sellingPrice: 250 }));
+
+    // Water: 1 box @ 6000, quantityBase=12
+    expect(cartItems.value[0].unitPrice).toBe(6000);
+    expect(cartItems.value[0].quantityBase).toBe(12);
+
+    // Chips: 1 piece @ 250, quantityBase=1
+    expect(cartItems.value[1].unitPrice).toBe(250);
+    expect(cartItems.value[1].quantityBase).toBe(1);
+
+    increaseQuantity(0); // 2 boxes of water
+
+    // Total: 2×6000 + 1×250 = 12250
+    expect(subtotal.value).toBe(12250);
+    expect(cartItems.value[0].quantityBase).toBe(24); // 2 × 12
   });
 });

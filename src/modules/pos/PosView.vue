@@ -4,7 +4,7 @@
       :items="cartItems"
       :units-map="cartItemUnitsMap"
       @increase="increaseQuantity"
-      @decrease="decreaseQuantity"
+      @decrease="handleDecreaseQuantity"
       @remove="removeFromCart"
       @unit-change="handleUnitChange"
     >
@@ -362,6 +362,7 @@
   <StockAlert
     :show="showStockAlert"
     :message="stockAlertMessage"
+    :products="stockAlertProducts"
     :title="t('errors.outOfStock')"
     :show-cancel="false"
     :confirm-text="t('common.close')"
@@ -389,8 +390,7 @@ import PosActionBar from '@/components/pos/PosActionBar.vue';
 import PaymentOverlay from '@/components/pos/PaymentOverlay.vue';
 import StockAlert from '@/components/StockAlert.vue';
 import type { Product, SaleItem, SaleInput, Category } from '@/types/domain';
-import { categoriesClient, posClient, productsClient } from '@/api';
-import type { ProductUnit } from '@/types/domain';
+import { categoriesClient, posClient } from '@/api';
 import { useGlobalBarcodeScanner } from '@/composables/useGlobalBarcodeScanner';
 import MoneyInput from '@/components/shared/MoneyInput.vue';
 import { generateIdempotencyKey } from '@/utils/idempotency';
@@ -398,6 +398,7 @@ import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/noti
 import { useLayoutStore } from '@/stores/layout';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import PosShortcutsHelp from '@/components/pos/PosShortcutsHelp.vue';
+import { usePosCart } from '@/composables/usePosCart';
 import { usePosSettingsStore, useSystemSettingsStore } from '@/stores/settings';
 import { createReceiptPrintData, printReceiptModern } from '@/modules/pos/receiptPrint';
 
@@ -422,29 +423,26 @@ const searchQuery = ref('');
 const selectedCategory = ref<number | null>(null);
 const dbCategories = ref<Category[]>([]);
 
-const cartItems = ref<SaleItem[]>([]);
-
-// Cache of product units keyed by productId
-const productUnitsCache = ref<Map<number, ProductUnit[]>>(new Map());
-
-// Map of available units for each cart item index (computed from cache)
-const cartItemUnitsMap = computed(() => {
-  const map = new Map<number, ProductUnit[]>();
-  cartItems.value.forEach((item, idx) => {
-    const units = productUnitsCache.value.get(item.productId);
-    if (units && units.length > 0) {
-      map.set(
-        idx,
-        units.filter((u) => u.isActive)
-      );
-    }
-  });
-  return map;
-});
-const discount = ref(0);
-const tax = ref(0);
-const selectedCustomerId = ref<number | null>(null);
-const saleNote = ref<string | null>(null);
+const {
+  cartItems,
+  cartItemUnitsMap,
+  discount,
+  tax,
+  selectedCustomerId,
+  saleNote,
+  subtotal,
+  total,
+  addToCart,
+  handleUnitChange,
+  increaseQuantity,
+  decreaseQuantity,
+  removeFromCart: removeCartItem,
+  confirmRemoveAt,
+  resetCart,
+  applyDiscount: applyCartDiscount,
+  ensureUnitsCached,
+  trackProductPrice,
+} = usePosCart();
 
 const isProcessingPayment = ref(false);
 const payOpen = ref(false);
@@ -460,6 +458,7 @@ const showMoreDialog = ref(false);
 const showStockAlert = ref(false);
 const showShortcutsHelp = ref(false);
 const stockAlertMessage = ref('');
+const stockAlertProducts = ref<string[]>([]);
 
 const pendingRemoveIndex = ref<number | null>(null);
 const customerSearch = ref('');
@@ -562,16 +561,6 @@ const filteredCustomers = computed(() => {
 
 const cashierName = computed(() => authStore.currentUser?.username || 'POS Client');
 
-const subtotal = computed(() => {
-  return cartItems.value.reduce((sum, item) => {
-    return sum + item.quantity * item.unitPrice - (item.discount || 0);
-  }, 0);
-});
-
-const total = computed(() => {
-  return Math.max(0, subtotal.value - discount.value + tax.value);
-});
-
 const anyDialogOpen = computed(() => {
   return (
     payOpen.value ||
@@ -589,6 +578,40 @@ const anyDialogOpen = computed(() => {
 
 function formatCurrency(value: number): string {
   return currencyFormatter(value);
+}
+
+/**
+ * Extract unavailable product names from the INSUFFICIENT_STOCK error details.
+ * The backend may return details as:
+ *   - an array of objects with a `productName` or `name` field
+ *   - an array of strings
+ *   - a single object with `productName`/`name`
+ * Falls back to all cart product names if nothing useful is found.
+ */
+function extractUnavailableProducts(details: unknown): string[] {
+  if (Array.isArray(details)) {
+    const names = details
+      .map((d) => {
+        if (typeof d === 'string') return d;
+        if (d && typeof d === 'object') {
+          const obj = d as Record<string, unknown>;
+          const name = obj.productName ?? obj.name;
+          return typeof name === 'string' ? name : undefined;
+        }
+        return undefined;
+      })
+      .filter((n): n is string => !!n);
+    if (names.length > 0) return names;
+  }
+
+  if (details && typeof details === 'object' && !Array.isArray(details)) {
+    const obj = details as Record<string, unknown>;
+    const name = obj.productName ?? obj.name;
+    if (typeof name === 'string') return [name];
+  }
+
+  // Fallback: show all cart product names
+  return cartItems.value.map((item) => item.productName).filter((n): n is string => !!n);
 }
 
 function heldSaleName(sale: HeldSale, index: number): string {
@@ -701,102 +724,22 @@ async function handleSearchSubmit() {
   focusSearchInput();
 }
 
-async function fetchProductUnits(productId: number): Promise<ProductUnit[]> {
-  if (productUnitsCache.value.has(productId)) {
-    return productUnitsCache.value.get(productId)!;
-  }
-  try {
-    const result = await productsClient.getUnits(productId);
-    const units = result.ok ? (result.data ?? []) : [];
-    productUnitsCache.value.set(productId, units);
-    return units;
-  } catch {
-    return [];
-  }
-}
-
-async function addToCart(product: Product): Promise<boolean> {
-  const productId = product.id ?? 0;
-
-  // Fetch units (cached)
-  const units = await fetchProductUnits(productId);
-  const activeUnits = units.filter((u) => u.isActive);
-
-  // Determine default unit
-  const defaultUnit = activeUnits.find((u) => u.isDefault) || activeUnits[0];
-
-  const unitPrice = defaultUnit?.sellingPrice ?? product.sellingPrice;
-  const unitName = defaultUnit?.unitName ?? product.unit ?? 'pcs';
-  const unitFactor = defaultUnit?.factorToBase ?? 1;
-
-  if (unitPrice <= 0) {
-    const proceed = confirm(t('pos.zeroPriceWarning'));
-    if (!proceed) return false;
-  }
-
-  const existingIndex = cartItems.value.findIndex(
-    (item) => item.productId === productId && item.unitName === unitName
-  );
-
-  if (existingIndex >= 0) {
-    const existing = cartItems.value[existingIndex];
-    existing.quantity += 1;
-    existing.quantityBase = existing.quantity * (existing.unitFactor ?? 1);
-    existing.subtotal = existing.quantity * existing.unitPrice - (existing.discount || 0);
-  } else {
-    cartItems.value.push({
-      productId,
-      productName: product.name,
-      quantity: 1,
-      unitPrice,
-      discount: 0,
-      subtotal: unitPrice,
-      unitName,
-      unitFactor,
-      quantityBase: unitFactor,
-    });
-  }
-
-  return true;
-}
-
-function handleUnitChange(payload: { index: number; unit: ProductUnit }) {
-  const item = cartItems.value[payload.index];
-  if (!item) return;
-  item.unitName = payload.unit.unitName;
-  item.unitFactor = payload.unit.factorToBase;
-  item.unitPrice = payload.unit.sellingPrice ?? item.unitPrice;
-  item.quantityBase = item.quantity * (payload.unit.factorToBase ?? 1);
-  item.subtotal = item.quantity * item.unitPrice - (item.discount || 0);
-}
-
-function increaseQuantity(index: number) {
-  const item = cartItems.value[index];
-  item.quantity += 1;
-  item.quantityBase = item.quantity * (item.unitFactor ?? 1);
-  item.subtotal = item.quantity * item.unitPrice - (item.discount || 0);
-}
-
-function decreaseQuantity(index: number) {
-  const item = cartItems.value[index];
-
-  if (item.quantity > 1) {
-    item.quantity -= 1;
-    item.quantityBase = item.quantity * (item.unitFactor ?? 1);
-    item.subtotal = item.quantity * item.unitPrice - (item.discount || 0);
-  } else {
-    removeFromCart(index);
+function handleDecreaseQuantity(index: number) {
+  const result = decreaseQuantity(index);
+  if (result === undefined) return;
+  if (result === 'confirm-needed') {
+    pendingRemoveIndex.value = index;
+    showRemoveConfirm.value = true;
   }
 }
 
 function removeFromCart(index: number) {
-  if (cartItems.value.length === 1) {
+  const result = removeCartItem(index);
+  if (result === undefined) return;
+  if (result === 'confirm-needed') {
     pendingRemoveIndex.value = index;
     showRemoveConfirm.value = true;
-    return;
   }
-
-  cartItems.value.splice(index, 1);
 }
 
 function cancelRemove() {
@@ -806,7 +749,7 @@ function cancelRemove() {
 
 function confirmRemove() {
   if (pendingRemoveIndex.value !== null) {
-    cartItems.value.splice(pendingRemoveIndex.value, 1);
+    confirmRemoveAt(pendingRemoveIndex.value);
   }
   showRemoveConfirm.value = false;
   pendingRemoveIndex.value = null;
@@ -824,11 +767,7 @@ function confirmClear() {
 }
 
 function resetSaleData() {
-  cartItems.value = [];
-  discount.value = 0;
-  tax.value = 0;
-  selectedCustomerId.value = null;
-  saleNote.value = null;
+  resetCart();
 }
 
 function openCustomerDialog() {
@@ -855,9 +794,7 @@ function openDiscountDialog() {
 }
 
 function applyDiscount() {
-  if (discountInput.value >= 0 && discountInput.value <= subtotal.value) {
-    discount.value = discountInput.value;
-  }
+  applyCartDiscount(discountInput.value);
   showDiscountDialog.value = false;
 }
 
@@ -900,12 +837,7 @@ function confirmHold() {
   heldSales.value.push(heldSale);
   saveHeldSales();
 
-  // Clear cart (stock is managed by backend)
-  cartItems.value = [];
-  discount.value = 0;
-  tax.value = 0;
-  selectedCustomerId.value = null;
-  saleNote.value = null;
+  resetSaleData();
 
   showHoldDialog.value = false;
   setTimeout(() => focusSearchInput(), 100);
@@ -926,6 +858,15 @@ function resumeHeldSale(index: number) {
   tax.value = sale.tax;
   selectedCustomerId.value = sale.customerId;
   saleNote.value = sale.note;
+
+  // Populate unit caches for resumed items
+  for (const item of cartItems.value) {
+    const product = productsStore.items.find((p) => p.id === item.productId);
+    if (product) {
+      trackProductPrice(item.productId);
+    }
+  }
+  void ensureUnitsCached();
 
   heldSales.value.splice(index, 1);
   saveHeldSales();
@@ -1118,11 +1059,7 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
             : itemsWithSubtotals,
       };
 
-      cartItems.value = [];
-      discount.value = 0;
-      tax.value = 0;
-      selectedCustomerId.value = null;
-      saleNote.value = null;
+      resetSaleData();
       payOpen.value = false;
 
       setTimeout(() => focusSearchInput(), 100);
@@ -1134,6 +1071,11 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
     } else if (!result.ok && 'error' in result) {
       if (result.error.code === 'INSUFFICIENT_STOCK') {
         stockAlertMessage.value = t('errors.outOfStockMessage');
+
+        // Extract out-of-stock product names from error details if available
+        const details = result.error.details;
+        const unavailableNames = extractUnavailableProducts(details);
+        stockAlertProducts.value = unavailableNames;
         showStockAlert.value = true;
       }
     }

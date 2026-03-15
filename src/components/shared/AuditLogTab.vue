@@ -98,11 +98,16 @@ const loading = ref(false);
 async function loadAuditTrail() {
   if (!props.entityId) return;
   loading.value = true;
-  const result = await auditClient.getTrail(props.entityType, props.entityId, props.limit);
-  if (result.ok) {
-    events.value = result.data ?? [];
+  try {
+    const result = await auditClient.getTrail(props.entityType, props.entityId, props.limit);
+    if (result.ok) {
+      events.value = result.data ?? [];
+    }
+  } catch {
+    events.value = [];
+  } finally {
+    loading.value = false;
   }
-  loading.value = false;
 }
 
 const ACTION_LABELS: Record<string, string> = {

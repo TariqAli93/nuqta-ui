@@ -19,6 +19,11 @@
         :active="unit.unitName === current"
         @click="emit('select', unit)"
       >
+        <template #prepend>
+          <v-icon v-if="unit.unitName === current" size="16" color="primary" class="ml-1">
+            mdi-check-circle
+          </v-icon>
+        </template>
         <v-list-item-title class="text-body-2">
           {{ unit.unitName }}
           <span v-if="unit.sellingPrice != null" class="text-caption text-medium-emphasis mr-2">
@@ -26,7 +31,7 @@
           </span>
         </v-list-item-title>
         <v-list-item-subtitle v-if="(unit.factorToBase ?? 1) > 1" class="text-caption">
-          × {{ unit.factorToBase }}
+          = {{ unit.factorToBase }} {{ baseUnitLabel }}
         </v-list-item-subtitle>
       </v-list-item>
     </v-list>
@@ -37,8 +42,9 @@
 <script setup lang="ts">
 import type { ProductUnitOption } from '@/types/pos';
 import { formatPrice } from '@/utils/format';
+import { computed } from 'vue';
 
-defineProps<{
+const props = defineProps<{
   current: string;
   units: ProductUnitOption[];
 }>();
@@ -46,4 +52,10 @@ defineProps<{
 const emit = defineEmits<{
   select: [unit: ProductUnitOption];
 }>();
+
+// Derive the base unit label from the unit with factor=1
+const baseUnitLabel = computed(() => {
+  const base = props.units.find((u) => (u.factorToBase ?? 1) === 1);
+  return base?.unitName ?? '';
+});
 </script>

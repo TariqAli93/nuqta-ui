@@ -84,61 +84,8 @@
           </v-col>
         </v-row>
 
-        <!-- Action buttons -->
-        <div class="d-flex ga-2 mb-4"></div>
-
-        <!-- Sale info -->
-        <v-card class="win-card mb-4" flat>
-          <v-card-text class="pa-0">
-            <v-list density="comfortable" lines="two">
-              <v-list-item
-                v-if="sale.paymentType"
-                :title="t('sales.paymentType')"
-                :subtitle="t(`enum.paymentType.${sale.paymentType}`)"
-                prepend-icon="mdi-credit-card-outline"
-              />
-              <v-divider v-if="sale.paymentType" />
-              <v-list-item
-                :title="t('sales.paidAmount')"
-                :subtitle="formatAmount(sale.paidAmount ?? 0)"
-                prepend-icon="mdi-cash-check"
-              />
-              <v-divider v-if="sale.remainingAmount" />
-              <v-list-item
-                v-if="sale.remainingAmount"
-                :title="t('sales.remaining')"
-                prepend-icon="mdi-cash-clock"
-              >
-                <template #subtitle>
-                  <span class="text-error font-weight-medium">
-                    {{ formatAmount(sale.remainingAmount) }}
-                  </span>
-                </template>
-              </v-list-item>
-              <v-divider v-if="sale.discount" />
-              <v-list-item
-                v-if="sale.discount"
-                :title="t('sales.discount')"
-                :subtitle="formatAmount(sale.discount)"
-                prepend-icon="mdi-tag-outline"
-              />
-              <v-divider v-if="sale.tax" />
-              <v-list-item
-                v-if="sale.tax"
-                :title="t('sales.tax')"
-                :subtitle="formatAmount(sale.tax)"
-                prepend-icon="mdi-percent-outline"
-              />
-              <v-divider v-if="sale.notes" />
-              <v-list-item
-                v-if="sale.notes"
-                :title="t('common.notes')"
-                :subtitle="sale.notes"
-                prepend-icon="mdi-note-text-outline"
-              />
-            </v-list>
-          </v-card-text>
-        </v-card>
+        <!-- Payment details -->
+        <PaymentInfoCard :sale="sale" class="mb-4" />
 
         <!-- Line items -->
         <v-card class="win-card" flat>
@@ -250,12 +197,7 @@
 
         <!-- Audit Trail -->
         <!-- <v-card class="win-card mt-4" flat>
-          <AuditLogTab
-            v-if="sale?.id"
-            entity-type="sale"
-            :entity-id="sale.id"
-            title="سجل تدقيق الفاتورة"
-          />
+          <AuditLogTab entity-type="sale" :entity-id="sale?.id ?? 1" title="سجل تدقيق الفاتورة" />
         </v-card> -->
       </template>
     </div>
@@ -298,6 +240,7 @@ import { useRoute } from 'vue-router';
 import { mapErrorToArabic, t } from '../../i18n/t';
 import { useSalesStore } from '../../stores/salesStore';
 import EmptyState from '../../components/emptyState.vue';
+import PaymentInfoCard from '../../components/shared/PaymentInfoCard.vue';
 import AuditLogTab from '../../components/shared/AuditLogTab.vue';
 import type { Sale } from '../../types/domain';
 import { notifyError, notifySuccess } from '@/utils/notify';
@@ -332,14 +275,19 @@ const profitMarginPct = computed(() => {
   return margin.toFixed(1);
 });
 
-const itemHeaders = computed(() => [
-  { title: t('sales.product'), key: 'productName' },
-  { title: t('sales.qty'), key: 'quantity' },
-  { title: t('sales.unitPrice'), key: 'unitPrice' },
-  { title: t('sales.discount'), key: 'discount' },
-  { title: t('sales.subtotal'), key: 'subtotal' },
-  { title: '', key: 'data-table-expand' },
-]);
+const itemHeaders = computed(() => {
+  const headers = [
+    { title: t('sales.product'), key: 'productName' },
+    { title: t('sales.qty'), key: 'quantity' },
+    { title: t('sales.unitPrice'), key: 'unitPrice' },
+    { title: t('sales.discount'), key: 'discount' },
+    { title: t('sales.subtotal'), key: 'subtotal' },
+  ];
+  if (paymentsOnInvoicesEnabled.value) {
+    headers.push({ title: '', key: 'data-table-expand' });
+  }
+  return headers;
+});
 
 function statusLabel(status: string | undefined): string {
   if (!status) return t('common.none');
@@ -370,7 +318,7 @@ function statusIcon(status: string | undefined): string {
 }
 
 function formatAmount(value: number): string {
-  const normalized = Number.isInteger(value) ? value : 0;
+  const normalized = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
   return new Intl.NumberFormat('ar-IQ', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
@@ -428,12 +376,14 @@ async function executeCancel() {
   cancelDialog.value = false;
   store.error = null;
 
-  const result = await store.cancelSale(sale.value.id);
-  cancelling.value = false;
-
-  if (result.ok) {
-    sale.value = result.data;
-    notifySuccess('تم إلغاء الفاتورة');
+  try {
+    const result = await store.cancelSale(sale.value.id);
+    if (result.ok) {
+      sale.value = result.data;
+      notifySuccess('تم إلغاء الفاتورة');
+    }
+  } finally {
+    cancelling.value = false;
   }
 }
 

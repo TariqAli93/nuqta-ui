@@ -300,7 +300,7 @@ const props = withDefaults(defineProps<Props>(), {
   subtotal: undefined,
   discount: 0,
   tax: 0,
-  currency: 'USD',
+  currency: 'IQD',
   cashierName: '',
   cashierTitle: 'POS Client',
   busy: false,
@@ -316,10 +316,15 @@ const emit = defineEmits<{
 
 const amountInput = ref('');
 const extraDiscountInput = ref('');
-const selectedPaymentType = ref<SaleInput['paymentType']>('cash');
 const selectedPaymentMethod = ref<PaymentMethod>('cash');
 const referenceNumber = ref('');
 const discountEditorOpen = ref(false);
+
+const selectedPaymentType = computed<SaleInput['paymentType']>(() => {
+  if (selectedPaymentMethod.value === 'credit') return 'credit';
+  // If you want to support 'mixed', add logic here
+  return 'cash';
+});
 
 const keypadKeys = [
   { id: '1', label: '1' },
@@ -496,7 +501,7 @@ function formatCurrency(value: number): string {
   }
 }
 
-function normalizeDecimalInput(value: string): string {
+function stripNonDigits(value: string): string {
   const normalized = value.replace(/[^\d]/g, '');
   const parsed = parseInt(normalized, 10);
   return (Number.isFinite(parsed) ? Math.max(0, parsed) : 0).toString();
@@ -511,7 +516,7 @@ function toInputAmount(value: number): string {
 const isRewriteMode = ref(true); // first keypad press overwrites existing value
 const entryMode = ref<'int' | 'dec'>('int'); // digits go to integer unless '.' pressed
 function onAmountInput(value: string) {
-  amountInput.value = normalizeDecimalInput(value || '');
+  amountInput.value = stripNonDigits(value || '');
   // Manual typing should NOT overwrite on next keypad press.
   isRewriteMode.value = false;
   // If user typed a dot manually, treat as decimal mode.
@@ -519,7 +524,7 @@ function onAmountInput(value: string) {
 }
 
 function onExtraDiscountInput(value: string) {
-  extraDiscountInput.value = normalizeDecimalInput(value || '');
+  extraDiscountInput.value = stripNonDigits(value || '');
 }
 
 function appendAmount(char: string) {
@@ -671,7 +676,6 @@ function confirmPayment() {
 }
 
 function resetState() {
-  selectedPaymentType.value = 'cash';
   selectedPaymentMethod.value = 'cash';
   referenceNumber.value = '';
   discountEditorOpen.value = false;

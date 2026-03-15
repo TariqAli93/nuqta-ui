@@ -58,7 +58,9 @@
               <span class="font-weight-medium">{{ item.invoiceNumber }}</span>
             </template>
             <template #item.customerId="{ item }">
-              <span class="text-medium-emphasis">{{ item.customerId ?? t('common.none') }}</span>
+              <span class="text-medium-emphasis">{{
+                item.customerId ? fetchCustomerName(item.customerId) : t('common.none')
+              }}</span>
             </template>
             <template #item.total="{ item }">
               <span class="font-weight-bold">{{ formatCurrency(item.total) }}</span>
@@ -95,17 +97,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { useSalesStore } from '../../stores/salesStore';
-import EmptyState from '../../components/emptyState.vue';
+import { computed, onMounted, ref, watch, onUnmounted } from 'vue';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { useSalesStore } from '@/stores/salesStore';
+import EmptyState from '@/components/emptyState.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { notifyError } from '@/utils/notify';
+import { useCustomersStore } from '@/stores/customersStore';
 
 const store = useSalesStore();
 const searchQuery = ref('');
 const statusFilter = ref<string | null>(null);
 let searchTimeout: ReturnType<typeof setTimeout> | null = null;
+
+const { fetchCustomers, items: customers } = useCustomersStore();
 
 const { formatCurrency } = useCurrency();
 
@@ -171,6 +176,14 @@ function fetchWithFilters() {
   });
 }
 
+const fetchCustomerName = computed(() => {
+  const map: Record<number, string> = {};
+  customers.map((c) => {
+    if (c.id && c.name) map[c.id] = c.name;
+  });
+  return (id: number) => map[id] || t('common.unknown');
+});
+
 watch([searchQuery, statusFilter], () => {
   if (searchTimeout) clearTimeout(searchTimeout);
   searchTimeout = setTimeout(fetchWithFilters, 300);
@@ -183,5 +196,10 @@ watch(localizedError, (value) => {
 
 onMounted(() => {
   fetchWithFilters();
+  fetchCustomers();
+});
+
+onUnmounted(() => {
+  if (searchTimeout) clearTimeout(searchTimeout);
 });
 </script>

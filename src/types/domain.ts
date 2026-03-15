@@ -122,13 +122,16 @@ export interface Sale {
   paymentType?: 'cash' | 'credit' | 'mixed';
   paidAmount?: number;
   remainingAmount?: number;
-  status?: 'pending' | 'completed' | 'cancelled';
+  status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial';
   notes?: string | null;
   idempotencyKey?: string | null;
   createdAt?: string;
   updatedAt?: string;
   createdBy?: number;
   items?: SaleItem[];
+  payments?: Payment[];
+  paymentMethod?: string;
+  referenceNumber?: string | null;
   cogs?: number;
   totalCogs?: number;
   profit?: number;

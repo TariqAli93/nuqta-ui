@@ -52,6 +52,7 @@
 
 <script setup lang="ts">
 import { t } from '@/i18n/t';
+import { formatPrice } from '@/utils/format';
 
 interface Props {
   subtotal: number;
@@ -64,14 +65,4 @@ withDefaults(defineProps<Props>(), {
   discount: 0,
   tax: 0,
 });
-
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('ar-IQ', {
-    style: 'currency',
-    currency: 'IQD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-    numberingSystem: 'latn',
-  }).format(price);
-};
 </script>

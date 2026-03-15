@@ -19,7 +19,7 @@
         <v-list v-if="items.length > 0" density="comfortable" bg-color="transparent" class="py-2">
           <CartItem
             v-for="(item, index) in items"
-            :key="index"
+            :key="`${item.productId}-${item.unitName}`"
             :item="item"
             :units="getUnitsForIndex(index)"
             @increase="$emit('increase', index)"
@@ -90,8 +90,6 @@ const emit = defineEmits<{
   increase: [index: number];
   decrease: [index: number];
   remove: [index: number];
-  setQuantity: [{ index: number; quantity: number }];
-  resetQuantityInput: [index: number];
   unitChange: [{ index: number; unit: ProductUnitOption }];
 }>();
 

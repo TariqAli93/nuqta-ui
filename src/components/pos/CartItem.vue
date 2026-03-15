@@ -16,6 +16,9 @@
         <span class="mr-1">·</span>
       </template>
       {{ formatPrice(item.unitPrice) }} {{ t('pos.each') }}
+      <span v-if="hasUnitFactor" class="text-caption text-disabled">
+        · {{ item.quantity }} × {{ item.unitFactor }} = {{ item.quantityBase }}
+      </span>
     </v-list-item-subtitle>
 
     <template #append>
@@ -31,7 +34,7 @@
         </v-btn>
 
         <span class="text-body-2 font-weight-bold text-no-wrap" style="max-width: 45px">
-          {{ formatPrice(item.unitPrice * item.quantity) }}
+          {{ formatPrice(item.subtotal) }}
         </span>
 
         <v-btn icon variant="text" density="comfortable" class="mr-4" @click="emit('remove')">
@@ -64,4 +67,6 @@ const emit = defineEmits<{
 const isNamedUnit = computed(
   () => props.item.unitName !== 'pcs' && props.item.unitName !== 'piece'
 );
+
+const hasUnitFactor = computed(() => (props.item.unitFactor ?? 1) > 1);
 </script>
