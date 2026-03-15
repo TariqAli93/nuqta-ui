@@ -13,7 +13,9 @@ export const ErrorCodes = {
   PERMISSION_DENIED: 'PERMISSION_DENIED', // 403
   CONFLICT: 'CONFLICT', // 409
   INSUFFICIENT_STOCK: 'INSUFFICIENT_STOCK', // 409 / 422
+  OPTIMISTIC_LOCK: 'OPTIMISTIC_LOCK', // 409 — concurrent write conflict
   INVALID_STATE: 'INVALID_STATE', // 409 / 422
+  FORBIDDEN: 'FORBIDDEN', // 403 — backend alias for PERMISSION_DENIED
   RATE_LIMITED: 'RATE_LIMITED', // 429 — retryable (see http.ts)
 
   // Network/transport errors (no HTTP status)
