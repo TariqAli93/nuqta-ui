@@ -58,10 +58,14 @@ export type DomainErrorCode =
 export function isInsufficientStockError(
   error: DomainError | undefined | null
 ): error is DomainError & { details: { available: number; requested: number } } {
+  const details = error?.details;
+
   return (
     error?.code === DOMAIN_ERROR_CODES.INSUFFICIENT_STOCK &&
-    typeof (error.details as Record<string, unknown> | undefined)?.available ===
-      'number'
+    details !== null &&
+    typeof details === 'object' &&
+    typeof (details as Record<string, unknown>).available === 'number' &&
+    typeof (details as Record<string, unknown>).requested === 'number'
   );
 }
 
