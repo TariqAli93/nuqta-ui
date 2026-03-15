@@ -16,6 +16,7 @@ import { computed } from 'vue';
 type SaleStatus = 'open' | 'completed' | 'cancelled' | 'refunded' | 'partially_refunded';
 type PayrollStatus = 'draft' | 'submitted' | 'approved' | 'disbursed' | 'cancelled';
 type PurchaseStatus = 'pending' | 'received' | 'cancelled';
+type Status = SaleStatus | PayrollStatus | PurchaseStatus | 'active' | 'inactive' | 'voided';
 
 const STATUS_CONFIG: Record<
   string,
@@ -44,7 +45,7 @@ const STATUS_CONFIG: Record<
 
 const props = withDefaults(
   defineProps<{
-    status: string;
+    status: Status;
     label?: string;
     size?: 'x-small' | 'small' | 'default' | 'large';
   }>(),
