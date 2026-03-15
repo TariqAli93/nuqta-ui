@@ -13,8 +13,10 @@ const errorCodeMap: Record<string, string> = {
   [ErrorCodes.NOT_FOUND]: 'errors.loadFailed',
   [ErrorCodes.UNAUTHORIZED]: 'auth.sessionExpired',
   [ErrorCodes.PERMISSION_DENIED]: 'errors.noPermission',
+  [ErrorCodes.FORBIDDEN]: 'errors.noPermission',
   [ErrorCodes.CONFLICT]: 'errors.saveFailed',
   [ErrorCodes.INSUFFICIENT_STOCK]: 'errors.insufficientStock',
+  [ErrorCodes.OPTIMISTIC_LOCK]: 'errors.optimisticLock',
   [ErrorCodes.INVALID_STATE]: 'errors.invalidData',
   [ErrorCodes.RATE_LIMITED]: 'errors.rateLimited',
   [ErrorCodes.NETWORK_ERROR]: 'errors.loadFailed',
@@ -64,6 +66,24 @@ export function useApiError() {
         notifyWarn(message, { dedupeKey });
       }
       return { message, isAuth: false };
+    }
+
+    if (error.code === ErrorCodes.INSUFFICIENT_STOCK && error.details) {
+      const d = error.details as Record<string, unknown>;
+      const available = typeof d.available === 'number' ? d.available : null;
+      const requested = typeof d.requested === 'number' ? d.requested : null;
+      const detailMsg =
+        available !== null && requested !== null
+          ? `${t('errors.insufficientStock')} — ${t('errors.stockAvailable')}: ${available.toLocaleString()}, ${t('errors.stockRequested')}: ${requested.toLocaleString()}`
+          : message;
+      if (notifyUser) notifyError(detailMsg, { dedupeKey });
+      return { message: detailMsg, details: error.details, isAuth: false };
+    }
+
+    if (error.code === ErrorCodes.OPTIMISTIC_LOCK) {
+      const detailMsg = t('errors.optimisticLock');
+      if (notifyUser) notifyWarn(detailMsg, { dedupeKey });
+      return { message: detailMsg, isAuth: false };
     }
 
     if (error.code === ErrorCodes.VALIDATION_ERROR && error.details) {
