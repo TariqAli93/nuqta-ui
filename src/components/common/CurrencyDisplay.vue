@@ -19,7 +19,7 @@ import { computed } from 'vue';
 
 const props = withDefaults(
   defineProps<{
-    /** Amount in the smallest integer unit (IQD has no sub-unit). */
+    /** Amount in the major currency unit (e.g. dinars, dollars; for zero-decimal currencies this is the smallest unit). */
     amount: number;
     /** ISO 4217 currency code. Defaults to IQD. */
     currency?: string;
