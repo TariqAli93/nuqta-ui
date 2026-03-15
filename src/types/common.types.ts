@@ -75,12 +75,12 @@ export function isInsufficientStockError(
 export function toPaginatedResult<T>(
   pagedResult: { items: T[]; total: number },
   page = 1,
-  pageSize?: number
+  pageSize: number
 ): PaginatedResult<T> {
   return {
     data: pagedResult.items,
     total: pagedResult.total,
     page,
-    pageSize: pageSize ?? pagedResult.items.length,
+    pageSize,
   };
 }
