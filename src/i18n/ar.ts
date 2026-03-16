@@ -16,6 +16,7 @@
   'common.status': 'الحالة',
   'common.total': 'الإجمالي',
   'common.none': '—',
+  'common.noCustomer': 'بدون عميل',
   'common.logout': 'تسجيل الخروج',
   'common.profile': 'الملف الشخصي',
   'common.actions': 'الإجراءات',
@@ -61,7 +62,8 @@
   'errors.insufficientStock': 'المخزون غير كافٍ',
   'errors.stockAvailable': 'المتوفر',
   'errors.stockRequested': 'المطلوب',
-  'errors.optimisticLock': 'تم تعديل هذا السجل بواسطة مستخدم آخر، يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى',
+  'errors.optimisticLock':
+    'تم تعديل هذا السجل بواسطة مستخدم آخر، يرجى إعادة تحميل الصفحة والمحاولة مرة أخرى',
   'errors.outOfStock': 'المنتج غير متوفر في المخزون',
   'errors.stockBelowZero': 'لا يمكن أن يكون المخزون أقل من الصفر',
   'errors.initializeFailed': 'فشل تهيئة النظام',

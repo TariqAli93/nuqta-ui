@@ -58,9 +58,10 @@
               <span class="font-weight-medium">{{ item.invoiceNumber }}</span>
             </template>
             <template #item.customerId="{ item }">
-              <span class="text-medium-emphasis">{{
-                item.customerId ? fetchCustomerName(item.customerId) : t('common.none')
-              }}</span>
+              <span v-if="item.customerId" class="text-medium-emphasis">
+                {{ fetchCustomerName(item.customerId) }}
+              </span>
+              <span v-else class="text-disabled">{{ t('common.noCustomer') }}</span>
             </template>
             <template #item.total="{ item }">
               <span class="font-weight-bold">{{ formatCurrency(item.total) }}</span>
