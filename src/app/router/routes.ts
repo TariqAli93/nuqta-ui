@@ -25,7 +25,6 @@ import { suppliersRoutes } from '../../modules/suppliers/routes';
 import { purchasesRoutes } from '../../modules/purchases/routes';
 import { inventoryRoutes } from '../../modules/inventory/routes';
 import { accountingRoutes } from '../../modules/accounting/routes';
-import { simpleModeRoutes } from '../../modules/simple/routes';
 
 export const routes: RouteRecordRaw[] = [
   setupRoute,
@@ -73,7 +72,6 @@ export const routes: RouteRecordRaw[] = [
           breadcrumb: { title: 'nav.pos', to: '/pos' },
         },
       },
-      ...simpleModeRoutes,
       ...customersRoutes,
       ...productsRoutes,
       ...salesRoutes,

@@ -1,9 +1,35 @@
 <template>
-  <v-tabs v-model="activeTab" color="primary" bg-color="surface" class="mb-4">
-    <v-tab value="all">الكل</v-tab>
-    <v-tab value="posted">مرحل</v-tab>
-    <v-tab value="unposted">غير مرحل</v-tab>
-  </v-tabs>
+  <v-toolbar flat density="compact" color="transparent" class="px-2 mb-2">
+    <v-tabs v-model="activeTab" color="primary" class="me-4">
+      <v-tab value="all">الكل</v-tab>
+      <v-tab value="posted">مرحل</v-tab>
+      <v-tab value="unposted">غير مرحل</v-tab>
+    </v-tabs>
+
+    <v-select
+      v-model="filterSource"
+      :items="sourceOptions"
+      clearable
+      label="المصدر"
+      density="compact"
+      variant="outlined"
+      hide-details
+      style="max-width: 180px"
+      class="me-3"
+    />
+
+    <v-spacer />
+
+    <v-btn
+      color="primary"
+      variant="flat"
+      size="small"
+      prepend-icon="mdi-plus"
+      :to="{ name: 'JournalEntryCreate' }"
+    >
+      إنشاء قيد
+    </v-btn>
+  </v-toolbar>
 
   <v-card>
     <v-card-text>
@@ -78,17 +104,28 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { postingClient } from '@/api/endpoints/posting';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
 import { formatDate, formatMoney } from '@/utils/formatters';
 
+const route = useRoute();
 const store = useAccountingStore();
 
 const activeTab = ref<'all' | 'posted' | 'unposted'>('all');
+const filterSource = ref<string | null>(null);
 const loading = ref(false);
 const actionLoading = ref<number | null>(null);
+
+const sourceOptions = [
+  { title: 'بيع', value: 'sale' },
+  { title: 'شراء', value: 'purchase' },
+  { title: 'دفعة', value: 'payment' },
+  { title: 'تسوية', value: 'adjustment' },
+  { title: 'يدوي', value: 'manual' },
+];
 
 const options = ref({
   page: 1,
@@ -113,6 +150,7 @@ async function loadData() {
 
   await store.fetchJournalEntries({
     isPosted,
+    sourceType: filterSource.value || undefined,
     limit: options.value.itemsPerPage,
     offset: (options.value.page - 1) * options.value.itemsPerPage,
   });
@@ -160,11 +198,20 @@ function onOptionsUpdate(newOptions: any) {
 }
 
 watch(activeTab, () => {
-  options.value.page = 1; // Reset to first page when changing tabs
+  options.value.page = 1;
+  loadData();
+});
+
+watch(filterSource, () => {
+  options.value.page = 1;
   loadData();
 });
 
 onMounted(() => {
+  // Check for accountId from route query (navigated from chart of accounts)
+  const querySource = route.query.sourceType as string | undefined;
+  if (querySource) filterSource.value = querySource;
+
   void store.fetchAccountingSettings();
   loadData();
 });

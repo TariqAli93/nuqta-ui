@@ -7,6 +7,7 @@
       </v-app-bar-title>
 
       <template #append>
+        <v-btn variant="text" icon="mdi-cog-outline" class="me-2" @click="settingsDialog?.open()" />
         <v-btn color="primary" prepend-icon="mdi-refresh" @click="refreshAll"> تحديث الكل </v-btn>
       </template>
     </v-app-bar>
@@ -23,14 +24,18 @@
     </v-tabs>
 
     <router-view />
+    <AccountingSettingsDialog ref="settingsDialog" />
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { t } from '@/i18n/t';
+import AccountingSettingsDialog from '@/components/workspace/AccountingSettingsDialog.vue';
+
+const settingsDialog = ref<InstanceType<typeof AccountingSettingsDialog> | null>(null);
 
 const route = useRoute();
 const router = useRouter();
@@ -39,6 +44,7 @@ const accountingStore = useAccountingStore();
 const tabs = [
   { value: 'accounts', label: 'دليل الحسابات', route: 'AccountingAccounts' },
   { value: 'journal', label: 'القيود اليومية', route: 'AccountingJournal' },
+  { value: 'posting', label: 'الترحيل', route: 'AccountingPosting' },
   { value: 'trial', label: 'ميزان المراجعة', route: 'AccountingTrialBalance' },
   { value: 'pnl', label: 'الأرباح والخسائر', route: 'AccountingProfitLoss' },
   { value: 'balance', label: 'الميزانية العمومية', route: 'AccountingBalanceSheet' },
@@ -61,7 +67,7 @@ function navigateToTab(routeName: string) {
 
 async function refreshAll(): Promise<void> {
   await Promise.all([
-    accountingStore.fetchAccounts(),
+    accountingStore.fetchAccounts(true),
     accountingStore.fetchJournalEntries({ limit: 30, offset: 0 }),
     accountingStore.fetchTrialBalance(),
     accountingStore.fetchProfitLoss(),

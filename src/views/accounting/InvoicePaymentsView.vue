@@ -82,6 +82,7 @@ import { useAccountingStore } from '@/stores/accountingStore';
 import { postingClient } from '@/api/endpoints/posting';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
+import { formatDate, formatMoney } from '@/utils/formatters';
 
 const store = useAccountingStore();
 
@@ -102,25 +103,6 @@ const headers = [
   { title: 'الحالة', key: 'isPosted' },
   { title: 'إجراءات', key: 'actions', sortable: false, align: 'end' as const },
 ];
-
-const formatMoney = (amount: number, currency = 'IQD') => {
-  const formatted = new Intl.NumberFormat('ar-IQ', {
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-    numberingSystem: 'latn',
-  }).format(amount || 0);
-  return `${formatted} ${currency}`;
-};
-
-const formatDate = (value?: string) => {
-  if (!value) return '—';
-  return new Date(value).toLocaleDateString('ar-IQ', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    numberingSystem: 'latn',
-  });
-};
 
 async function loadData() {
   loading.value = true;
@@ -183,6 +165,7 @@ watch(activeTab, () => {
 });
 
 onMounted(() => {
+  void store.fetchAccountingSettings();
   loadData();
 });
 </script>

@@ -5,7 +5,7 @@
  */
 import type { ApiResult, PagedResult } from '../contracts';
 import type { Account, JournalEntry } from '../../types/domain';
-import { apiGet, apiGetPaged } from '../http';
+import { apiGet, apiGetPaged, apiPost, apiPut, apiDelete } from '../http';
 
 export interface TrialBalanceRow {
   accountId: number;
@@ -37,6 +37,17 @@ export interface BalanceSheetReport {
   currentEarnings: number;
   totalEquity: number;
   difference: number;
+}
+
+export interface LedgerEntry {
+  id: number;
+  entryDate: string;
+  entryNumber: string;
+  journalEntryId: number;
+  description: string;
+  debit: number;
+  credit: number;
+  runningBalance: number;
 }
 
 export const accountingClient = {
@@ -73,4 +84,92 @@ export const accountingClient = {
     toDate?: string;
   }): Promise<ApiResult<BalanceSheetReport>> =>
     apiGet<BalanceSheetReport>('/accounting/balance-sheet', params),
+
+  createEntry: (data: {
+    entryDate: string;
+    description: string;
+    notes?: string;
+    currency?: string;
+    lines: { accountId: number; debit: number; credit: number; description?: string }[];
+  }): Promise<ApiResult<JournalEntry>> =>
+    apiPost<JournalEntry>('/accounting/journal-entries', data),
+
+  updateEntry: (
+    id: number,
+    data: {
+      entryDate?: string;
+      description?: string;
+      notes?: string;
+      lines?: { accountId: number; debit: number; credit: number; description?: string }[];
+    }
+  ): Promise<ApiResult<JournalEntry>> =>
+    apiPut<JournalEntry>(`/accounting/journal-entries/${id}`, data),
+
+  deleteEntry: (id: number): Promise<ApiResult<{ ok: true }>> =>
+    apiDelete<{ ok: true }>(`/accounting/journal-entries/${id}`),
+
+  createAccount: (data: {
+    code: string;
+    name: string;
+    nameAr?: string;
+    accountType: Account['accountType'];
+    parentId?: number | null;
+  }): Promise<ApiResult<Account>> => apiPost<Account>('/accounting/accounts', data),
+
+  updateAccount: (
+    id: number,
+    data: Partial<{
+      name: string;
+      nameAr: string;
+      accountType: Account['accountType'];
+      parentId: number | null;
+      isActive: boolean;
+    }>
+  ): Promise<ApiResult<Account>> => apiPut<Account>(`/accounting/accounts/${id}`, data),
+
+  getAccountLedger: async (
+    accountId: number,
+    params?: {
+      dateFrom?: string;
+      dateTo?: string;
+    }
+  ): Promise<ApiResult<LedgerEntry[]>> => {
+    const result = await apiGetPaged<JournalEntry>('/accounting/journal-entries', {
+      dateFrom: params?.dateFrom,
+      dateTo: params?.dateTo,
+      limit: 500,
+      offset: 0,
+    });
+
+    if (!result.ok) return result as unknown as ApiResult<LedgerEntry[]>;
+
+    const ledger: LedgerEntry[] = [];
+    let runningBalance = 0;
+
+    const sorted = [...result.data.items].sort(
+      (a, b) => new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
+    );
+
+    for (const entry of sorted) {
+      if (!entry.lines) continue;
+      for (const line of entry.lines) {
+        if (line.accountId !== accountId) continue;
+        const debit = line.debit ?? 0;
+        const credit = line.credit ?? 0;
+        runningBalance += debit - credit;
+        ledger.push({
+          id: line.id ?? entry.id ?? 0,
+          entryDate: entry.entryDate,
+          entryNumber: entry.entryNumber,
+          journalEntryId: entry.id ?? 0,
+          description: line.description || entry.description,
+          debit,
+          credit,
+          runningBalance,
+        });
+      }
+    }
+
+    return { ok: true, data: ledger };
+  },
 };

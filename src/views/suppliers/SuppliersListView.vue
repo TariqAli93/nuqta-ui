@@ -1,15 +1,19 @@
 <template>
   <v-container fluid>
-    <v-row class="mb-4" align="center">
-      <v-col>
-        <h1 class="text-h5 font-weight-bold">الموردين</h1>
-      </v-col>
-      <v-col cols="auto">
+    <v-app-bar class="mb-6" border="bottom">
+      <v-app-bar-title>
+        <div class="win-title mb-0">الموردين</div>
+        <div class="text-sm">
+          إدارة بيانات الموردين، الأرصدة الحالية، والتعاملات المالية المتعلقة بهم
+        </div>
+      </v-app-bar-title>
+
+      <template #append>
         <v-btn color="primary" prepend-icon="mdi-plus" :to="{ name: 'SupplierCreate' }">
           إضافة مورد
         </v-btn>
-      </v-col>
-    </v-row>
+      </template>
+    </v-app-bar>
 
     <v-card>
       <v-card-text>

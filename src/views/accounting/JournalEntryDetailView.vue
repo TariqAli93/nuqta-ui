@@ -1,8 +1,18 @@
 <template>
   <v-container>
-    <v-btn variant="text" prepend-icon="mdi-arrow-right" class="mb-3" @click="goBack">
-      العودة للقيود
-    </v-btn>
+    <v-app-bar class="mb-6" border="bottom">
+      <v-app-bar-title>
+        <div class="win-title mb-0">{{ entryDisplay.entryNumber }}</div>
+        <div class="text-sm">
+          عرض تفاصيل القيد
+          <span v-if="entryDisplay.entryDate">لتاريخ {{ entryDisplay.entryDate }}</span>
+        </div>
+      </v-app-bar-title>
+
+      <template #prepend>
+        <v-btn icon="mdi-arrow-right" variant="text" @click="goBack" />
+      </template>
+    </v-app-bar>
 
     <v-skeleton-loader v-if="accountingStore.loading" type="card" />
 
@@ -47,7 +57,12 @@ const entryDisplay = computed((): JournalEntryDisplay => {
     totalAmount: e.totalAmount ?? 0,
     currency: e.currency,
     notes: e.notes,
-    lines: e.lines ?? [],
+    lines: (e.lines ?? []).map((line) => ({
+      ...line,
+      debit: line.debit ?? 0,
+      credit: line.credit ?? 0,
+      description: line.description ?? '',
+    })),
   };
 });
 

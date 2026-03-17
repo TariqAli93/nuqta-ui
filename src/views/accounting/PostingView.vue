@@ -1,5 +1,5 @@
 ﻿<template>
-  <v-container fluid class="pa-6">
+  <div>
     <div class="d-flex align-center justify-space-between mb-6">
       <div>
         <h1 class="text-h5 font-weight-bold">ترحيل القيود المحاسبية</h1>
@@ -250,14 +250,17 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import { postingClient, type PostingBatch } from '../../api/endpoints/posting';
-import { notifyError, notifySuccess } from '@/utils/notify';
-import { formatDate as sharedFormatDate, formatMoney as sharedFormatMoney } from '@/utils/formatters';
+import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
+import {
+  formatDate as sharedFormatDate,
+  formatMoney as sharedFormatMoney,
+} from '@/utils/formatters';
 
 const posting = ref(false);
 const loadingBatches = ref(false);
@@ -370,7 +373,11 @@ async function loadBatches() {
     if (result.ok) {
       batches.value = result.data.items || [];
     } else {
-      notifyError(result.error.message || 'فشل تحميل الدفعات');
+      if (result.error.status === 404) {
+        notifyWarn('ميزة إدارة الدفعات غير متوفرة حالياً في الخادم');
+      } else {
+        notifyError(result.error.message || 'فشل تحميل الدفعات');
+      }
     }
   } catch {
     notifyError('فشل تحميل الدفعات');
@@ -409,7 +416,11 @@ async function executeLock() {
       notifySuccess('تم قفل الدفعة بنجاح');
       await loadBatches();
     } else {
-      notifyError(result.error.message || 'فشل القفل');
+      if (result.error.status === 404) {
+        notifyWarn('ميزة قفل الدفعات غير متوفرة حالياً في الخادم');
+      } else {
+        notifyError(result.error.message || 'فشل القفل');
+      }
     }
   } catch {
     notifyError('فشل القفل');
@@ -430,7 +441,11 @@ async function executeUnlock() {
       notifySuccess('تم فتح قفل الدفعة بنجاح');
       await loadBatches();
     } else {
-      notifyError(result.error.message || 'فشل فتح القفل');
+      if (result.error.status === 404) {
+        notifyWarn('ميزة فتح قفل الدفعات غير متوفرة حالياً في الخادم');
+      } else {
+        notifyError(result.error.message || 'فشل فتح القفل');
+      }
     }
   } catch {
     notifyError('فشل فتح القفل');
@@ -451,7 +466,11 @@ async function executeReverse() {
       notifySuccess('تم عكس الدفعة بنجاح');
       await loadBatches();
     } else {
-      notifyError(result.error.message || 'فشل عكس الدفعة');
+      if (result.error.status === 404) {
+        notifyWarn('ميزة عكس الدفعات غير متوفرة حالياً في الخادم');
+      } else {
+        notifyError(result.error.message || 'فشل عكس الدفعة');
+      }
     }
   } catch {
     notifyError('فشل عكس الدفعة');

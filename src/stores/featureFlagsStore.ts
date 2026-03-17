@@ -19,7 +19,6 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
 
   const accountingEnabled = computed(() => accountingEnabledDecision.value === true);
   const accountingReady = computed(() => accountingEnabled.value && coaSeeded.value);
-  const simpleMode = computed(() => accountingEnabledDecision.value === false);
 
   function applyStatus(status: AccountingSetupStatus): void {
     accountingEnabledDecision.value = status.enabled;
@@ -71,7 +70,6 @@ export const useFeatureFlagsStore = defineStore('featureFlags', () => {
     accountingEnabledDecision,
     accountingEnabled,
     accountingReady,
-    simpleMode,
     coaSeeded,
     // Module toggles
     purchasesEnabled,

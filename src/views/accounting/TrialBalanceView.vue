@@ -24,49 +24,71 @@
       <v-btn color="primary" variant="tonal" :loading="accountingStore.loading" @click="refresh">
         عرض
       </v-btn>
+      <v-spacer />
+      <v-btn variant="text" size="small" prepend-icon="mdi-download" @click="exportCSV"
+        >تصدير CSV</v-btn
+      >
+      <v-btn variant="text" size="small" prepend-icon="mdi-printer" @click="printTable"
+        >طباعة</v-btn
+      >
     </v-card-text>
 
-    <v-data-table
-      :headers="trialHeaders"
-      :items="accountingStore.trialBalance"
-      :loading="accountingStore.loading"
-      density="compact"
-      :items-per-page="20"
+    <v-alert
+      v-if="accountingStore.error && !accountingStore.loading"
+      type="error"
+      variant="tonal"
+      class="mx-4 mb-4"
+      closable
     >
-      <template #item.debitTotal="{ item }">{{ formatMoney(item.debitTotal || 0) }}</template>
-      <template #item.creditTotal="{ item }">{{ formatMoney(item.creditTotal || 0) }}</template>
-      <template #item.balance="{ item }">{{ formatMoney(item.balance || 0) }}</template>
-      <template #no-data>
-        <div class="text-center py-8 text-medium-emphasis">لا توجد بيانات ميزان مراجعة بعد.</div>
-      </template>
-      <template #bottom>
-        <v-divider />
-        <v-row dense class="px-4 py-3">
-          <v-col class="text-end font-weight-bold">
-            إجمالي المدين: {{ formatMoney(totalDebit) }}
-          </v-col>
-          <v-col class="text-end font-weight-bold">
-            إجمالي الدائن: {{ formatMoney(totalCredit) }}
-          </v-col>
-          <v-col class="text-end font-weight-bold">
-            <v-chip :color="isBalanced ? 'success' : 'error'" size="small" variant="tonal">
-              {{ isBalanced ? 'متوازن ✓' : 'غير متوازن ✗' }}
-            </v-chip>
-          </v-col>
-        </v-row>
-      </template>
-    </v-data-table>
+      {{ accountingStore.error }}
+    </v-alert>
+
+    <div id="trial-balance-report">
+      <v-data-table
+        :headers="trialHeaders"
+        :items="accountingStore.trialBalance"
+        :loading="accountingStore.loading"
+        density="compact"
+        :items-per-page="20"
+      >
+        <template #item.debitTotal="{ item }">{{ formatCurrency(item.debitTotal || 0) }}</template>
+        <template #item.creditTotal="{ item }">{{
+          formatCurrency(item.creditTotal || 0)
+        }}</template>
+        <template #item.balance="{ item }">{{ formatCurrency(item.balance || 0) }}</template>
+        <template #no-data>
+          <div class="text-center py-8 text-medium-emphasis">لا توجد بيانات ميزان مراجعة بعد.</div>
+        </template>
+        <template #bottom>
+          <v-divider />
+          <v-row dense class="px-4 py-3">
+            <v-col class="text-end font-weight-bold">
+              إجمالي المدين: {{ formatCurrency(totalDebit) }}
+            </v-col>
+            <v-col class="text-end font-weight-bold">
+              إجمالي الدائن: {{ formatCurrency(totalCredit) }}
+            </v-col>
+            <v-col class="text-end font-weight-bold">
+              <v-chip :color="isBalanced ? 'success' : 'error'" size="small" variant="tonal">
+                {{ isBalanced ? 'متوازن ✓' : 'غير متوازن ✗' }}
+              </v-chip>
+            </v-col>
+          </v-row>
+        </template>
+      </v-data-table>
+    </div>
   </v-card>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { formatMoney } from '@/utils/formatters';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { useCurrency } from '@/composables/useCurrency';
+import { useExportReport } from '@/composables/useExportReport';
 
 const accountingStore = useAccountingStore();
-const { isZeroDecimal } = useCurrency();
+const { isZeroDecimal, formatCurrency } = useCurrency();
+const { exportToCSV, printReport } = useExportReport();
 
 const dateFrom = ref<string | null>(null);
 const dateTo = ref<string | null>(null);
@@ -105,4 +127,23 @@ async function refresh(): Promise<void> {
 onMounted(async () => {
   await accountingStore.fetchTrialBalance();
 });
+
+function exportCSV() {
+  exportToCSV(
+    accountingStore.trialBalance as unknown as Record<string, unknown>[],
+    'trial-balance',
+    {
+      code: 'الكود',
+      name: 'الحساب',
+      accountType: 'نوع الحساب',
+      debitTotal: 'مدين',
+      creditTotal: 'دائن',
+      balance: 'الرصيد',
+    }
+  );
+}
+
+function printTable() {
+  printReport('trial-balance-report');
+}
 </script>

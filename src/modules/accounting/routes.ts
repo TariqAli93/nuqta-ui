@@ -9,6 +9,8 @@ const BalanceSheetView = () => import('../../views/accounting/BalanceSheetView.v
 const PostingView = () => import('../../views/accounting/PostingView.vue');
 const InvoicePaymentsView = () => import('../../views/accounting/InvoicePaymentsView.vue');
 const JournalEntryDetailView = () => import('../../views/accounting/JournalEntryDetailView.vue');
+const CreateJournalEntryView = () => import('../../views/accounting/CreateJournalEntryView.vue');
+const GeneralLedgerView = () => import('../../views/accounting/GeneralLedgerView.vue');
 
 export const accountingRoutes: RouteRecordRaw[] = [
   {
@@ -32,6 +34,11 @@ export const accountingRoutes: RouteRecordRaw[] = [
         component: JournalEntriesView,
       },
       {
+        path: 'posting',
+        name: 'AccountingPosting',
+        component: PostingView,
+      },
+      {
         path: 'trial-balance',
         name: 'AccountingTrialBalance',
         component: TrialBalanceView,
@@ -49,9 +56,15 @@ export const accountingRoutes: RouteRecordRaw[] = [
     ],
   },
   {
-    path: 'accounting/posting',
-    name: 'Posting',
-    component: PostingView,
+    path: 'accounting/journal/new',
+    name: 'JournalEntryCreate',
+    component: CreateJournalEntryView,
+    meta: { requiresAccounting: true, requiresViewAccounting: true },
+  },
+  {
+    path: 'accounting/accounts/:accountId/ledger',
+    name: 'AccountLedger',
+    component: GeneralLedgerView,
     meta: { requiresAccounting: true, requiresViewAccounting: true },
   },
   {
@@ -85,5 +98,10 @@ export const accountingRoutes: RouteRecordRaw[] = [
     path: 'accounting/reports/balance-sheet',
     name: 'BalanceSheet',
     redirect: { name: 'AccountingBalanceSheet' },
+  },
+  {
+    path: 'accounting/posting',
+    name: 'Posting',
+    redirect: { name: 'AccountingPosting' },
   },
 ];

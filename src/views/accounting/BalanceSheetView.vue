@@ -24,7 +24,30 @@
       <v-btn color="primary" variant="tonal" :loading="accountingStore.loading" @click="refresh">
         عرض الميزانية
       </v-btn>
+      <v-spacer />
+      <v-btn variant="text" size="small" prepend-icon="mdi-download" @click="exportCSV"
+        >تصدير CSV</v-btn
+      >
+      <v-btn variant="text" size="small" prepend-icon="mdi-printer" @click="printTable"
+        >طباعة</v-btn
+      >
     </v-card-text>
+
+    <v-alert
+      v-if="accountingStore.error && !accountingStore.loading"
+      type="error"
+      variant="tonal"
+      class="mx-4 mb-4"
+      closable
+    >
+      {{ accountingStore.error }}
+    </v-alert>
+
+    <v-skeleton-loader
+      v-if="accountingStore.loading && !accountingStore.balanceSheet"
+      type="table"
+      class="mx-4"
+    />
 
     <!-- Summary cards -->
     <v-row dense class="px-4 mb-4">
@@ -33,7 +56,7 @@
           <v-card-text class="text-center">
             <div class="text-caption">إجمالي الأصول</div>
             <div class="text-h6">
-              {{ formatMoney(bs?.totalAssets ?? 0) }}
+              {{ formatCurrency(bs?.totalAssets ?? 0) }}
             </div>
           </v-card-text>
         </v-card>
@@ -43,7 +66,7 @@
           <v-card-text class="text-center">
             <div class="text-caption">إجمالي الالتزامات</div>
             <div class="text-h6">
-              {{ formatMoney(bs?.totalLiabilities ?? 0) }}
+              {{ formatCurrency(bs?.totalLiabilities ?? 0) }}
             </div>
           </v-card-text>
         </v-card>
@@ -53,7 +76,7 @@
           <v-card-text class="text-center">
             <div class="text-caption">إجمالي حقوق الملكية</div>
             <div class="text-h6">
-              {{ formatMoney(bs?.totalEquity ?? 0) }}
+              {{ formatCurrency(bs?.totalEquity ?? 0) }}
             </div>
           </v-card-text>
         </v-card>
@@ -67,7 +90,7 @@
           <v-card-text class="text-center">
             <div class="text-caption">حسابات حقوق الملكية</div>
             <div class="text-subtitle-1 font-weight-medium">
-              {{ formatMoney(bs?.equityAccounts ?? 0) }}
+              {{ formatCurrency(bs?.equityAccounts ?? 0) }}
             </div>
           </v-card-text>
         </v-card>
@@ -80,11 +103,11 @@
               class="text-subtitle-1 font-weight-medium"
               :class="(bs?.currentEarnings ?? 0) >= 0 ? 'text-success' : 'text-error'"
             >
-              {{ formatMoney(bs?.currentEarnings ?? 0) }}
+              {{ formatCurrency(bs?.currentEarnings ?? 0) }}
             </div>
             <div class="text-caption text-medium-emphasis mt-1">
-              إيرادات {{ formatMoney(bs?.revenueNet ?? 0) }} − مصروفات
-              {{ formatMoney(bs?.expenseNet ?? 0) }}
+              إيرادات {{ formatCurrency(bs?.revenueNet ?? 0) }} − مصروفات
+              {{ formatCurrency(bs?.expenseNet ?? 0) }}
             </div>
           </v-card-text>
         </v-card>
@@ -97,7 +120,7 @@
               class="text-subtitle-1 font-weight-medium"
               :class="(bs?.difference ?? 0) === 0 ? 'text-success' : 'text-error'"
             >
-              {{ formatMoney(bs?.difference ?? 0) }}
+              {{ formatCurrency(bs?.difference ?? 0) }}
             </div>
           </v-card-text>
         </v-card>
@@ -109,12 +132,12 @@
       <v-col cols="12">
         <v-alert :type="isBalanced ? 'success' : 'error'" variant="tonal" density="compact">
           <strong>معادلة الميزانية:</strong>
-          الأصول ({{ formatMoney(bs?.totalAssets ?? 0) }})
+          الأصول ({{ formatCurrency(bs?.totalAssets ?? 0) }})
           {{ isBalanced ? '=' : '≠' }}
-          الالتزامات ({{ formatMoney(bs?.totalLiabilities ?? 0) }}) + حقوق الملكية ({{
-            formatMoney(bs?.totalEquity ?? 0)
+          الالتزامات ({{ formatCurrency(bs?.totalLiabilities ?? 0) }}) + حقوق الملكية ({{
+            formatCurrency(bs?.totalEquity ?? 0)
           }})
-          <template v-if="!isBalanced"> — فرق: {{ formatMoney(bs?.difference ?? 0) }} </template>
+          <template v-if="!isBalanced"> — فرق: {{ formatCurrency(bs?.difference ?? 0) }} </template>
         </v-alert>
       </v-col>
     </v-row>
@@ -153,7 +176,7 @@
               <v-list-item v-for="item in bs.assets || []" :key="item.accountId">
                 <v-list-item-title>{{ item.name }}</v-list-item-title>
                 <template #append>
-                  <span class="font-weight-medium">{{ formatMoney(item.balance || 0) }}</span>
+                  <span class="font-weight-medium">{{ formatCurrency(item.balance || 0) }}</span>
                 </template>
               </v-list-item>
               <v-list-item v-if="!(bs.assets || []).length">
@@ -171,7 +194,7 @@
               <v-list-item v-for="item in bs.liabilities || []" :key="item.accountId">
                 <v-list-item-title>{{ item.name }}</v-list-item-title>
                 <template #append>
-                  <span class="font-weight-medium">{{ formatMoney(item.balance || 0) }}</span>
+                  <span class="font-weight-medium">{{ formatCurrency(item.balance || 0) }}</span>
                 </template>
               </v-list-item>
               <v-list-item v-if="!(bs.liabilities || []).length">
@@ -189,7 +212,7 @@
               <v-list-item v-for="item in bs.equity || []" :key="item.accountId">
                 <v-list-item-title>{{ item.name }}</v-list-item-title>
                 <template #append>
-                  <span class="font-weight-medium">{{ formatMoney(item.balance || 0) }}</span>
+                  <span class="font-weight-medium">{{ formatCurrency(item.balance || 0) }}</span>
                 </template>
               </v-list-item>
               <!-- Current period earnings -->
@@ -200,7 +223,7 @@
                     class="font-weight-medium"
                     :class="(bs.currentEarnings ?? 0) >= 0 ? 'text-success' : 'text-error'"
                   >
-                    {{ formatMoney(bs.currentEarnings ?? 0) }}
+                    {{ formatCurrency(bs.currentEarnings ?? 0) }}
                   </span>
                 </template>
               </v-list-item>
@@ -210,7 +233,7 @@
                   إجمالي حقوق الملكية
                 </v-list-item-title>
                 <template #append>
-                  <span class="font-weight-bold">{{ formatMoney(bs.totalEquity ?? 0) }}</span>
+                  <span class="font-weight-bold">{{ formatCurrency(bs.totalEquity ?? 0) }}</span>
                 </template>
               </v-list-item>
             </v-list>
@@ -223,9 +246,12 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { formatMoney } from '@/utils/formatters';
+import { useCurrency } from '@/composables/useCurrency';
+import { useExportReport } from '@/composables/useExportReport';
 import { useAccountingStore } from '@/stores/accountingStore';
 
+const { formatCurrency } = useCurrency();
+const { exportToCSV, printReport } = useExportReport();
 const accountingStore = useAccountingStore();
 
 const fromDate = ref<string | null>(null);
@@ -237,6 +263,32 @@ const isBalanced = computed(() => {
   if (!bs.value) return true;
   return bs.value.difference === 0;
 });
+
+function exportCSV(): void {
+  if (!bs.value) return;
+  const rows = [
+    ...((bs.value.assets || []) as Array<{ name: string; balance: number }>).map((r) => ({
+      section: 'أصول',
+      name: r.name,
+      balance: r.balance,
+    })),
+    ...((bs.value.liabilities || []) as Array<{ name: string; balance: number }>).map((r) => ({
+      section: 'التزامات',
+      name: r.name,
+      balance: r.balance,
+    })),
+    ...((bs.value.equity || []) as Array<{ name: string; balance: number }>).map((r) => ({
+      section: 'حقوق ملكية',
+      name: r.name,
+      balance: r.balance,
+    })),
+  ];
+  exportToCSV(rows, 'balance-sheet', { section: 'القسم', name: 'البند', amount: 'المبلغ' });
+}
+
+function printTable(): void {
+  printReport('balance-sheet-report');
+}
 
 async function refresh(): Promise<void> {
   await accountingStore.fetchBalanceSheet({
