@@ -127,14 +127,15 @@ export function usePosCart() {
     item.subtotal = item.quantity * item.unitPrice - (item.discount || 0);
   }
 
-  function decreaseQuantity(index: number) {
+  function decreaseQuantity(index: number): 'decreased' | 'removed' | 'confirm-needed' {
     const item = cartItems.value[index];
     if (item.quantity > 1) {
       item.quantity -= 1;
       item.quantityBase = item.quantity * (item.unitFactor ?? 1);
       item.subtotal = item.quantity * item.unitPrice - (item.discount || 0);
+      return 'decreased';
     } else {
-      removeFromCart(index);
+      return removeFromCart(index);
     }
   }
 
@@ -200,6 +201,14 @@ export function usePosCart() {
     await Promise.all(productIds.map((id) => fetchProductUnits(id)));
   }
 
+  function clearUnitCache(productId?: number): void {
+    if (productId != null) {
+      productUnitsCache.value.delete(productId);
+    } else {
+      productUnitsCache.value.clear();
+    }
+  }
+
   return {
     cartItems,
     cartItemUnitsMap,
@@ -219,5 +228,6 @@ export function usePosCart() {
     applyDiscount,
     trackProductPrice,
     ensureUnitsCached,
+    clearUnitCache,
   };
 }

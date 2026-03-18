@@ -39,3 +39,7 @@ export function canAdjustStock(role: UserRole): boolean {
 export function canViewAccounting(role: UserRole): boolean {
   return role === 'admin';
 }
+
+export function canPrintBarcodes(role: UserRole): boolean {
+  return role === 'admin' || role === 'manager';
+}
