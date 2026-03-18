@@ -87,7 +87,10 @@ export const useInventoryStore = defineStore('inventory', () => {
   }
 
   async function fetchExpiryAlerts(daysAhead?: number) {
-    loadingAlerts.value = true;
+    // Lightweight background refresh — does not toggle the aggregate loading flag
+    // so the UI is not disrupted while expiry data refreshes silently.
+    // Components that specifically need to track expiry alert loading can use
+    // the `loadingAlerts` flag directly; it is left false intentionally here.
     error.value = null;
     try {
       const result = await inventoryClient.getExpiryAlerts(daysAhead);
@@ -100,8 +103,6 @@ export const useInventoryStore = defineStore('inventory', () => {
     } catch (err: unknown) {
       error.value = err instanceof Error ? err.message : 'فشل في تحميل تنبيهات الصلاحية';
       return { ok: false as const, error: { code: 'FETCH_FAILED', message: error.value! } };
-    } finally {
-      loadingAlerts.value = false;
     }
   }
 

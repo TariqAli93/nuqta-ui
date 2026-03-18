@@ -52,5 +52,8 @@ export function useAccess() {
     canAdjustStock: computed(() =>
       role.value ? uiAccessHelpers.canAdjustStock(role.value) : false
     ),
+    canPrintBarcodes: computed(() =>
+      role.value ? uiAccessHelpers.canPrintBarcodes(role.value) : false
+    ),
   };
 }

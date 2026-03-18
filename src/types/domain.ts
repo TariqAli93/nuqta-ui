@@ -343,6 +343,52 @@ export interface ProductUnit {
   createdAt?: string;
 }
 
+// ── Barcode ─────────────────────────────────────────────────────────────────
+export interface BarcodeTemplate {
+  id?: number;
+  name: string;
+  width: number;
+  height: number;
+  barcodeType?: string;
+  showPrice?: boolean;
+  showName?: boolean;
+  showBarcode?: boolean;
+  showExpiry?: boolean;
+  isDefault?: boolean;
+  createdAt?: string;
+}
+
+export interface BarcodePrintJob {
+  id?: number;
+  templateId: number;
+  productId: number;
+  productName: string;
+  barcode?: string | null;
+  price?: number | null;
+  quantity: number;
+  status?: 'pending' | 'printed' | 'failed';
+  createdAt?: string;
+  createdBy?: number;
+}
+
+export type BarcodeTemplateInput = Pick<
+  BarcodeTemplate,
+  | 'name'
+  | 'width'
+  | 'height'
+  | 'barcodeType'
+  | 'showPrice'
+  | 'showName'
+  | 'showBarcode'
+  | 'showExpiry'
+  | 'isDefault'
+>;
+
+export type BarcodePrintJobInput = Pick<
+  BarcodePrintJob,
+  'templateId' | 'productId' | 'productName' | 'quantity'
+>;
+
 // ── Product Batch ───────────────────────────────────────────────────────────
 export interface ProductBatch {
   id?: number;

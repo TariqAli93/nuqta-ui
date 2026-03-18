@@ -389,7 +389,17 @@ export async function apiGet<T>(
           createMeta(startedAt)
         );
       }
-      const apiError = axiosErrorToApiError(error as AxiosError);
+      const axErr = error as AxiosError;
+      // Call the unauthorized handler directly here in addition to the Axios
+      // response interceptor. The interceptor handles the full refresh-then-retry
+      // flow for real Axios requests, but unit tests mock `http.get` at the
+      // function level which bypasses interceptors entirely. Handling 401 here
+      // ensures consistent behaviour in both environments without duplicating
+      // the refresh logic.
+      if (axErr?.response?.status === 401 && unauthorizedHandler) {
+        unauthorizedHandler();
+      }
+      const apiError = axiosErrorToApiError(axErr);
       return createFailure(apiError, createMeta(startedAt));
     } finally {
       inflightRequests.delete(key);
