@@ -16,7 +16,15 @@ import { computed } from 'vue';
 type SaleStatus = 'open' | 'completed' | 'cancelled' | 'refunded' | 'partially_refunded';
 type PayrollStatus = 'draft' | 'submitted' | 'approved' | 'disbursed' | 'cancelled';
 type PurchaseStatus = 'pending' | 'received' | 'cancelled';
-type Status = SaleStatus | PayrollStatus | PurchaseStatus | 'active' | 'inactive' | 'voided';
+type EmployeeStatus = 'active' | 'inactive' | 'terminated' | 'on_leave';
+type Status =
+  | SaleStatus
+  | PayrollStatus
+  | PurchaseStatus
+  | EmployeeStatus
+  | 'active'
+  | 'inactive'
+  | 'voided';
 
 const STATUS_CONFIG: Record<
   string,
@@ -41,6 +49,9 @@ const STATUS_CONFIG: Record<
   disbursed: { color: 'primary', icon: 'mdi-cash-multiple', label: 'مُصرف' },
   // Payments
   voided: { color: 'error', icon: 'mdi-close', label: 'ملغي' },
+  // Employee
+  terminated: { color: 'error', icon: 'mdi-account-remove', label: 'منتهي الخدمة' },
+  on_leave: { color: 'warning', icon: 'mdi-account-clock', label: 'في إجازة' },
 };
 
 const props = withDefaults(
