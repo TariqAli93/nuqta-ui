@@ -466,3 +466,85 @@ export type CompanySettingsInput = Pick<
   | 'currency'
   | 'lowStockThreshold'
 >;
+
+// ── HR — Department ─────────────────────────────────────────────────────────
+export interface Department {
+  id?: number;
+  name: string;
+  description?: string | null;
+  managerId?: number | null;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type DepartmentInput = Pick<Department, 'name' | 'description' | 'managerId' | 'isActive'>;
+
+// ── HR — Employee ───────────────────────────────────────────────────────────
+export type EmployeeStatus = 'active' | 'inactive' | 'terminated' | 'on_leave';
+
+export interface Employee {
+  id?: number;
+  fullName: string;
+  phone?: string | null;
+  email?: string | null;
+  departmentId?: number | null;
+  designation?: string | null;
+  dateOfJoining?: string | null;
+  dateOfBirth?: string | null;
+  salary?: number | null;
+  status?: EmployeeStatus;
+  address?: string | null;
+  notes?: string | null;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type EmployeeInput = Pick<
+  Employee,
+  | 'fullName'
+  | 'phone'
+  | 'email'
+  | 'departmentId'
+  | 'designation'
+  | 'dateOfJoining'
+  | 'dateOfBirth'
+  | 'salary'
+  | 'status'
+  | 'address'
+  | 'notes'
+>;
+
+// ── HR — Payroll Run ────────────────────────────────────────────────────────
+export type PayrollRunStatus = 'draft' | 'submitted' | 'approved' | 'disbursed' | 'cancelled';
+
+export interface PayrollRunEntry {
+  id?: number;
+  payrollRunId?: number;
+  employeeId: number;
+  employeeName?: string;
+  basicSalary: number;
+  allowances?: number;
+  deductions?: number;
+  netSalary: number;
+}
+
+export interface PayrollRun {
+  id?: number;
+  title: string;
+  periodStart: string;
+  periodEnd: string;
+  status?: PayrollRunStatus;
+  totalAmount?: number;
+  notes?: string | null;
+  entries?: PayrollRunEntry[];
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: number;
+}
+
+export type PayrollRunInput = Pick<
+  PayrollRun,
+  'title' | 'periodStart' | 'periodEnd' | 'notes'
+>;

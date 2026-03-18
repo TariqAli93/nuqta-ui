@@ -25,6 +25,7 @@ export { supplierLedgerClient } from './endpoints/supplierLedger';
 export { postingClient } from './endpoints/posting';
 export { auditClient } from './endpoints/audit';
 export { backupClient } from './endpoints/backup';
+export { employeesClient, departmentsClient, payrollClient } from './endpoints/hr';
 export { dashboardClient } from './endpoints/dashboard';
 export { setupClient } from './endpoints/setup';
 export { registerUnauthorizedHandler, setAccessToken, getAccessToken } from './http';

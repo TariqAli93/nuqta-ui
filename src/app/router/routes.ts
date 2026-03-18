@@ -25,6 +25,7 @@ import { suppliersRoutes } from '../../modules/suppliers/routes';
 import { purchasesRoutes } from '../../modules/purchases/routes';
 import { inventoryRoutes } from '../../modules/inventory/routes';
 import { accountingRoutes } from '../../modules/accounting/routes';
+import { hrRoutes } from '../../modules/hr/routes';
 
 export const routes: RouteRecordRaw[] = [
   setupRoute,
@@ -79,6 +80,7 @@ export const routes: RouteRecordRaw[] = [
       ...purchasesRoutes,
       ...inventoryRoutes,
       ...accountingRoutes,
+      ...hrRoutes,
       ...settingsRoutes,
       ...usersRoutes,
       ...categoriesRoutes,

@@ -236,6 +236,11 @@ const openedGroups = computed(() => {
     }
   }
 
+  // HR
+  if (path.startsWith('/hr')) {
+    groups.push('hr-management');
+  }
+
   // Customer Management
   if (path.startsWith('/customers')) {
     groups.push('customer-management');
@@ -387,6 +392,33 @@ const primaryNav = computed((): NavEntry[] => {
           icon: 'mdi-book-account',
           label: t('nav.customerLedger'),
           visible: systemSettingsStore.data?.ledgersEnabled,
+        },
+      ],
+    },
+    {
+      type: 'group',
+      id: 'hr-management',
+      icon: 'mdi-badge-account-horizontal',
+      label: t('nav.hrManagement'),
+      visible: uiAccess.canViewInventory(role),
+      children: [
+        {
+          type: 'item',
+          to: '/hr/employees',
+          icon: 'mdi-account-hard-hat',
+          label: t('nav.employees'),
+        },
+        {
+          type: 'item',
+          to: '/hr/departments',
+          icon: 'mdi-office-building',
+          label: t('nav.departments'),
+        },
+        {
+          type: 'item',
+          to: '/hr/payroll',
+          icon: 'mdi-cash-multiple',
+          label: t('nav.payroll'),
         },
       ],
     },
