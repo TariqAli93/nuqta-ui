@@ -10,7 +10,7 @@ export const salesRoutes: RouteRecordRaw[] = [
     name: 'Sales',
     component: SalesListView,
     meta: {
-      requiresCreateSales: true,
+      permissions: ['sales:read'],
       breadcrumb: { title: 'nav.sales', to: '/sales' },
     },
   },
@@ -19,7 +19,7 @@ export const salesRoutes: RouteRecordRaw[] = [
     name: 'SaleCreate',
     component: SaleFormView,
     meta: {
-      requiresCreateSales: true,
+      permissions: ['sales:create'],
       enableBarcode: 'pos',
       breadcrumb: [
         { title: 'nav.sales', to: '/sales' },
@@ -32,7 +32,7 @@ export const salesRoutes: RouteRecordRaw[] = [
     name: 'SaleDetails',
     component: SaleDetailsView,
     meta: {
-      requiresCreateSales: true,
+      permissions: ['sales:read'],
       breadcrumb: [
         { title: 'nav.sales', to: '/sales' },
         { title: 'sales.details' },

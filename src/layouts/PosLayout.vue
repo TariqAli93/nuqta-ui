@@ -138,7 +138,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 import { useVuetifyStore } from '@/stores/vuetify';
 import { t } from '@/i18n/t';
-import * as uiAccess from '@/auth/uiAccess';
+import { useRBAC } from '@/composables/useRBAC';
 import { useTheme } from 'vuetify';
 import { initEventBridge, destroyEventBridge } from '@/plugins/eventBridge';
 import { useInventoryAlerts } from '@/composables/useInventoryAlerts';
@@ -155,6 +155,7 @@ const vuetifyTheme = useTheme();
 
 // settings store for accessing notification settings in the POS layout
 const systemSettingsStore = useSystemSettingsStore();
+const { can } = useRBAC();
 
 /** Toggle theme in both Vuetify runtime and the persisted store. */
 function toggleTheme() {
@@ -255,8 +256,7 @@ const openedGroups = computed(() => {
 });
 
 const primaryNav = computed((): NavEntry[] => {
-  const role = authStore.user?.role;
-  if (!role) return [];
+  if (!authStore.isAuthenticated) return [];
 
   const entries: (NavEntry & { visible?: boolean })[] = [
     {
@@ -264,21 +264,21 @@ const primaryNav = computed((): NavEntry[] => {
       to: '/pos',
       icon: 'mdi-point-of-sale',
       label: t('nav.pos'),
-      visible: uiAccess.canCreateSales(role),
+      visible: can('sales:create'),
     },
     {
       type: 'item',
       to: '/products',
       icon: 'mdi-package-variant',
       label: t('nav.products'),
-      visible: uiAccess.canManageProducts(role),
+      visible: can('products:read'),
     },
     {
       type: 'group',
       id: 'inventory-management',
       icon: 'mdi-warehouse',
       label: t('nav.inventoryManagement'),
-      visible: uiAccess.canViewInventory(role),
+      visible: can('inventory:read'),
       children: [
         {
           type: 'item',
@@ -311,28 +311,28 @@ const primaryNav = computed((): NavEntry[] => {
       to: '/categories',
       icon: 'mdi-shape-outline',
       label: t('nav.categories'),
-      visible: uiAccess.canManageProducts(role),
+      visible: can('products:read'),
     },
     {
       type: 'item',
       to: '/purchases',
       icon: 'mdi-cart-arrow-down',
       label: t('nav.purchases'),
-      visible: uiAccess.canManagePurchases(role) && systemSettingsStore.data?.purchasesEnabled,
+      visible: can('purchases:read') && systemSettingsStore.data?.purchasesEnabled,
     },
     {
       type: 'item',
       to: '/sales',
       icon: 'mdi-receipt-text',
       label: t('nav.sales'),
-      visible: uiAccess.canCreateSales(role),
+      visible: can('sales:read'),
     },
     {
       type: 'group',
       id: 'accounting',
       icon: 'mdi-calculator',
       label: t('nav.accounting'),
-      visible: uiAccess.canViewAccounting(role) && systemSettingsStore.data?.accountingEnabled,
+      visible: can('accounting:read') && systemSettingsStore.data?.accountingEnabled,
       children: [
         {
           type: 'item',
@@ -378,7 +378,7 @@ const primaryNav = computed((): NavEntry[] => {
       id: 'customer-management',
       icon: 'mdi-account-group',
       label: t('nav.customerManagement'),
-      visible: uiAccess.canManageCustomers(role),
+      visible: can('customers:read'),
       children: [
         {
           type: 'item',
@@ -400,7 +400,7 @@ const primaryNav = computed((): NavEntry[] => {
       id: 'hr-management',
       icon: 'mdi-badge-account-horizontal',
       label: t('nav.hrManagement'),
-      visible: uiAccess.canViewInventory(role),
+      visible: can('hr:read'),
       children: [
         {
           type: 'item',
@@ -427,7 +427,7 @@ const primaryNav = computed((): NavEntry[] => {
       id: 'supplier-management',
       icon: 'mdi-truck-delivery',
       label: t('nav.supplierManagement'),
-      visible: uiAccess.canManageSuppliers(role),
+      visible: can('suppliers:read'),
       children: [
         {
           type: 'item',
@@ -465,8 +465,7 @@ const primaryNav = computed((): NavEntry[] => {
 });
 
 const footerNav = computed(() => {
-  const role = authStore.user?.role;
-  if (!role) return [];
+  if (!authStore.isAuthenticated) return [];
 
   return [
     {
@@ -479,14 +478,14 @@ const footerNav = computed(() => {
       to: '/backup',
       icon: 'mdi-backup-restore',
       label: 'النسخ الاحتياطي',
-      visible: role === 'admin' || role === 'manager',
+      visible: can('backup:read'),
     },
 
     {
       to: '/settings',
       icon: 'mdi-cog',
       label: t('nav.settings'),
-      visible: uiAccess.canManageSettings(role),
+      visible: can('settings:read'),
     },
     { to: '/about', icon: 'mdi-information-outline', label: t('nav.about'), visible: true },
   ].filter((item) => item.visible);

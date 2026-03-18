@@ -8,7 +8,7 @@ export const productsRoutes: RouteRecordRaw[] = [
     name: 'ProductWorkspace',
     component: ProductWorkspaceView,
     meta: {
-      requiresManageProducts: true,
+      permissions: ['products:read'],
       breadcrumb: { title: 'nav.products', to: '/products' },
     },
   },
@@ -21,7 +21,7 @@ export const productsRoutes: RouteRecordRaw[] = [
       query: { ...to.query, action: 'create' },
     }),
     meta: {
-      requiresManageProducts: true,
+      permissions: ['products:create'],
       enableBarcode: 'product',
       breadcrumb: [{ title: 'nav.products', to: '/products' }, { title: 'products.new' }],
     },
@@ -34,7 +34,7 @@ export const productsRoutes: RouteRecordRaw[] = [
       query: { ...to.query, productId: String(to.params.id) },
     }),
     meta: {
-      requiresManageProducts: true,
+      permissions: ['products:read'],
       breadcrumb: [{ title: 'nav.products', to: '/products' }, { title: 'common.details' }],
     },
   },
@@ -46,7 +46,7 @@ export const productsRoutes: RouteRecordRaw[] = [
       query: { ...to.query, productId: String(to.params.id), action: 'edit' },
     }),
     meta: {
-      requiresManageProducts: true,
+      permissions: ['products:update'],
       enableBarcode: 'product',
       breadcrumb: [{ title: 'nav.products', to: '/products' }, { title: 'products.edit' }],
     },
@@ -59,7 +59,7 @@ export const productsRoutes: RouteRecordRaw[] = [
       query: { ...to.query, productId: String(to.params.id), tab: 'units', action: 'barcode' },
     }),
     meta: {
-      requiresManageProducts: true,
+      permissions: ['products:read'],
       breadcrumb: [
         { title: 'nav.products', to: '/products' },
         { title: 'products.unitsAndPricing' },

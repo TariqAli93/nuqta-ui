@@ -55,7 +55,7 @@ export const routes: RouteRecordRaw[] = [
         name: 'Backup',
         component: BackupView,
         meta: {
-          requiresRole: 'admin',
+          permissions: ['backup:read'],
           breadcrumb: [
             { title: 'nav.dashboard', to: '/dashboard' },
             { title: 'nav.reports', to: '/backup' },
@@ -68,7 +68,7 @@ export const routes: RouteRecordRaw[] = [
         name: 'POS',
         component: PosView,
         meta: {
-          requiresCreateSales: true,
+          permissions: ['sales:create'],
           enableBarcode: 'pos',
           breadcrumb: { title: 'nav.pos', to: '/pos' },
         },

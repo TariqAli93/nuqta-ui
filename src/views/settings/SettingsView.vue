@@ -52,8 +52,7 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { t } from '../../i18n/t';
-import { useAuthStore } from '../../stores/authStore';
-import { useAccess } from '../../composables/useAccess';
+import { useRBAC } from '../../composables/useRBAC';
 import SystemSettingsTab from '@/components/settings/SystemSettingsTab.vue';
 import PosSettingsTab from '@/components/settings/PosSettingsTab.vue';
 import AccountingSettingsTab from '@/components/settings/AccountingSettingsTab.vue';
@@ -63,19 +62,10 @@ type SettingsTab = 'system' | 'pos' | 'accounting' | 'users';
 
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore();
-const access = useAccess();
+const { can } = useRBAC();
 const activeTab = ref<SettingsTab>('system');
 
-const canManageUsers = computed(() => {
-  const role = authStore.user?.role;
-  if (!role) return false;
-  if (access.canManageUsers.value) return true;
-
-  return authStore.permissions.some((permission) =>
-    ['users:read', 'users:create', 'users:update', 'users:delete'].includes(permission)
-  );
-});
+const canManageUsers = computed(() => can('users:read'));
 
 const validTabs: SettingsTab[] = ['system', 'pos', 'accounting', 'users'];
 

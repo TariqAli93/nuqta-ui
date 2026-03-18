@@ -5,6 +5,6 @@ export const usersRoutes: RouteRecordRaw[] = [
     path: 'users',
     name: 'Users',
     redirect: { name: 'SettingsUsers' },
-    meta: { requiresManageSettings: true },
+    meta: { permissions: ['users:read'] },
   },
 ];

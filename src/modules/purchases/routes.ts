@@ -11,7 +11,7 @@ export const purchasesRoutes: RouteRecordRaw[] = [
     component: PurchasesListView,
     meta: {
       requiresPurchasing: true,
-      requiresManagePurchases: true,
+      permissions: ['purchases:read'],
       breadcrumb: { title: 'nav.purchases', to: '/purchases' },
     },
   },
@@ -20,7 +20,7 @@ export const purchasesRoutes: RouteRecordRaw[] = [
     name: 'PurchaseCreate',
     component: PurchaseFormView,
     meta: {
-      requiresManagePurchases: true,
+      permissions: ['purchases:create'],
       requiresPurchasing: true,
       breadcrumb: [
         { title: 'nav.purchases', to: '/purchases' },
@@ -34,7 +34,7 @@ export const purchasesRoutes: RouteRecordRaw[] = [
     component: PurchaseDetailsView,
     meta: {
       requiresPurchasing: true,
-      requiresManagePurchases: true,
+      permissions: ['purchases:read'],
       breadcrumb: [
         { title: 'nav.purchases', to: '/purchases' },
         { title: 'common.details' },

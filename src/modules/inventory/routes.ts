@@ -12,7 +12,7 @@ export const inventoryRoutes: RouteRecordRaw[] = [
     component: InventoryWorkspaceView,
     meta: {
       requiresAccounting: true,
-      requiresViewInventory: true,
+      permissions: ['inventory:read'],
       breadcrumb: { title: 'nav.inventoryManagement', to: '/inventory/overview' },
     },
     children: [
@@ -52,7 +52,7 @@ export const inventoryRoutes: RouteRecordRaw[] = [
     path: 'inventory/adjustments/new',
     name: 'StockAdjustment',
     redirect: { name: 'InventoryOverview' },
-    meta: { requiresAdjustStock: true, requiresAccounting: true, requiresViewInventory: true },
+    meta: { permissions: ['inventory:adjust'], requiresAccounting: true },
   },
   {
     path: 'workspace/finance',

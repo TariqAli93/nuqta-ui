@@ -16,7 +16,7 @@ export const accountingRoutes: RouteRecordRaw[] = [
   {
     path: 'accounting',
     component: AccountingWorkspaceView,
-    meta: { requiresAccounting: true, requiresViewAccounting: true },
+    meta: { requiresAccounting: true, permissions: ['accounting:read'] },
     children: [
       {
         path: '',
@@ -59,19 +59,19 @@ export const accountingRoutes: RouteRecordRaw[] = [
     path: 'accounting/journal/new',
     name: 'JournalEntryCreate',
     component: CreateJournalEntryView,
-    meta: { requiresAccounting: true, requiresViewAccounting: true },
+    meta: { requiresAccounting: true, permissions: ['accounting:update'] },
   },
   {
     path: 'accounting/accounts/:accountId/ledger',
     name: 'AccountLedger',
     component: GeneralLedgerView,
-    meta: { requiresAccounting: true, requiresViewAccounting: true },
+    meta: { requiresAccounting: true, permissions: ['accounting:read'] },
   },
   {
     path: 'accounting/journal/:id',
     name: 'JournalEntryDetail',
     component: JournalEntryDetailView,
-    meta: { requiresAccounting: true, requiresViewAccounting: true },
+    meta: { requiresAccounting: true, permissions: ['accounting:read'] },
   },
   {
     path: 'invoice-payments',
@@ -80,7 +80,7 @@ export const accountingRoutes: RouteRecordRaw[] = [
     meta: {
       requiresLedgers: true,
       requiresPaymentsOnInvoices: true,
-      requiresViewAccounting: true,
+      permissions: ['accounting:read'],
     },
   },
   // Legacy redirects for backward compatibility

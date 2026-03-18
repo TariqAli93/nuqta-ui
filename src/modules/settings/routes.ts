@@ -11,7 +11,7 @@ export const settingsRoutes: RouteRecordRaw[] = [
     path: 'settings',
     component: SettingsLayout,
     meta: {
-      requiresManageSettings: true,
+      permissions: ['settings:read'],
       breadcrumb: { title: 'nav.settings', to: '/settings/system' },
     },
     redirect: { name: 'SettingsSystem' },

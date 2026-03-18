@@ -8,7 +8,7 @@ export const categoriesRoutes: RouteRecordRaw[] = [
     name: 'Categories',
     component: CategoriesView,
     meta: {
-      requiresManageProducts: true,
+      permissions: ['products:read'],
       breadcrumb: { title: 'nav.categories', to: '/categories' },
     },
   },

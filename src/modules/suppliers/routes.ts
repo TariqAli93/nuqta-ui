@@ -12,7 +12,7 @@ export const suppliersRoutes: RouteRecordRaw[] = [
     component: SuppliersListView,
     meta: {
       requiresPurchasing: true,
-      requiresManageSuppliers: true,
+      permissions: ['suppliers:read'],
       breadcrumb: { title: 'nav.suppliers', to: '/suppliers' },
     },
   },
@@ -23,7 +23,7 @@ export const suppliersRoutes: RouteRecordRaw[] = [
     meta: {
       requiresPurchasing: true,
       requiresLedgers: true,
-      requiresManageSuppliers: true,
+      permissions: ['suppliers:read'],
       breadcrumb: [
         { title: 'nav.suppliers', to: '/suppliers' },
         { title: 'nav.supplierLedger' },
@@ -35,7 +35,7 @@ export const suppliersRoutes: RouteRecordRaw[] = [
     name: 'SupplierCreate',
     component: SupplierFormView,
     meta: {
-      requiresManageSuppliers: true,
+      permissions: ['suppliers:create'],
       requiresPurchasing: true,
       breadcrumb: [
         { title: 'nav.suppliers', to: '/suppliers' },
@@ -50,7 +50,7 @@ export const suppliersRoutes: RouteRecordRaw[] = [
     meta: {
       requiresPurchasing: true,
       requiresLedgers: true,
-      requiresManageSuppliers: true,
+      permissions: ['suppliers:read'],
       breadcrumb: [
         { title: 'nav.suppliers', to: '/suppliers' },
         { title: 'common.details' },
@@ -62,7 +62,7 @@ export const suppliersRoutes: RouteRecordRaw[] = [
     name: 'SupplierEdit',
     component: SupplierFormView,
     meta: {
-      requiresManageSuppliers: true,
+      permissions: ['suppliers:update'],
       requiresPurchasing: true,
       breadcrumb: [
         { title: 'nav.suppliers', to: '/suppliers' },
