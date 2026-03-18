@@ -16,7 +16,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'Employees',
     component: EmployeesListView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['hr:read'],
       breadcrumb: { title: 'hr.employees.title', to: '/hr/employees' },
     },
   },
@@ -25,7 +25,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'EmployeeCreate',
     component: EmployeeFormView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['hr:update'],
       breadcrumb: [
         { title: 'hr.employees.title', to: '/hr/employees' },
         { title: 'common.add' },
@@ -37,7 +37,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'EmployeeDetails',
     component: EmployeeDetailsView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['hr:read'],
       breadcrumb: [
         { title: 'hr.employees.title', to: '/hr/employees' },
         { title: 'common.details' },
@@ -49,7 +49,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'EmployeeEdit',
     component: EmployeeFormView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['hr:update'],
       breadcrumb: [
         { title: 'hr.employees.title', to: '/hr/employees' },
         { title: 'common.edit' },
@@ -62,7 +62,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'Departments',
     component: DepartmentsListView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['hr:read'],
       breadcrumb: { title: 'hr.departments.title', to: '/hr/departments' },
     },
   },
@@ -71,7 +71,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'DepartmentCreate',
     component: DepartmentFormView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['hr:update'],
       breadcrumb: [
         { title: 'hr.departments.title', to: '/hr/departments' },
         { title: 'common.add' },
@@ -83,7 +83,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'DepartmentEdit',
     component: DepartmentFormView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['hr:update'],
       breadcrumb: [
         { title: 'hr.departments.title', to: '/hr/departments' },
         { title: 'common.edit' },
@@ -96,7 +96,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'Payroll',
     component: PayrollListView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['payroll:read'],
       breadcrumb: { title: 'hr.payroll.title', to: '/hr/payroll' },
     },
   },
@@ -105,7 +105,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'PayrollCreate',
     component: PayrollFormView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['payroll:update'],
       breadcrumb: [
         { title: 'hr.payroll.title', to: '/hr/payroll' },
         { title: 'common.add' },
@@ -117,7 +117,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'PayrollDetails',
     component: PayrollDetailsView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['payroll:read'],
       breadcrumb: [
         { title: 'hr.payroll.title', to: '/hr/payroll' },
         { title: 'common.details' },
@@ -129,7 +129,7 @@ export const hrRoutes: RouteRecordRaw[] = [
     name: 'PayrollEdit',
     component: PayrollFormView,
     meta: {
-      requiresRole: 'manager',
+      permissions: ['payroll:update'],
       breadcrumb: [
         { title: 'hr.payroll.title', to: '/hr/payroll' },
         { title: 'common.edit' },

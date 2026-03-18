@@ -11,7 +11,7 @@ export const customersRoutes: RouteRecordRaw[] = [
     name: 'Customers',
     component: CustomersListView,
     meta: {
-      requiresManageCustomers: true,
+      permissions: ['customers:read'],
       breadcrumb: { title: 'nav.customers', to: '/customers' },
     },
   },
@@ -21,7 +21,7 @@ export const customersRoutes: RouteRecordRaw[] = [
     component: CustomerLedgerView,
     meta: {
       requiresLedgers: true,
-      requiresManageCustomers: true,
+      permissions: ['customers:read'],
       breadcrumb: [
         { title: 'nav.customers', to: '/customers' },
         { title: 'nav.customerLedger' },
@@ -33,7 +33,7 @@ export const customersRoutes: RouteRecordRaw[] = [
     name: 'CustomerCreate',
     component: CustomerFormView,
     meta: {
-      requiresManageCustomers: true,
+      permissions: ['customers:create'],
       breadcrumb: [
         { title: 'nav.customers', to: '/customers' },
         { title: 'common.add' },
@@ -46,7 +46,7 @@ export const customersRoutes: RouteRecordRaw[] = [
     component: CustomerProfileView,
     meta: {
       requiresLedgers: true,
-      requiresManageCustomers: true,
+      permissions: ['customers:read'],
       breadcrumb: [
         { title: 'nav.customers', to: '/customers' },
         { title: 'common.details' },
@@ -58,7 +58,7 @@ export const customersRoutes: RouteRecordRaw[] = [
     name: 'CustomerEdit',
     component: CustomerFormView,
     meta: {
-      requiresManageCustomers: true,
+      permissions: ['customers:update'],
       breadcrumb: [
         { title: 'nav.customers', to: '/customers' },
         { title: 'common.edit' },

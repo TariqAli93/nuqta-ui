@@ -1,7 +1,6 @@
 import type { Router } from 'vue-router';
 import { useAuthStore } from '../stores/authStore';
 import { useFeatureFlagsStore } from '../stores/featureFlagsStore';
-import * as uiAccess from './uiAccess';
 
 export function applyAuthGuard(router: Router): void {
   router.beforeEach(async (to) => {
@@ -68,51 +67,23 @@ export function applyAuthGuard(router: Router): void {
 
       authStore.startSessionCheck();
 
-      const role = authStore.user?.role;
-      if (!role) {
-        return { name: 'Forbidden' };
+      // Permission-based access check: collect permissions from matched routes
+      const requiredPermissions = to.matched.reduce<string[]>((acc, record) => {
+        if (record.meta.permissions) {
+          acc.push(...record.meta.permissions);
+        }
+        return acc;
+      }, []);
+
+      if (requiredPermissions.length > 0) {
+        const userPermissions = new Set(authStore.permissions);
+        const hasAll = requiredPermissions.every((p) => userPermissions.has(p));
+        if (!hasAll) {
+          return { name: 'Forbidden' };
+        }
       }
 
-      if (to.meta.requiresManageProducts && !uiAccess.canManageProducts(role)) {
-        return { name: 'Forbidden' };
-      }
-
-      if (to.meta.requiresManageCustomers && !uiAccess.canManageCustomers(role)) {
-        return { name: 'Forbidden' };
-      }
-
-      if (to.meta.requiresCreateSales && !uiAccess.canCreateSales(role)) {
-        return { name: 'Forbidden' };
-      }
-
-      if (to.meta.requiresManageSettings && !uiAccess.canManageSettings(role)) {
-        return { name: 'Forbidden' };
-      }
-
-      if (to.meta.requiresManagePurchases && !uiAccess.canManagePurchases(role)) {
-        return { name: 'Forbidden' };
-      }
-
-      if (to.meta.requiresManageSuppliers && !uiAccess.canManageSuppliers(role)) {
-        return { name: 'Forbidden' };
-      }
-
-      if (to.meta.requiresViewInventory && !uiAccess.canViewInventory(role)) {
-        return { name: 'Forbidden' };
-      }
-
-      if (to.meta.requiresViewAccounting && !uiAccess.canViewAccounting(role)) {
-        return { name: 'Forbidden' };
-      }
-
-      if (to.meta.requiresAdjustStock && !uiAccess.canAdjustStock(role)) {
-        return { name: 'Forbidden' };
-      }
-
-      if (to.meta.requiresRole && role !== to.meta.requiresRole) {
-        return { name: 'Forbidden' };
-      }
-
+      // Feature flag checks
       const needsFeatureFlags = Boolean(
         to.meta.requiresAccounting ||
         to.meta.requiresPurchasing ||
@@ -124,21 +95,24 @@ export function applyAuthGuard(router: Router): void {
         await featureFlagsStore.hydrate();
       }
 
-      if (featureFlagsStore.initialized && role !== 'admin') {
-        if (to.meta.requiresAccounting && !featureFlagsStore.accountingReady) {
-          return { name: 'Forbidden' };
-        }
+      if (featureFlagsStore.initialized) {
+        const isAdmin = authStore.permissions.includes('settings:update');
+        if (!isAdmin) {
+          if (to.meta.requiresAccounting && !featureFlagsStore.accountingReady) {
+            return { name: 'Forbidden' };
+          }
 
-        if (to.meta.requiresPurchasing && !featureFlagsStore.purchasesEnabled) {
-          return { name: 'Forbidden' };
-        }
+          if (to.meta.requiresPurchasing && !featureFlagsStore.purchasesEnabled) {
+            return { name: 'Forbidden' };
+          }
 
-        if (to.meta.requiresLedgers && !featureFlagsStore.ledgersEnabled) {
-          return { name: 'Forbidden' };
-        }
+          if (to.meta.requiresLedgers && !featureFlagsStore.ledgersEnabled) {
+            return { name: 'Forbidden' };
+          }
 
-        if (to.meta.requiresPaymentsOnInvoices && !featureFlagsStore.paymentsOnInvoicesEnabled) {
-          return { name: 'Forbidden' };
+          if (to.meta.requiresPaymentsOnInvoices && !featureFlagsStore.paymentsOnInvoicesEnabled) {
+            return { name: 'Forbidden' };
+          }
         }
       }
     }

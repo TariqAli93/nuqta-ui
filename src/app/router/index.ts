@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router';
-import type { UserRole } from '../../types/domain';
 import { routes } from './routes';
 import { applyAuthGuard } from '../../auth/guards';
 import { registerAuthNavigator } from '../../stores/authStore';
@@ -8,20 +7,11 @@ declare module 'vue-router' {
   interface RouteMeta {
     requiresAuth?: boolean;
     requiresGuest?: boolean;
-    requiresManageProducts?: boolean;
-    requiresManageCustomers?: boolean;
-    requiresCreateSales?: boolean;
-    requiresManageSettings?: boolean;
-    requiresManagePurchases?: boolean;
-    requiresManageSuppliers?: boolean;
-    requiresViewInventory?: boolean;
-    requiresViewAccounting?: boolean;
-    requiresAdjustStock?: boolean;
+    permissions?: string[];
     requiresAccounting?: boolean;
     requiresPurchasing?: boolean;
     requiresLedgers?: boolean;
     requiresPaymentsOnInvoices?: boolean;
-    requiresRole?: UserRole;
     enableBarcode?: 'pos' | 'product';
   }
 }

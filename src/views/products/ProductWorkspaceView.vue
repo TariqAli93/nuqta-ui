@@ -256,7 +256,7 @@ import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { categoriesClient, suppliersClient } from '@/api';
 import { useProductWorkspaceStore } from '@/stores/productWorkspaceStore';
-import { useAccess } from '@/composables/useAccess';
+import { useRBAC } from '@/composables/useRBAC';
 import { generateIdempotencyKey } from '@/utils/idempotency';
 import { notifyError } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
@@ -280,7 +280,7 @@ import { useSystemSettingsStore } from '@/stores/settings';
 const route = useRoute();
 const router = useRouter();
 const workspaceStore = useProductWorkspaceStore();
-const access = useAccess();
+const { can } = useRBAC();
 
 // Load system settings to determine feature availability (e.g. stock adjustment)
 const settingsStore = useSystemSettingsStore();
@@ -295,7 +295,7 @@ const editMode = ref(false);
 const deleteDialog = ref(false);
 
 const selectedProductId = computed(() => workspaceStore.selectedProductId);
-const showAdjustTab = computed(() => access.canAdjustStock.value);
+const showAdjustTab = computed(() => can('inventory:adjust'));
 const showUnitsTab = computed(() => settingsStore.data?.unitsEnabled);
 
 /* ── Barcode polling ───────────────────────────────────────────── */
