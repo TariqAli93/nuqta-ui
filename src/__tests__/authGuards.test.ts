@@ -28,6 +28,20 @@ function createAuthStore(overrides: Record<string, unknown> = {}) {
       role: 'admin',
       isActive: true,
     },
+    permissions: [
+      'sales:read', 'sales:create', 'sales:refund', 'sales:cancel',
+      'products:read', 'products:create', 'products:update', 'products:delete',
+      'customers:read', 'customers:create', 'customers:update',
+      'suppliers:read', 'suppliers:create', 'suppliers:update',
+      'purchases:read', 'purchases:create',
+      'inventory:read', 'inventory:adjust',
+      'hr:read', 'hr:update',
+      'payroll:read', 'payroll:update', 'payroll:approve',
+      'accounting:read', 'accounting:update',
+      'settings:read', 'settings:update',
+      'users:read', 'users:create', 'users:update',
+      'barcodes:print', 'backup:read',
+    ],
     isAuthenticated: true,
     checkInitialSetup: vi.fn(),
     ensureAuthenticated: vi.fn().mockResolvedValue(true),
@@ -50,11 +64,17 @@ function createFeatureFlagsStore(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function createRoute(meta: Record<string, unknown>, fullPath = '/target', name = 'Target') {
+function createRoute(
+  meta: Record<string, unknown>,
+  fullPath = '/target',
+  name = 'Target',
+  matched?: Array<{ meta: Record<string, unknown> }>
+) {
   return {
     name,
     fullPath,
     meta,
+    matched: matched ?? [{ meta }],
   };
 }
 
@@ -78,6 +98,7 @@ describe('applyAuthGuard', () => {
       isAuthenticated: false,
       token: null,
       user: null,
+      permissions: [],
     });
 
     vi.mocked(useAuthStore).mockReturnValue(authStore as any);
@@ -89,21 +110,16 @@ describe('applyAuthGuard', () => {
     expect(result).toEqual({ name: 'Login', query: { redirect: '/sales' } });
   });
 
-  it('blocks routes that require an exact role', async () => {
+  it('blocks routes when user lacks required permissions', async () => {
     vi.mocked(useAuthStore).mockReturnValue(
       createAuthStore({
-        user: {
-          id: 2,
-          username: 'manager',
-          fullName: 'Manager User',
-          role: 'manager',
-          isActive: true,
-        },
+        permissions: ['products:read'],
       }) as any
     );
     vi.mocked(useFeatureFlagsStore).mockReturnValue(createFeatureFlagsStore() as any);
 
-    const result = await guard(createRoute({ requiresAuth: true, requiresRole: 'admin' }));
+    const meta = { requiresAuth: true, permissions: ['accounting:read'] };
+    const result = await guard(createRoute(meta, '/accounting/accounts', 'AccountingAccounts'));
 
     expect(result).toEqual({ name: 'Forbidden' });
   });
@@ -118,17 +134,20 @@ describe('applyAuthGuard', () => {
           role: 'cashier',
           isActive: true,
         },
+        permissions: ['sales:read', 'sales:create', 'customers:read'],
       }) as any
     );
     vi.mocked(useFeatureFlagsStore).mockReturnValue(createFeatureFlagsStore() as any);
 
+    const meta = {
+      requiresAuth: true,
+      requiresAccounting: true,
+      permissions: ['accounting:read'],
+    };
+
     const result = await guard(
       createRoute(
-        {
-          requiresAuth: true,
-          requiresViewAccounting: true,
-          requiresAccounting: true,
-        },
+        meta,
         '/accounting/accounts',
         'AccountingAccounts'
       )
@@ -155,20 +174,23 @@ describe('applyAuthGuard', () => {
           role: 'manager',
           isActive: true,
         },
+        permissions: [
+          'products:read', 'products:create', 'products:update',
+          'purchases:read', 'purchases:create',
+          'suppliers:read',
+        ],
       }) as any
     );
     vi.mocked(useFeatureFlagsStore).mockReturnValue(featureFlagsStore as any);
 
+    const meta = {
+      requiresAuth: true,
+      permissions: ['purchases:read'],
+      requiresPurchasing: true,
+    };
+
     const result = await guard(
-      createRoute(
-        {
-          requiresAuth: true,
-          requiresManagePurchases: true,
-          requiresPurchasing: true,
-        },
-        '/purchases',
-        'Purchases'
-      )
+      createRoute(meta, '/purchases', 'Purchases')
     );
 
     expect(featureFlagsStore.hydrate).toHaveBeenCalledOnce();
@@ -184,13 +206,15 @@ describe('applyAuthGuard', () => {
       }) as any
     );
 
+    const meta = {
+      requiresAuth: true,
+      requiresAccounting: true,
+      permissions: ['accounting:read'],
+    };
+
     const result = await guard(
       createRoute(
-        {
-          requiresAuth: true,
-          requiresViewAccounting: true,
-          requiresAccounting: true,
-        },
+        meta,
         '/accounting/accounts',
         'AccountingAccounts'
       )
@@ -199,7 +223,7 @@ describe('applyAuthGuard', () => {
     expect(result).toBe(true);
   });
 
-  it('allows managers into inventory routes when role and feature flags match', async () => {
+  it('allows managers into inventory routes when permissions and feature flags match', async () => {
     vi.mocked(useAuthStore).mockReturnValue(
       createAuthStore({
         user: {
@@ -209,22 +233,47 @@ describe('applyAuthGuard', () => {
           role: 'manager',
           isActive: true,
         },
+        permissions: [
+          'products:read', 'products:create',
+          'inventory:read', 'inventory:adjust',
+        ],
       }) as any
     );
     vi.mocked(useFeatureFlagsStore).mockReturnValue(createFeatureFlagsStore() as any);
 
+    const meta = {
+      requiresAuth: true,
+      permissions: ['inventory:read'],
+      requiresAccounting: true,
+    };
+
     const result = await guard(
-      createRoute(
-        {
-          requiresAuth: true,
-          requiresViewInventory: true,
-          requiresAccounting: true,
-        },
-        '/inventory/overview',
-        'InventoryOverview'
-      )
+      createRoute(meta, '/inventory/overview', 'InventoryOverview')
     );
 
     expect(result).toBe(true);
+  });
+
+  it('collects permissions from nested matched routes', async () => {
+    vi.mocked(useAuthStore).mockReturnValue(
+      createAuthStore({
+        permissions: ['inventory:read'],
+      }) as any
+    );
+    vi.mocked(useFeatureFlagsStore).mockReturnValue(createFeatureFlagsStore() as any);
+
+    const parentMeta = { requiresAuth: true, permissions: ['inventory:read'] };
+    const childMeta = { permissions: ['inventory:adjust'] };
+
+    const result = await guard(
+      createRoute(
+        { requiresAuth: true, permissions: ['inventory:adjust'] },
+        '/inventory/adjustments/new',
+        'StockAdjustment',
+        [{ meta: parentMeta }, { meta: childMeta }]
+      )
+    );
+
+    expect(result).toEqual({ name: 'Forbidden' });
   });
 });
