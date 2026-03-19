@@ -1,13 +1,15 @@
 /**
  * Audit API endpoints.
  *
- * Replaces: ipc/auditClient.ts
+ * Backend provides a single flexible endpoint:
+ *   GET /audit/trail  — query filters: entityType, entityId, userId, action, dateFrom, dateTo, limit, offset
+ *   POST /audit/cleanup — body: { olderThanDays: number }
  *
- * TODO: These endpoints are not in the current backend API spec.
- * Paths are inferred from the IPC channel names and may need adjustment.
+ * All former separate routes (user-actions, by-date, by-action, statistics)
+ * are served via GET /audit/trail with appropriate filter params.
  */
-import type { ApiResult } from '../contracts';
-import { apiGet, apiPost } from '../http';
+import type { ApiResult, PagedResult } from '../contracts';
+import { apiGetPaged, apiPost } from '../http';
 
 export interface AuditEvent {
   id: number;
@@ -15,50 +17,54 @@ export interface AuditEvent {
   entityId: number;
   action: string;
   userId?: number;
-  changedFields?: Record<string, { old: unknown; new: unknown }>;
-  changeDescription?: string;
-  metadata?: Record<string, unknown>;
+  changedFields?: Record<string, { old: unknown; new: unknown }> | null;
+  changeDescription?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  metadata?: Record<string, unknown> | null;
   timestamp: string;
 }
 
-interface AuditStatistics {
-  totalEvents: number;
-  byAction: Record<string, number>;
-  byEntityType: Record<string, number>;
-  byUser?: Record<string, number>;
+export interface AuditTrailParams {
+  entityType?: string;
+  entityId?: number;
+  userId?: number;
+  action?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export const auditClient = {
-  getTrail: (
+  /** GET /audit/trail with flexible filters */
+  getTrail: (params?: AuditTrailParams): Promise<ApiResult<PagedResult<AuditEvent>>> =>
+    apiGetPaged<AuditEvent>('/audit/trail', params),
+
+  getByEntity: (
     entityType: string,
     entityId: number,
-    limit?: number
-  ): Promise<ApiResult<AuditEvent[]>> =>
-    apiGet<AuditEvent[]>('/audit/trail', { entityType, entityId, limit: limit ?? 50 }),
+    limit = 50
+  ): Promise<ApiResult<PagedResult<AuditEvent>>> =>
+    apiGetPaged<AuditEvent>('/audit/trail', { entityType, entityId, limit }),
 
-  getUserActions: (
+  getByUser: (
     userId: number,
     params?: { limit?: number; offset?: number }
-  ): Promise<ApiResult<AuditEvent[]>> =>
-    apiGet<AuditEvent[]>('/audit/user-actions', { userId, ...(params ?? {}) }),
+  ): Promise<ApiResult<PagedResult<AuditEvent>>> =>
+    apiGetPaged<AuditEvent>('/audit/trail', { userId, ...(params ?? {}) }),
 
   getByDateRange: (
-    startDate: string,
-    endDate: string,
-    limit?: number
-  ): Promise<ApiResult<AuditEvent[]>> =>
-    apiGet<AuditEvent[]>('/audit/by-date', { startDate, endDate, limit }),
+    dateFrom: string,
+    dateTo: string,
+    limit = 50
+  ): Promise<ApiResult<PagedResult<AuditEvent>>> =>
+    apiGetPaged<AuditEvent>('/audit/trail', { dateFrom, dateTo, limit }),
 
-  getByAction: (action: string, limit?: number): Promise<ApiResult<AuditEvent[]>> =>
-    apiGet<AuditEvent[]>('/audit/by-action', { action, limit }),
+  getByAction: (action: string, limit = 50): Promise<ApiResult<PagedResult<AuditEvent>>> =>
+    apiGetPaged<AuditEvent>('/audit/trail', { action, limit }),
 
-  getStatistics: (params?: {
-    startDate?: string;
-    endDate?: string;
-    userId?: number;
-  }): Promise<ApiResult<AuditStatistics>> =>
-    apiGet<AuditStatistics>('/audit/statistics', params ?? {}),
-
-  cleanup: (olderThanDays: number): Promise<ApiResult<{ deletedCount: number; message: string }>> =>
-    apiPost<{ deletedCount: number; message: string }>('/audit/cleanup', { olderThanDays }),
+  /** POST /audit/cleanup — returns { deletedCount: number } */
+  cleanup: (olderThanDays: number): Promise<ApiResult<{ deletedCount: number }>> =>
+    apiPost<{ deletedCount: number }>('/audit/cleanup', { olderThanDays }),
 };

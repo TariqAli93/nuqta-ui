@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, shallowRef } from 'vue';
 import { payrollClient } from '../api';
-import type { PayrollRun, PayrollRunInput } from '../types/domain';
+import type { PayrollRun, PayrollRunInput } from '../api/endpoints/hr';
 
 export const usePayrollStore = defineStore('payroll', () => {
   const items = shallowRef<PayrollRun[]>([]);
@@ -42,17 +42,6 @@ export const usePayrollStore = defineStore('payroll', () => {
     loading.value = true;
     error.value = null;
     const result = await payrollClient.create(payload);
-    if (!result.ok) {
-      error.value = result.error.message;
-    }
-    loading.value = false;
-    return result;
-  }
-
-  async function updatePayrollRun(id: number, payload: PayrollRunInput) {
-    loading.value = true;
-    error.value = null;
-    const result = await payrollClient.update(id, payload);
     if (!result.ok) {
       error.value = result.error.message;
     }
@@ -112,7 +101,6 @@ export const usePayrollStore = defineStore('payroll', () => {
     fetchPayrollRuns,
     fetchPayrollRunById,
     createPayrollRun,
-    updatePayrollRun,
     submitPayrollRun,
     approvePayrollRun,
     disbursePayrollRun,
