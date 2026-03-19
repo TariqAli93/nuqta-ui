@@ -255,69 +255,6 @@ export const useAccountingStore = defineStore('accounting', () => {
     }
   }
 
-  async function updateEntry(
-    id: number,
-    data: {
-      entryDate?: string;
-      description?: string;
-      notes?: string;
-      lines?: { accountId: number; debit: number; credit: number; description?: string }[];
-    }
-  ) {
-    loading.value = true;
-    error.value = null;
-    try {
-      const result = await accountingClient.updateEntry(id, data);
-      if (!result.ok) error.value = result.error.message;
-      return result;
-    } catch (err: unknown) {
-      error.value = err instanceof Error ? err.message : 'فشل في تحديث القيد';
-      return { ok: false as const, error: { code: 'UPDATE_FAILED', message: error.value! } };
-    } finally {
-      loading.value = false;
-    }
-  }
-
-  async function deleteEntry(id: number) {
-    loading.value = true;
-    error.value = null;
-    try {
-      const result = await accountingClient.deleteEntry(id);
-      if (!result.ok) error.value = result.error.message;
-      return result;
-    } catch (err: unknown) {
-      error.value = err instanceof Error ? err.message : 'فشل في حذف القيد';
-      return { ok: false as const, error: { code: 'DELETE_FAILED', message: error.value! } };
-    } finally {
-      loading.value = false;
-    }
-  }
-
-  async function createAccount(data: {
-    code: string;
-    name: string;
-    nameAr?: string;
-    accountType: Account['accountType'];
-    parentId?: number | null;
-  }) {
-    loading.value = true;
-    error.value = null;
-    try {
-      const result = await accountingClient.createAccount(data);
-      if (result.ok) {
-        accounts.value.push(result.data);
-      } else {
-        error.value = result.error.message;
-      }
-      return result;
-    } catch (err: unknown) {
-      error.value = err instanceof Error ? err.message : 'فشل في إنشاء الحساب';
-      return { ok: false as const, error: { code: 'CREATE_FAILED', message: error.value! } };
-    } finally {
-      loading.value = false;
-    }
-  }
-
   async function updateAccount(
     id: number,
     data: Partial<{
@@ -389,9 +326,6 @@ export const useAccountingStore = defineStore('accounting', () => {
     fetchProfitLoss,
     fetchBalanceSheet,
     createEntry,
-    updateEntry,
-    deleteEntry,
-    createAccount,
     updateAccount,
     fetchAccountLedger,
   };
