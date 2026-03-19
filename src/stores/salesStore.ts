@@ -1,7 +1,6 @@
 ﻿import { defineStore } from 'pinia';
 import { ref, shallowRef } from 'vue';
 import { salesClient } from '../api';
-import type { SaleReceiptData } from '../api/endpoints/sales';
 import type { Payment, Sale, SaleInput } from '../types/domain';
 import { generateIdempotencyKey } from '../utils/idempotency';
 
@@ -104,10 +103,10 @@ export const useSalesStore = defineStore('sales', () => {
     }
   }
 
-  async function generateReceipt(saleId: number): Promise<SaleReceiptData> {
+  async function generateReceipt(saleId: number): Promise<string> {
     const result = await salesClient.generateReceipt(saleId);
     if (result.ok) {
-      return result.data;
+      return result.data.receiptHtml;
     } else {
       throw new Error(result.error.message || 'Failed to generate receipt');
     }

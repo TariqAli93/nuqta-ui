@@ -2,28 +2,18 @@
  * Accounting API endpoints.
  *
  * Replaces: ipc/accountingClient.ts
- *
- * Backend trial-balance row shape:
- *   { accountId, accountCode, accountName, accountType, debit, credit, balance }
- *
- * Note: Journal entries are immutable once created (accounting integrity).
- * Only account metadata can be updated via PUT /accounting/accounts/:id.
  */
 import type { ApiResult, PagedResult } from '../contracts';
 import type { Account, JournalEntry } from '../../types/domain';
-import { apiGet, apiGetPaged, apiPost, apiPut } from '../http';
+import { apiGet, apiGetPaged, apiPost, apiPut, apiDelete } from '../http';
 
-/**
- * Matches backend TrialBalanceRowSchema exactly:
- *   { accountId, accountCode, accountName, accountType, debit, credit, balance }
- */
 export interface TrialBalanceRow {
   accountId: number;
-  accountCode: string;
-  accountName: string;
+  code: string;
+  name: string;
   accountType: string;
-  debit: number;
-  credit: number;
+  debitTotal: number;
+  creditTotal: number;
   balance: number;
 }
 
@@ -104,10 +94,28 @@ export const accountingClient = {
   }): Promise<ApiResult<JournalEntry>> =>
     apiPost<JournalEntry>('/accounting/journal-entries', data),
 
-  /**
-   * Update account metadata (name, nameAr, accountType, parentId, isActive).
-   * Backend: PUT /accounting/accounts/:id
-   */
+  updateEntry: (
+    id: number,
+    data: {
+      entryDate?: string;
+      description?: string;
+      notes?: string;
+      lines?: { accountId: number; debit: number; credit: number; description?: string }[];
+    }
+  ): Promise<ApiResult<JournalEntry>> =>
+    apiPut<JournalEntry>(`/accounting/journal-entries/${id}`, data),
+
+  deleteEntry: (id: number): Promise<ApiResult<{ ok: true }>> =>
+    apiDelete<{ ok: true }>(`/accounting/journal-entries/${id}`),
+
+  createAccount: (data: {
+    code: string;
+    name: string;
+    nameAr?: string;
+    accountType: Account['accountType'];
+    parentId?: number | null;
+  }): Promise<ApiResult<Account>> => apiPost<Account>('/accounting/accounts', data),
+
   updateAccount: (
     id: number,
     data: Partial<{
