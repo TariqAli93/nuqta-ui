@@ -123,6 +123,7 @@ export interface Sale {
   paidAmount?: number;
   remainingAmount?: number;
   status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial';
+  // ^ 'refunded' and 'partial' align with backend schema enum
   notes?: string | null;
   idempotencyKey?: string | null;
   createdAt?: string;
@@ -448,11 +449,20 @@ export type UserInput = Pick<User, 'username' | 'fullName' | 'role' | 'isActive'
 
 export type CategoryInput = Pick<Category, 'name' | 'description' | 'isActive'>;
 
-export type SettingsCurrencyResponse = {
-  defaultCurrency: string;
-  usdRate: number;
-  iqdRate: number;
-};
+/**
+ * Backend GET /settings/currency response shape.
+ * Matches CurrencySettingsSchema in the backend route.
+ */
+export interface SettingsCurrencyResponse {
+  id?: number;
+  currencyCode: string;
+  currencyName?: string;
+  symbol?: string;
+  exchangeRate?: number;
+  isBaseCurrency?: boolean;
+  isActive?: boolean;
+  updatedAt?: string | null;
+}
 
 export type CompanySettingsInput = Pick<
   CompanySettings,
@@ -468,55 +478,48 @@ export type CompanySettingsInput = Pick<
 >;
 
 // ── HR — Department ─────────────────────────────────────────────────────────
+/**
+ * Backend Department schema: { id, name, description, isActive, createdAt, updatedAt, createdBy }
+ * Note: managerId is NOT in the backend schema.
+ */
 export interface Department {
   id?: number;
   name: string;
   description?: string | null;
-  managerId?: number | null;
   isActive?: boolean;
   createdAt?: string;
-  updatedAt?: string;
+  updatedAt?: string | null;
+  createdBy?: number | null;
 }
 
-export type DepartmentInput = Pick<Department, 'name' | 'description' | 'managerId' | 'isActive'>;
+export type DepartmentInput = Pick<Department, 'name' | 'description' | 'isActive'>;
 
 // ── HR — Employee ───────────────────────────────────────────────────────────
-export type EmployeeStatus = 'active' | 'inactive' | 'terminated' | 'on_leave';
-
+/**
+ * Backend Employee schema uses flat string fields (not normalized FK-based):
+ *   { id, name, salary, position, department, isActive, createdAt, updatedAt, createdBy }
+ */
 export interface Employee {
   id?: number;
-  fullName: string;
-  phone?: string | null;
-  email?: string | null;
-  departmentId?: number | null;
-  designation?: string | null;
-  dateOfJoining?: string | null;
-  dateOfBirth?: string | null;
-  salary?: number | null;
-  status?: EmployeeStatus;
-  address?: string | null;
-  notes?: string | null;
+  name: string;
+  salary: number;
+  position: string;
+  department: string;
   isActive?: boolean;
   createdAt?: string;
-  updatedAt?: string;
+  updatedAt?: string | null;
+  createdBy?: number | null;
 }
 
-export type EmployeeInput = Pick<
-  Employee,
-  | 'fullName'
-  | 'phone'
-  | 'email'
-  | 'departmentId'
-  | 'designation'
-  | 'dateOfJoining'
-  | 'dateOfBirth'
-  | 'salary'
-  | 'status'
-  | 'address'
-  | 'notes'
->;
+export type EmployeeInput = Pick<Employee, 'name' | 'salary' | 'position' | 'department' | 'isActive'>;
 
 // ── HR — Payroll Run ────────────────────────────────────────────────────────
+/**
+ * Backend PayrollRun schema uses integer year/month (not ISO date strings):
+ *   { id, periodYear, periodMonth, paymentDate, status, totalGrossPay, totalDeductions, totalBonuses, totalNetPay }
+ *
+ * PayrollRunItem uses: { grossPay, deductions, bonuses, netPay } (not basicSalary/allowances)
+ */
 export type PayrollRunStatus = 'draft' | 'submitted' | 'approved' | 'disbursed' | 'cancelled';
 
 export interface PayrollRunEntry {
@@ -524,27 +527,50 @@ export interface PayrollRunEntry {
   payrollRunId?: number;
   employeeId: number;
   employeeName?: string;
-  basicSalary: number;
-  allowances?: number;
-  deductions?: number;
-  netSalary: number;
+  position?: string;
+  department?: string;
+  grossPay: number;
+  deductions: number;
+  bonuses: number;
+  netPay: number;
+  notes?: string | null;
+  createdAt?: string;
 }
 
 export interface PayrollRun {
   id?: number;
-  title: string;
-  periodStart: string;
-  periodEnd: string;
+  periodYear: number;
+  periodMonth: number;
+  paymentDate?: string | null;
   status?: PayrollRunStatus;
-  totalAmount?: number;
+  totalGrossPay?: number;
+  totalDeductions?: number;
+  totalBonuses?: number;
+  totalNetPay?: number;
+  salaryExpenseAccountCode?: string;
+  deductionsLiabilityAccountCode?: string;
+  paymentAccountCode?: string;
+  journalEntryId?: number | null;
   notes?: string | null;
-  entries?: PayrollRunEntry[];
   createdAt?: string;
-  updatedAt?: string;
-  createdBy?: number;
+  createdBy?: number | null;
+  approvedAt?: string | null;
+  approvedBy?: number | null;
+  items?: PayrollRunEntry[];
 }
 
-export type PayrollRunInput = Pick<
-  PayrollRun,
-  'title' | 'periodStart' | 'periodEnd' | 'notes'
->;
+export interface PayrollRunInput {
+  periodYear: number;
+  periodMonth: number;
+  paymentDate?: string;
+  salaryExpenseAccountCode?: string;
+  deductionsLiabilityAccountCode?: string;
+  paymentAccountCode?: string;
+  notes?: string;
+  items: {
+    employeeId: number;
+    deductions?: number;
+    bonuses?: number;
+    notes?: string;
+  }[];
+}
