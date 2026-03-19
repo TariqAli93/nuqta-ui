@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, shallowRef } from 'vue';
 import { departmentsClient } from '../api';
-import type { Department, DepartmentInput } from '../types/domain';
+import type { Department, DepartmentInput } from '../api/endpoints/hr';
 
 export const useDepartmentsStore = defineStore('departments', () => {
   const items = shallowRef<Department[]>([]);

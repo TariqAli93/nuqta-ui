@@ -4,8 +4,9 @@
  * Replaces: ipc/authClient.ts
  */
 import type { ApiResult } from '../contracts';
-import type { UserPublic, FirstUserInput, CompanySettings } from '../../types/domain';
+import type { UserPublic, FirstUserInput } from '../../types/domain';
 import { apiGet, apiPost } from '../http';
+import { getAccessToken } from '../http';
 
 // ---------------------------------------------------------------------------
 // Request / Response types
@@ -14,12 +15,13 @@ import { apiGet, apiPost } from '../http';
 interface AuthLoginRequest {
   username: string;
   password: string;
-  [key: string]: any;
 }
 
 export interface AuthLoginResponse {
   accessToken: string;
-  refreshToken?: string;
+  /** Legacy alias — same value as accessToken */
+  token?: string;
+  refreshToken: string;
   user: UserPublic;
   permissions: string[];
 }
@@ -31,41 +33,23 @@ export interface AuthSetupStatus {
   wizardCompleted: boolean;
 }
 
-export interface InitializeAppRequest {
-  admin: {
-    username: string;
-    password: string;
-    fullName: string;
-    phone?: string;
-  };
-  companySettings: CompanySettings;
-}
-
-interface AuthVerifyCredentialsRequest {
-  username: string;
-  password: string;
-  [key: string]: any;
-}
-
-interface AuthVerifyCredentialsResponse {
-  user: UserPublic;
-  permissions?: string[];
-}
+/** Backend returns UserSafe (no token). Callers must login separately. */
+export type RegisterResponse = UserPublic;
 
 interface AuthChangePasswordRequest {
-  username: string;
   currentPassword: string;
   newPassword: string;
-  [key: string]: any;
 }
 
 interface AuthChangePasswordResponse {
   success: true;
 }
 
-interface AuthValidateTokenResponse {
-  valid: boolean;
-  error?: string;
+/**
+ * GET /auth/me returns the currently authenticated user plus their permissions.
+ */
+export interface MeResponse extends UserPublic {
+  permissions: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -79,34 +63,37 @@ export const authClient = {
   checkInitialSetup: (): Promise<ApiResult<AuthSetupStatus>> =>
     apiGet<AuthSetupStatus>('/auth/setup-status'),
 
-  createFirstUser: (userData: FirstUserInput): Promise<ApiResult<AuthLoginResponse>> =>
-    apiPost<AuthLoginResponse>('/auth/register', userData),
+  /**
+   * Register the first admin user. Returns the created UserSafe (no token).
+   * Callers must login separately to obtain a token.
+   */
+  createFirstUser: (userData: FirstUserInput): Promise<ApiResult<RegisterResponse>> =>
+    apiPost<RegisterResponse>('/auth/register', userData),
 
-  initializeApp: (
-    data: InitializeAppRequest
-  ): Promise<ApiResult<{ success: boolean; admin: UserPublic }>> =>
-    apiPost<{ success: boolean; admin: UserPublic }>('/auth/register', data),
+  /**
+   * Token refresh. Requires the stored refreshToken in the body.
+   */
+  refresh: (refreshToken: string): Promise<ApiResult<AuthLoginResponse>> =>
+    apiPost<AuthLoginResponse>('/auth/refresh', { refreshToken }),
 
-  /** Token refresh — TODO: Add backend endpoint if needed */
-  refresh: (): Promise<ApiResult<{ accessToken: string }>> =>
-    apiPost<{ accessToken: string }>('/auth/refresh'),
+  logout: (refreshToken?: string): Promise<ApiResult<null>> =>
+    apiPost<null>('/auth/logout', refreshToken ? { refreshToken } : undefined),
 
-  /** Logout — client-side token clear, optionally call backend */
-  logout: (): Promise<ApiResult<{ ok: true }>> => apiPost<{ ok: true }>('/auth/logout'),
-
-  getCurrentUser: (): Promise<ApiResult<{ user: UserPublic; permissions: string[] }>> =>
-    apiGet<{ user: UserPublic; permissions: string[] }>('/auth/me'),
-
-  verifyCredentials: (
-    credentials: AuthVerifyCredentialsRequest
-  ): Promise<ApiResult<AuthVerifyCredentialsResponse>> =>
-    apiPost<AuthVerifyCredentialsResponse>('/auth/login', credentials),
+  /**
+   * Get the current authenticated user with their permissions.
+   * Backend returns: { ...UserSafe, permissions: string[] }
+   */
+  getCurrentUser: (): Promise<ApiResult<MeResponse>> =>
+    apiGet<MeResponse>('/auth/me'),
 
   changePassword: (
     payload: AuthChangePasswordRequest
   ): Promise<ApiResult<AuthChangePasswordResponse>> =>
     apiPost<AuthChangePasswordResponse>('/auth/change-password', payload),
 
-  validateToken: (payload: { token: string }): Promise<ApiResult<AuthValidateTokenResponse>> =>
-    apiGet<AuthValidateTokenResponse>('/auth/me'),
+  /**
+   * Validate that the current access token is still valid by calling /auth/me.
+   */
+  validateToken: (): Promise<ApiResult<MeResponse>> =>
+    apiGet<MeResponse>('/auth/me'),
 };
