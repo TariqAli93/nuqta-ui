@@ -4,7 +4,7 @@
  * Replaces: ipc/settingsClient.ts
  */
 import type { ApiResult } from '../contracts';
-import type { CompanySettings } from '../../types/domain';
+import type { SettingsCurrencyResponse, CompanySettings } from '../../types/domain';
 import { apiGet, apiPut, apiPost } from '../http';
 
 export interface ModuleSettings {
@@ -32,27 +32,17 @@ export interface InvoiceSettings {
   showQr: boolean;
 }
 
-/**
- * GET /settings/modules returns ModuleSettings directly (not wrapped in { modules, ... }).
- */
-export type ModuleSettingsResponse = ModuleSettings;
-
-interface SetupWizardPayload {
-  modules?: Partial<ModuleSettings>;
-  notifications?: Partial<NotificationSettings>;
-  invoice?: Partial<InvoiceSettings>;
+export interface AllModuleSettings {
+  modules: ModuleSettings;
+  notifications: NotificationSettings;
+  invoice: InvoiceSettings;
+  wizardCompleted: boolean;
 }
 
-/** Backend returns { id, currencyCode, currencyName, symbol, exchangeRate, isBaseCurrency, isActive, updatedAt } */
-export interface CurrencySettingsResponse {
-  id?: number;
-  currencyCode: string;
-  currencyName?: string;
-  symbol?: string;
-  exchangeRate?: number;
-  isBaseCurrency?: boolean;
-  isActive?: boolean;
-  updatedAt?: string | null;
+interface SetupWizardPayload {
+  modules: ModuleSettings;
+  notifications: NotificationSettings;
+  invoice: InvoiceSettings;
 }
 
 type TypedSettingValue = string | number | boolean;
@@ -62,8 +52,8 @@ export const settingsClient = {
   get: (key: string): Promise<ApiResult<string | null>> =>
     apiGet<string | null>(`/settings/${key}`),
 
-  set: (key: string, value: TypedSettingValue): Promise<ApiResult<null>> =>
-    apiPut<null>(`/settings/${key}`, { value: String(value) }),
+  set: (key: string, value: TypedSettingValue): Promise<ApiResult<{ ok: true }>> =>
+    apiPut<{ ok: true }>(`/settings/${key}`, { value }),
 
   getTyped: async <K extends string>(
     keys: readonly K[]
@@ -83,37 +73,36 @@ export const settingsClient = {
     return { ok: true as const, data: values };
   },
 
-  setTyped: async (values: Record<string, TypedSettingValue>): Promise<ApiResult<null>> => {
+  setTyped: async (values: Record<string, TypedSettingValue>): Promise<ApiResult<{ ok: true }>> => {
     for (const [key, value] of Object.entries(values)) {
-      const result = await apiPut<null>(`/settings/${key}`, { value: String(value) });
+      const result = await apiPut<{ ok: true }>(`/settings/${key}`, { value });
       if (!result.ok) return result;
     }
-    return { ok: true as const, data: null };
+    return { ok: true as const, data: { ok: true as const } };
   },
 
-  getCurrency: (): Promise<ApiResult<CurrencySettingsResponse>> =>
-    apiGet<CurrencySettingsResponse>('/settings/currency'),
+  getCurrency: (): Promise<ApiResult<SettingsCurrencyResponse>> =>
+    apiGet<SettingsCurrencyResponse>('/settings/currency'),
 
   getCompany: (): Promise<ApiResult<CompanySettings | null>> =>
     apiGet<CompanySettings | null>('/settings/company'),
 
-  setCompany: (settings: CompanySettings): Promise<ApiResult<CompanySettings>> =>
-    apiPut<CompanySettings>('/settings/company', settings),
+  setCompany: (settings: CompanySettings): Promise<ApiResult<{ ok: true }>> =>
+    apiPut<{ ok: true }>('/settings/company', settings),
 
   getAppVersion: (): Promise<ApiResult<{ version: string }>> =>
     apiGet<{ version: string }>('/system/capabilities'),
 
+  /** No-op for printers in web mode — desktop-only feature */
   getPrinters: (): Promise<ApiResult<{ printers: string[] }>> =>
     Promise.resolve({ ok: true as const, data: { printers: [] } }),
 
-  /** GET /settings/modules — returns ModuleSettings directly */
-  getModules: (): Promise<ApiResult<ModuleSettingsResponse>> =>
-    apiGet<ModuleSettingsResponse>('/settings/modules'),
+  getModules: (): Promise<ApiResult<AllModuleSettings>> =>
+    apiGet<AllModuleSettings>('/settings/modules'),
 
-  /** POST /settings/setup-wizard — returns { completed: boolean } */
-  completeWizard: (data: SetupWizardPayload): Promise<ApiResult<{ completed: boolean }>> =>
-    apiPost<{ completed: boolean }>('/settings/setup-wizard', data),
+  completeWizard: (data: SetupWizardPayload): Promise<ApiResult<AllModuleSettings>> =>
+    apiPost<AllModuleSettings>('/settings/setup-wizard', data),
 
-  setModuleToggle: (key: string, value: boolean): Promise<ApiResult<null>> =>
-    apiPut<null>(`/settings/${key}`, { value: String(value) }),
+  setModuleToggle: (key: string, value: boolean): Promise<ApiResult<AllModuleSettings>> =>
+    apiPut<AllModuleSettings>(`/settings/${key}`, { value }),
 };

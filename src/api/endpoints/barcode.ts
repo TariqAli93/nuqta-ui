@@ -14,13 +14,13 @@ export const barcodeClient = {
   // ── Templates ─────────────────────────────────────────────────────────────
 
   getTemplates: (): Promise<ApiResult<BarcodeTemplate[]>> =>
-    apiGet<BarcodeTemplate[]>('/barcode/templates'),
+    apiGet<BarcodeTemplate[]>('/barcodes/templates'),
 
   createTemplate: (data: BarcodeTemplateInput): Promise<ApiResult<BarcodeTemplate>> =>
-    apiPost<BarcodeTemplate>('/barcode/templates', data),
+    apiPost<BarcodeTemplate>('/barcodes/templates', data),
 
   deleteTemplate: (id: number): Promise<ApiResult<{ ok: boolean }>> =>
-    apiDelete<{ ok: boolean }>(`/barcode/templates/${id}`),
+    apiDelete<{ ok: boolean }>(`/barcodes/templates/${id}`),
 
   // ── Print Jobs ────────────────────────────────────────────────────────────
 
@@ -30,8 +30,8 @@ export const barcodeClient = {
     limit?: number;
     offset?: number;
   }): Promise<ApiResult<PagedResult<BarcodePrintJob>>> =>
-    apiGetPaged<BarcodePrintJob>('/barcode/print-jobs', params),
+    apiGetPaged<BarcodePrintJob>('/barcodes/print-jobs', params),
 
   createPrintJob: (data: BarcodePrintJobInput): Promise<ApiResult<BarcodePrintJob>> =>
-    apiPost<BarcodePrintJob>('/barcode/print-jobs', data),
+    apiPost<BarcodePrintJob>('/barcodes/print-jobs', data),
 };
