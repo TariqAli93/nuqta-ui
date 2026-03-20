@@ -12,11 +12,11 @@ import { posClient, postingClient, accountingClient } from '@/api';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { generateIdempotencyKey } from '@/utils/idempotency';
 import { notifyError, notifySuccess } from '@/utils/notify';
-import type { SaleInput, SaleItem } from '@/types/domain';
+import type { SaleCreateInput, SaleItem, PaymentMethod } from '@/types/domain';
 
 export interface PaymentOverlayPayload {
   paid: number;
-  paymentType: SaleInput['paymentType'];
+  paymentType: SaleCreateInput['paymentType'];
   discount?: number;
   paymentMethod?: string;
   referenceNumber?: string;
@@ -109,32 +109,25 @@ export function usePosPayment() {
     isProcessingPayment.value = true;
 
     try {
-      const invoiceNumber = `فاتورة-${Date.now()}`;
-      const itemsWithSubtotals = cartItems.map((item) => ({
-        ...item,
-        subtotal: item.quantity * item.unitPrice - (item.discount || 0),
-        quantityBase: item.quantity * (item.unitFactor ?? 1),
-      }));
-      const remainingAmount = Math.max(payableTotal - paidAmount, 0);
-
-      const payload: SaleInput = {
-        invoiceNumber,
-        customerId: selectedCustomerId,
-        subtotal: subtotalValue,
+      const payload: SaleCreateInput = {
+        customerId: selectedCustomerId ?? undefined,
         discount: appliedDiscount,
         tax: taxValue,
-        total: payableTotal,
-        currency,
-        exchangeRate: 1,
-        interestRate: 0,
-        interestAmount: 0,
         paymentType: overlayPayload.paymentType || 'cash',
         paidAmount,
-        remainingAmount,
-        status: remainingAmount <= 0 ? 'completed' : 'pending',
-        notes: saleNote,
-        items: itemsWithSubtotals,
-        paymentMethod: overlayPayload.paymentMethod,
+        currency,
+        notes: saleNote ?? undefined,
+        items: cartItems.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          discount: item.discount,
+          unitName: item.unitName,
+          unitFactor: item.unitFactor,
+          batchId: item.batchId,
+        })),
+        interestRate: 0,
+        paymentMethod: overlayPayload.paymentMethod as PaymentMethod | undefined,
         referenceNumber: overlayPayload.referenceNumber,
         idempotencyKey: generateIdempotencyKey('sale'),
       };

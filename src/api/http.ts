@@ -20,7 +20,6 @@ import { createFailure, normalizeApiError, normalizeApiResult, toPagedResult } f
 // ---------------------------------------------------------------------------
 // Axios instance
 // ---------------------------------------------------------------------------
-
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
 export const http: AxiosInstance = axios.create({
@@ -131,23 +130,41 @@ http.interceptors.response.use(
 
       try {
         const storedRefreshToken = getRefreshToken();
-        const refreshResponse = await http.post('/auth/refresh', storedRefreshToken ? { refreshToken: storedRefreshToken } : undefined);
+
+        // No refresh token available — treat as immediate auth failure
+        if (!storedRefreshToken) {
+          setAccessToken(null);
+          setRefreshToken(null);
+          try {
+            localStorage.removeItem('token');
+          } catch {
+            /* noop */
+          }
+          if (unauthorizedHandler) {
+            unauthorizedHandler();
+          }
+          return Promise.reject(error);
+        }
+
+        const refreshResponse = await http.post('/auth/refresh', {
+          refreshToken: storedRefreshToken,
+        });
         const data = refreshResponse.data?.data ?? refreshResponse.data ?? {};
         const newToken = data.accessToken ?? data.token ?? null;
         const newRefreshToken = data.refreshToken ?? null;
 
-        if (newToken) {
-          setAccessToken(newToken);
+        if ('accessToken' in data && newToken) {
+          setAccessToken(newToken ?? null);
           try {
-            localStorage.setItem('token', newToken);
+            localStorage.setItem('token', newToken ?? '');
           } catch {
             /* noop */
           }
-          if (newRefreshToken) {
-            setRefreshToken(newRefreshToken);
+          if ('refreshToken' in data && newRefreshToken !== null) {
+            setRefreshToken(newRefreshToken ?? null);
           }
-          onTokenRefreshed(newToken);
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          onTokenRefreshed(newToken ?? '');
+          originalRequest.headers.Authorization = `Bearer ${newToken ?? ''}`;
           return http(originalRequest);
         }
       } catch (refreshErr) {

@@ -2,7 +2,7 @@
 import { ref, shallowRef } from 'vue';
 import { salesClient } from '../api';
 import type { SaleReceiptData } from '../api/endpoints/sales';
-import type { Payment, Sale, SaleInput } from '../types/domain';
+import type { Payment, Sale, SaleCreateInput } from '../types/domain';
 import { generateIdempotencyKey } from '../utils/idempotency';
 
 export const useSalesStore = defineStore('sales', () => {
@@ -32,7 +32,7 @@ export const useSalesStore = defineStore('sales', () => {
     }
   }
 
-  async function createSale(payload: SaleInput) {
+  async function createSale(payload: SaleCreateInput) {
     loading.value = true;
     error.value = null;
     try {

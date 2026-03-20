@@ -83,8 +83,7 @@ export const authClient = {
     apiGet<AuthSetupStatus>('/auth/setup-status'),
 
   /**
-   * Register the first admin user. Returns the created UserSafe (no token).
-   * Callers must login separately to obtain a token.
+   * Register the first admin user. Returns a full login response (with tokens).
    */
   createFirstUser: (userData: FirstUserInput): Promise<ApiResult<RegisterResponse>> =>
     apiPost<RegisterResponse>('/auth/register', userData),
@@ -102,8 +101,7 @@ export const authClient = {
    * Get the current authenticated user with their permissions.
    * Backend returns: { ...UserSafe, permissions: string[] }
    */
-  getCurrentUser: (): Promise<ApiResult<MeResponse>> =>
-    apiGet<MeResponse>('/auth/me'),
+  getCurrentUser: (): Promise<ApiResult<MeResponse>> => apiGet<MeResponse>('/auth/me'),
 
   changePassword: (
     payload: AuthChangePasswordRequest
@@ -113,8 +111,7 @@ export const authClient = {
   /**
    * Validate that the current access token is still valid by calling /auth/me.
    */
-  validateToken: (): Promise<ApiResult<MeResponse>> =>
-    apiGet<MeResponse>('/auth/me'),
+  validateToken: (): Promise<ApiResult<MeResponse>> => apiGet<MeResponse>('/auth/me'),
 
   /**
    * Initialize the application with admin user and company settings.
