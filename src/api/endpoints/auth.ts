@@ -33,8 +33,27 @@ export interface AuthSetupStatus {
   wizardCompleted: boolean;
 }
 
-/** Backend returns UserSafe (no token). Callers must login separately. */
-export type RegisterResponse = UserPublic;
+/** Backend returns full login response (with tokens) after register. */
+export type RegisterResponse = AuthLoginResponse;
+
+export interface InitializeAppRequest {
+  admin: {
+    username: string;
+    password: string;
+    fullName: string;
+    phone?: string;
+  };
+  companySettings?: {
+    name?: string;
+    currency?: string;
+    address?: string | null;
+    phone?: string | null;
+    phone2?: string | null;
+    email?: string | null;
+    taxId?: string | null;
+    logo?: string | null;
+  };
+}
 
 interface AuthChangePasswordRequest {
   currentPassword: string;
@@ -96,4 +115,11 @@ export const authClient = {
    */
   validateToken: (): Promise<ApiResult<MeResponse>> =>
     apiGet<MeResponse>('/auth/me'),
+
+  /**
+   * Initialize the application with admin user and company settings.
+   * Calls POST /settings/setup-wizard.
+   */
+  initializeApp: (payload: InitializeAppRequest): Promise<ApiResult<{ success: boolean }>> =>
+    apiPost<{ success: boolean }>('/settings/setup-wizard', payload),
 };

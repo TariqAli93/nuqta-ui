@@ -28,5 +28,5 @@ export { backupClient } from './endpoints/backup';
 export { employeesClient, departmentsClient, payrollClient } from './endpoints/hr';
 export { dashboardClient } from './endpoints/dashboard';
 export { setupClient } from './endpoints/setup';
-export { registerUnauthorizedHandler, setAccessToken, getAccessToken } from './http';
+export { registerUnauthorizedHandler, setAccessToken, getAccessToken, setRefreshToken, getRefreshToken } from './http';
 export type { ApiResult, ApiError, PagedResult } from './contracts';

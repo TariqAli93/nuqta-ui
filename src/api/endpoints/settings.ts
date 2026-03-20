@@ -116,4 +116,42 @@ export const settingsClient = {
 
   setModuleToggle: (key: string, value: boolean): Promise<ApiResult<null>> =>
     apiPut<null>(`/settings/${key}`, { value: String(value) }),
+
+  // ── V2 settings endpoints ─────────────────────────────────────────
+
+  /** GET /settings/system */
+  getSystem: (): Promise<ApiResult<any>> =>
+    apiGet<any>('/settings/system'),
+
+  /** PUT /settings/system */
+  updateSystem: (data: Record<string, unknown>): Promise<ApiResult<any>> =>
+    apiPut<any>('/settings/system', data),
+
+  /** GET /settings/accounting-v2 */
+  getAccountingSettings: (): Promise<ApiResult<any>> =>
+    apiGet<any>('/settings/accounting-v2'),
+
+  /** PUT /settings/accounting-v2 */
+  updateAccountingSettings: (data: Record<string, unknown>): Promise<ApiResult<any>> =>
+    apiPut<any>('/settings/accounting-v2', data),
+
+  /** GET /settings/pos */
+  getPosSettings: (): Promise<ApiResult<any>> =>
+    apiGet<any>('/settings/pos'),
+
+  /** PUT /settings/pos */
+  updatePosSettings: (data: Record<string, unknown>): Promise<ApiResult<any>> =>
+    apiPut<any>('/settings/pos', data),
+
+  /** GET /settings/barcode-config */
+  getBarcodeSettings: (): Promise<ApiResult<any>> =>
+    apiGet<any>('/settings/barcode-config'),
+
+  /** PUT /settings/barcode-config */
+  updateBarcodeSettings: (data: Record<string, unknown>): Promise<ApiResult<any>> =>
+    apiPut<any>('/settings/barcode-config', data),
+
+  /** POST /settings/setup-wizard-v2 */
+  completeWizardV2: (data: Record<string, unknown>): Promise<ApiResult<any>> =>
+    apiPost<any>('/settings/setup-wizard-v2', data),
 };

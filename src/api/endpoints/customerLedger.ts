@@ -8,7 +8,7 @@ import type { CustomerLedgerEntry } from '../../types/domain';
 import { apiGet, apiGetPaged, apiPost } from '../http';
 
 interface RecordPaymentInput {
-  customerId: number;
+  customerId: number; // used as URL path param, NOT sent in body
   amount: number;
   paymentMethod: string;
   notes?: string;
@@ -16,7 +16,7 @@ interface RecordPaymentInput {
 }
 
 interface LedgerAdjustmentInput {
-  customerId: number;
+  customerId: number; // used as URL path param, NOT sent in body
   amount: number;
   notes?: string;
 }
@@ -33,11 +33,15 @@ export const customerLedgerClient = {
   ): Promise<ApiResult<PagedResult<CustomerLedgerEntry>>> =>
     apiGetPaged<CustomerLedgerEntry>(`/customer-ledger/${customerId}`, params),
 
-  recordPayment: (data: RecordPaymentInput): Promise<ApiResult<CustomerLedgerEntry>> =>
-    apiPost<CustomerLedgerEntry>(`/customer-ledger/${data.customerId}/payments`, data),
+  recordPayment: (data: RecordPaymentInput): Promise<ApiResult<CustomerLedgerEntry>> => {
+    const { customerId, ...body } = data;
+    return apiPost<CustomerLedgerEntry>(`/customer-ledger/${customerId}/payments`, body);
+  },
 
-  addAdjustment: (data: LedgerAdjustmentInput): Promise<ApiResult<CustomerLedgerEntry>> =>
-    apiPost<CustomerLedgerEntry>(`/customer-ledger/${data.customerId}/adjustments`, data),
+  addAdjustment: (data: LedgerAdjustmentInput): Promise<ApiResult<CustomerLedgerEntry>> => {
+    const { customerId, ...body } = data;
+    return apiPost<CustomerLedgerEntry>(`/customer-ledger/${customerId}/adjustments`, body);
+  },
 
   reconcileDebt: (repair = false): Promise<ApiResult<any>> =>
     apiPost<any>('/customer-ledger/reconcile', { repair }),

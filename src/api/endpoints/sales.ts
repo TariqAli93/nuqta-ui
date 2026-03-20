@@ -9,7 +9,7 @@
  *   receipt: { ok: true, data: SaleReceiptData }
  */
 import type { ApiResult, PagedResult } from '../contracts';
-import type { Payment, Sale, SaleInput } from '../../types/domain';
+import type { Payment, Sale, SaleCreateInput } from '../../types/domain';
 import { apiGet, apiGetPaged, apiPost } from '../http';
 
 export interface RefundResult {
@@ -17,6 +17,8 @@ export interface RefundResult {
   refundedAmount: number;
   newPaidAmount: number;
   newRemainingAmount: number;
+  totalRefunded?: number;
+  status?: string;
 }
 
 export interface SaleReceiptStore {
@@ -66,7 +68,7 @@ export const salesClient = {
   getAll: (params?: Record<string, unknown>): Promise<ApiResult<PagedResult<Sale>>> =>
     apiGetPaged<Sale>('/sales/', params),
 
-  create: (sale: SaleInput): Promise<ApiResult<Sale>> => apiPost<Sale>('/sales/', sale),
+  create: (sale: SaleCreateInput): Promise<ApiResult<Sale>> => apiPost<Sale>('/sales/', sale),
 
   addPayment: (saleId: number, payment: Omit<Payment, 'saleId'>): Promise<ApiResult<unknown>> =>
     apiPost<unknown>(`/sales/${saleId}/payments`, payment),
@@ -83,4 +85,8 @@ export const salesClient = {
 
   generateReceipt: (id: number): Promise<ApiResult<SaleReceiptData>> =>
     apiGet<SaleReceiptData>(`/sales/${id}/receipt`),
+
+  /** Settle outstanding credit balance for a sale */
+  settle: (id: number, data: { amount: number; paymentMethod?: string; notes?: string }): Promise<ApiResult<Sale>> =>
+    apiPost<Sale>(`/sales/${id}/settle`, data),
 };

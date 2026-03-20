@@ -35,6 +35,7 @@ export const http: AxiosInstance = axios.create({
 // ---------------------------------------------------------------------------
 
 let _accessToken: string | null = null;
+let _refreshToken: string | null = null;
 
 /**
  * Store the access token used for Bearer auth.
@@ -45,6 +46,28 @@ export function setAccessToken(newToken: string | null): void {
 
 export function getAccessToken(): string | null {
   return _accessToken;
+}
+
+export function setRefreshToken(token: string | null): void {
+  _refreshToken = token;
+  try {
+    if (token) {
+      localStorage.setItem('refreshToken', token);
+    } else {
+      localStorage.removeItem('refreshToken');
+    }
+  } catch {
+    /* noop */
+  }
+}
+
+export function getRefreshToken(): string | null {
+  if (_refreshToken) return _refreshToken;
+  try {
+    return localStorage.getItem('refreshToken');
+  } catch {
+    return null;
+  }
 }
 
 // Request interceptor — attach Bearer token
@@ -107,9 +130,11 @@ http.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshResponse = await http.post('/auth/refresh');
-        const newToken =
-          refreshResponse.data?.data?.accessToken ?? refreshResponse.data?.accessToken ?? null;
+        const storedRefreshToken = getRefreshToken();
+        const refreshResponse = await http.post('/auth/refresh', storedRefreshToken ? { refreshToken: storedRefreshToken } : undefined);
+        const data = refreshResponse.data?.data ?? refreshResponse.data ?? {};
+        const newToken = data.accessToken ?? data.token ?? null;
+        const newRefreshToken = data.refreshToken ?? null;
 
         if (newToken) {
           setAccessToken(newToken);
@@ -117,6 +142,9 @@ http.interceptors.response.use(
             localStorage.setItem('token', newToken);
           } catch {
             /* noop */
+          }
+          if (newRefreshToken) {
+            setRefreshToken(newRefreshToken);
           }
           onTokenRefreshed(newToken);
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -127,6 +155,7 @@ http.interceptors.response.use(
         const status = (refreshErr as AxiosError)?.response?.status;
         if (!status || status === 401 || status === 403) {
           setAccessToken(null);
+          setRefreshToken(null);
           try {
             localStorage.removeItem('token');
           } catch {
@@ -502,6 +531,7 @@ export async function apiDelete<T>(
 /** @internal Reset module state — for testing only */
 export function __resetForTests(): void {
   _accessToken = null;
+  _refreshToken = null;
   unauthorizedHandler = null;
   isRefreshing = false;
   refreshSubscribers = [];

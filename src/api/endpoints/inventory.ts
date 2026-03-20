@@ -32,10 +32,10 @@ export interface StockDriftItem {
 }
 
 export interface StockReconciliationResult {
-  driftItems: StockDriftItem[];
-  totalProducts: number;
+  items: StockDriftItem[];
+  total: number;
   totalDrift: number;
-  repairedCount: number;
+  corrected?: number | null;
 }
 
 export interface StockAdjustmentInput {
