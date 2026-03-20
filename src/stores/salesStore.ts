@@ -1,7 +1,7 @@
 ﻿import { defineStore } from 'pinia';
 import { ref, shallowRef } from 'vue';
 import { salesClient } from '../api';
-import type { SaleReceiptData } from '../api/endpoints/sales';
+import type { SaleReceiptData, SettlePayload } from '../api/endpoints/sales';
 import type { Payment, Sale, SaleInput } from '../types/domain';
 import { generateIdempotencyKey } from '../utils/idempotency';
 
@@ -130,6 +130,26 @@ export const useSalesStore = defineStore('sales', () => {
     }
   }
 
+  async function settleSale(id: number, payload?: SettlePayload) {
+    loading.value = true;
+    error.value = null;
+    try {
+      const result = await salesClient.settle(id, {
+        ...payload,
+        idempotencyKey: payload?.idempotencyKey || generateIdempotencyKey('sale-settle'),
+      });
+      if (!result.ok) {
+        error.value = result.error.message;
+      }
+      return result;
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'فشل في تسوية عملية البيع';
+      return { ok: false as const, error: { code: 'SETTLE_FAILED', message: error.value! } };
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     items,
     total,
@@ -142,5 +162,6 @@ export const useSalesStore = defineStore('sales', () => {
     cancelSale,
     refundSale,
     generateReceipt,
+    settleSale,
   };
 });

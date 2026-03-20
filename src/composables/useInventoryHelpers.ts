@@ -9,6 +9,9 @@ export function useInventoryHelpers() {
     if (value === 'in') return 'دخول';
     if (value === 'out') return 'خروج';
     if (value === 'adjust') return 'تعديل';
+    if (value === 'transfer') return 'نقل';
+    if (value === 'return') return 'إرجاع';
+    if (value === 'cancellation') return 'إلغاء';
     return value;
   }
 
@@ -39,6 +42,9 @@ export function useInventoryHelpers() {
     if (value === 'purchase') return 'شراء';
     if (value === 'return') return 'إرجاع';
     if (value === 'adjustment') return 'تعديل';
+    if (value === 'sale_cancellation') return 'إلغاء بيع';
+    if (value === 'cancellation') return 'إلغاء فاتورة';
+    if (value === 'transfer') return 'نقل';
     return value;
   }
 
@@ -50,6 +56,9 @@ export function useInventoryHelpers() {
     if (reason === 'purchase') return 'success';
     if (reason === 'return') return 'error';
     if (reason === 'adjustment') return 'warning';
+    if (reason === 'sale_cancellation') return 'info';
+    if (reason === 'cancellation') return 'info';
+    if (reason === 'transfer') return 'info';
     return '';
   }
 

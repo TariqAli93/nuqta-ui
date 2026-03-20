@@ -164,4 +164,12 @@ export const accountingClient = {
 
     return { ok: true, data: ledger };
   },
+
+  createAccount: (data: {
+    code: string;
+    name: string;
+    nameAr: string;
+    accountType: Account['accountType'];
+    parentId?: number | null;
+  }): Promise<ApiResult<Account>> => apiPost<Account>('/accounting/accounts', data),
 };

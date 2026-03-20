@@ -162,7 +162,7 @@ async function save() {
       const result = await accountingStore.createAccount({
         code: form.code,
         name: form.name,
-        nameAr: form.nameAr || undefined,
+        nameAr: form.nameAr,
         accountType: form.accountType as Account['accountType'],
         parentId: form.parentId,
       });

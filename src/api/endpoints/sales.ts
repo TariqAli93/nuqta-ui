@@ -19,6 +19,13 @@ export interface RefundResult {
   newRemainingAmount: number;
 }
 
+export interface SettlePayload {
+  paymentMethod?: 'cash' | 'card' | 'bank_transfer' | 'credit';
+  referenceNumber?: string;
+  notes?: string;
+  idempotencyKey?: string;
+}
+
 export interface SaleReceiptStore {
   companyName: string;
   companyNameAr: string;
@@ -74,8 +81,7 @@ export const salesClient = {
   getById: (id: number): Promise<ApiResult<Sale>> => apiGet<Sale>(`/sales/${id}`),
 
   /** Backend returns { ok: true, data: null } on success */
-  cancel: (id: number): Promise<ApiResult<null>> =>
-    apiPost<null>(`/sales/${id}/cancel`),
+  cancel: (id: number): Promise<ApiResult<null>> => apiPost<null>(`/sales/${id}/cancel`),
 
   /** Backend returns { saleId, refundedAmount, newPaidAmount, newRemainingAmount } */
   refund: (id: number, amount: number, reason?: string): Promise<ApiResult<RefundResult>> =>
@@ -83,4 +89,8 @@ export const salesClient = {
 
   generateReceipt: (id: number): Promise<ApiResult<SaleReceiptData>> =>
     apiGet<SaleReceiptData>(`/sales/${id}/receipt`),
+
+  /** Backend returns { ok: true, data: null } on success */
+  settle: (id: number, payload?: SettlePayload): Promise<ApiResult<null>> =>
+    apiPost<null>(`/sales/${id}/settle`, payload),
 };

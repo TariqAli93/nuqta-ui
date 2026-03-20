@@ -21,6 +21,18 @@
             >
               استرجاع
             </v-btn>
+            <!-- تسوية الفاتورة في حال المتبقي اكبر من 0 -->
+            <v-btn
+              v-if="
+                sale?.status === 'pending' &&
+                (sale.paidAmount < sale.remainingAmount || sale.remainingAmount > 0)
+              "
+              color="success"
+              prepend-icon="mdi-cash-check"
+              @click="settleDialog = true"
+            >
+              تسوية
+            </v-btn>
             <v-btn
               v-if="sale?.status === 'completed' || sale?.status === 'pending'"
               color="error"
@@ -231,6 +243,67 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Settle confirmation dialog -->
+    <v-dialog v-model="settleDialog" max-width="480">
+      <v-card>
+        <v-card-title>تأكيد التسوية</v-card-title>
+        <v-card-text>
+          <p class="mb-4">
+            سيتم تسوية المبلغ المتبقي
+            <strong>{{
+              formatAmount((sale?.remainingAmount ?? sale?.total ?? 0) - (sale?.paidAmount ?? 0))
+            }}</strong>
+            وتحديث حالة الفاتورة.
+          </p>
+
+          <v-select
+            v-model="settleForm.paymentMethod"
+            :items="paymentMethodOptions"
+            item-title="title"
+            item-value="value"
+            label="طريقة الدفع"
+            variant="outlined"
+            density="comfortable"
+            hide-details="auto"
+            class="mb-3"
+          />
+
+          <v-text-field
+            v-if="settleRefRequired"
+            v-model="settleForm.referenceNumber"
+            label="رقم المرجع"
+            variant="outlined"
+            density="comfortable"
+            hide-details="auto"
+            class="mb-3"
+            :rules="[(v) => !!v || 'رقم المرجع مطلوب عند الدفع بالبطاقة']"
+          />
+
+          <v-textarea
+            v-model="settleForm.notes"
+            label="ملاحظات"
+            variant="outlined"
+            density="comfortable"
+            hide-details
+            rows="2"
+            auto-grow
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="settleDialog = false">إلغاء</v-btn>
+          <v-btn
+            color="success"
+            :loading="settling"
+            :disabled="settleRefRequired && !settleForm.referenceNumber.trim()"
+            @click="executeSettle"
+          >
+            تأكيد التسوية
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -245,6 +318,7 @@ import AuditLogTab from '../../components/shared/AuditLogTab.vue';
 import type { Sale } from '../../types/domain';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { useSystemSettingsStore } from '@/stores/settings';
+import type { PaymentMethod } from '@/types/domain';
 
 const store = useSalesStore();
 const route = useRoute();
@@ -255,6 +329,23 @@ const refunding = ref(false);
 const cancelling = ref(false);
 const refundDialog = ref(false);
 const cancelDialog = ref(false);
+const settleDialog = ref(false);
+const settling = ref(false);
+
+const settleForm = ref({
+  paymentMethod: 'cash' as PaymentMethod,
+  referenceNumber: '',
+  notes: '',
+});
+
+const paymentMethodOptions = [
+  { title: 'نقدي', value: 'cash' },
+  { title: 'بطاقة', value: 'card' },
+  { title: 'حوالة بنكية', value: 'bank_transfer' },
+  { title: 'آجل', value: 'credit' },
+];
+
+const settleRefRequired = computed(() => settleForm.value.paymentMethod === 'card');
 
 const settingsStore = useSystemSettingsStore();
 
@@ -360,7 +451,7 @@ async function executeRefund() {
       'Refund from sale details view'
     );
     if (result.ok) {
-      sale.value = result.data;
+      sale.value = result.data as unknown as Sale;
       notifySuccess('تم استرجاع الفاتورة');
     } else {
       notifyError(mapErrorToArabic(result.error, 'errors.refundFailed'));
@@ -379,11 +470,42 @@ async function executeCancel() {
   try {
     const result = await store.cancelSale(sale.value.id);
     if (result.ok) {
-      sale.value = result.data;
       notifySuccess('تم إلغاء الفاتورة');
+      await loadSale();
+    } else {
+      notifyError(mapErrorToArabic(result.error, 'errors.cancelFailed'));
     }
   } finally {
     cancelling.value = false;
+  }
+}
+
+function resetSettleForm() {
+  settleForm.value = { paymentMethod: 'cash', referenceNumber: '', notes: '' };
+}
+
+async function executeSettle() {
+  if (!sale.value?.id) return;
+  if (settleRefRequired.value && !settleForm.value.referenceNumber.trim()) return;
+  settling.value = true;
+  settleDialog.value = false;
+  store.error = null;
+
+  try {
+    const result = await store.settleSale(sale.value.id, {
+      paymentMethod: settleForm.value.paymentMethod,
+      referenceNumber: settleForm.value.referenceNumber.trim() || undefined,
+      notes: settleForm.value.notes.trim() || undefined,
+    });
+    if (result.ok) {
+      notifySuccess('تم تسوية الفاتورة');
+      resetSettleForm();
+      await loadSale();
+    } else {
+      notifyError(mapErrorToArabic(result.error, 'errors.settleFailed'));
+    }
+  } finally {
+    settling.value = false;
   }
 }
 

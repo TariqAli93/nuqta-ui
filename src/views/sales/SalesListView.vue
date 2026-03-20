@@ -51,8 +51,6 @@
             :items="filteredSales"
             density="comfortable"
             class="ds-table-enhanced ds-table-striped"
-            :no-data-text="''"
-            :hide-default-footer="true"
           >
             <template #item.invoiceNumber="{ item }">
               <span class="font-weight-medium">{{ item.invoiceNumber }}</span>
@@ -119,6 +117,7 @@ const statusOptions = computed(() => [
   { title: t('sales.pending'), value: 'pending' },
   { title: t('sales.completed'), value: 'completed' },
   { title: t('sales.cancelled'), value: 'cancelled' },
+  { title: t('sales.refunded'), value: 'refunded' },
 ]);
 
 const filteredSales = computed(() => {
@@ -164,6 +163,7 @@ function statusBadgeClass(status: string | undefined): string {
     pending: 'warning',
     cancelled: 'error',
     refunded: 'info',
+    hold: 'warning',
   };
   return (status && statusMap[status]) || 'ds-badge-neutral';
 }
