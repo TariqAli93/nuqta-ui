@@ -60,15 +60,12 @@ export const postingClient = {
   reverseBatch: (batchId: number): Promise<ApiResult<ReverseBatchResult>> =>
     apiPost<ReverseBatchResult>(`/posting/batches/${batchId}/reverse`),
 
-  /** TODO: Backend endpoint not in current spec — add when available */
-  lockBatch: (batchId: number): Promise<ApiResult<{ ok: true }>> =>
-    apiPost<{ ok: true }>(`/posting/batches/${batchId}/lock`),
+  lockBatch: (batchId: number): Promise<ApiResult<{ batchId: number; status: string }>> =>
+    apiPost<{ batchId: number; status: string }>(`/posting/batches/${batchId}/lock`),
 
-  /** TODO: Backend endpoint not in current spec — add when available */
-  unlockBatch: (batchId: number): Promise<ApiResult<{ ok: true }>> =>
-    apiPost<{ ok: true }>(`/posting/batches/${batchId}/unlock`),
+  unlockBatch: (batchId: number): Promise<ApiResult<{ batchId: number; status: string }>> =>
+    apiPost<{ batchId: number; status: string }>(`/posting/batches/${batchId}/unlock`),
 
-  /** TODO: Backend endpoint not in current spec — add when available */
   isBatchLocked: (batchId: number): Promise<ApiResult<{ locked: boolean }>> =>
     apiGet<{ locked: boolean }>(`/posting/batches/${batchId}/locked`),
 };

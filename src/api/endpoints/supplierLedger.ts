@@ -8,7 +8,7 @@ import type { SupplierLedgerEntry } from '../../types/domain';
 import { apiGetPaged, apiPost } from '../http';
 
 interface SupplierPaymentInput {
-  supplierId: number;
+  supplierId: number; // used as URL path param, NOT sent in body
   amount: number;
   paymentMethod: string;
   notes?: string;
@@ -27,8 +27,10 @@ export const supplierLedgerClient = {
   ): Promise<ApiResult<PagedResult<SupplierLedgerEntry>>> =>
     apiGetPaged<SupplierLedgerEntry>(`/supplier-ledger/${supplierId}`, params),
 
-  recordPayment: (data: SupplierPaymentInput): Promise<ApiResult<SupplierLedgerEntry>> =>
-    apiPost<SupplierLedgerEntry>(`/supplier-ledger/${data.supplierId}/payments`, data),
+  recordPayment: (data: SupplierPaymentInput): Promise<ApiResult<SupplierLedgerEntry>> => {
+    const { supplierId, ...body } = data;
+    return apiPost<SupplierLedgerEntry>(`/supplier-ledger/${supplierId}/payments`, body);
+  },
 
   reconcileBalance: (repair = false): Promise<ApiResult<any>> =>
     apiPost<any>('/supplier-ledger/reconcile', { repair }),

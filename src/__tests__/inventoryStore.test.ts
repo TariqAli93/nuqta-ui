@@ -33,6 +33,7 @@ vi.mock('@/api/endpoints/inventory', () => ({
     getExpiryAlerts: vi.fn(),
     adjustStock: vi.fn(),
     reconcileStock: vi.fn(),
+    repairDrift: vi.fn(),
   },
 }));
 
@@ -55,10 +56,10 @@ const mockExpiryAlert = (): ExpiryAlert => ({
 });
 
 const mockReconciliation = (): StockReconciliationResult => ({
-  driftItems: [],
-  totalProducts: 50,
+  items: [],
+  total: 50,
   totalDrift: 0,
-  repairedCount: 0,
+  corrected: 0,
 });
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -320,13 +321,13 @@ describe('inventoryStore — reconcileStock', () => {
   it('calls reconcileStock with repair=true when requested', async () => {
     const { inventoryClient } = await import('@/api/endpoints/inventory');
     vi.mocked(inventoryClient.reconcileStock).mockResolvedValue(
-      createApiSuccess({ ...mockReconciliation(), repairedCount: 3 })
+      createApiSuccess({ ...mockReconciliation(), corrected: 3 })
     );
 
     await store.reconcileStock(true);
 
     expect(inventoryClient.reconcileStock).toHaveBeenCalledWith(true);
-    expect(store.reconciliation?.repairedCount).toBe(3);
+    expect(store.reconciliation?.corrected).toBe(3);
   });
 
   it('defaults repair flag to false', async () => {

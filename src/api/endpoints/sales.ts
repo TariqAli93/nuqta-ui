@@ -9,14 +9,47 @@
  *   receipt: { ok: true, data: SaleReceiptData }
  */
 import type { ApiResult, PagedResult } from '../contracts';
-import type { Payment, Sale, SaleInput } from '../../types/domain';
+import type { Payment, Sale, SaleCreateInput } from '../../types/domain';
 import { apiGet, apiGetPaged, apiPost } from '../http';
+
+/** Strip payload to only backend-allowed fields (additionalProperties: false). */
+function sanitizeSalePayload(input: SaleCreateInput): SaleCreateInput {
+  const sanitized: SaleCreateInput = {
+    items: input.items.map((item) => {
+      const clean: SaleCreateInput['items'][number] = {
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      };
+      if (item.discount != null) clean.discount = item.discount;
+      if (item.unitName != null) clean.unitName = item.unitName;
+      if (item.unitFactor != null) clean.unitFactor = item.unitFactor;
+      if (item.batchId != null) clean.batchId = item.batchId;
+      return clean;
+    }),
+    paymentType: input.paymentType,
+  };
+  if (input.customerId != null) sanitized.customerId = input.customerId;
+  if (input.discount != null) sanitized.discount = input.discount;
+  if (input.tax != null) sanitized.tax = input.tax;
+  if (input.paidAmount != null) sanitized.paidAmount = input.paidAmount;
+  if (input.currency != null) sanitized.currency = input.currency;
+  if (input.notes != null) sanitized.notes = input.notes;
+  if (input.interestRate != null) sanitized.interestRate = input.interestRate;
+  if (input.interestRateBps != null) sanitized.interestRateBps = input.interestRateBps;
+  if (input.paymentMethod != null) sanitized.paymentMethod = input.paymentMethod;
+  if (input.referenceNumber != null) sanitized.referenceNumber = input.referenceNumber;
+  if (input.idempotencyKey != null) sanitized.idempotencyKey = input.idempotencyKey;
+  return sanitized;
+}
 
 export interface RefundResult {
   saleId: number;
   refundedAmount: number;
   newPaidAmount: number;
   newRemainingAmount: number;
+  totalRefunded?: number;
+  status?: string;
 }
 
 export interface SettlePayload {
@@ -73,7 +106,8 @@ export const salesClient = {
   getAll: (params?: Record<string, unknown>): Promise<ApiResult<PagedResult<Sale>>> =>
     apiGetPaged<Sale>('/sales/', params),
 
-  create: (sale: SaleInput): Promise<ApiResult<Sale>> => apiPost<Sale>('/sales/', sale),
+  create: (sale: SaleCreateInput): Promise<ApiResult<Sale>> =>
+    apiPost<Sale>('/sales/', sanitizeSalePayload(sale)),
 
   addPayment: (saleId: number, payment: Omit<Payment, 'saleId'>): Promise<ApiResult<unknown>> =>
     apiPost<unknown>(`/sales/${saleId}/payments`, payment),

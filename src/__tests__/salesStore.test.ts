@@ -137,10 +137,9 @@ describe('salesStore — createSale', () => {
     vi.mocked(salesClient.create).mockResolvedValue(createApiSuccess(sale));
 
     const result = await store.createSale({
-      invoiceNumber: 'INV-010',
-      subtotal: 3000,
-      total: 3000,
-    } as any);
+      items: [{ productId: 1, quantity: 2, unitPrice: 1500 }],
+      paymentType: 'cash',
+    });
 
     expect(result.ok).toBe(true);
     expect(store.loading).toBe(false);
@@ -153,7 +152,7 @@ describe('salesStore — createSale', () => {
       createApiFailure('INSUFFICIENT_STOCK', 'Not enough stock')
     );
 
-    const result = await store.createSale({ invoiceNumber: '', subtotal: 0, total: 0 } as any);
+    const result = await store.createSale({ items: [], paymentType: 'cash' });
 
     expect(result.ok).toBe(false);
     expect(store.error).toBe('Not enough stock');
@@ -175,9 +174,7 @@ describe('salesStore — addPayment', () => {
 
   it('calls salesClient.addPayment with generated idempotency key', async () => {
     const { salesClient } = await import('@/api');
-    vi.mocked(salesClient.addPayment).mockResolvedValue(
-      createApiSuccess(createMockSale())
-    );
+    vi.mocked(salesClient.addPayment).mockResolvedValue(createApiSuccess(createMockSale()));
 
     const payment = createMockPayment({ idempotencyKey: null });
     await store.addPayment(1, payment);
@@ -190,9 +187,7 @@ describe('salesStore — addPayment', () => {
 
   it('preserves caller-supplied idempotency key', async () => {
     const { salesClient } = await import('@/api');
-    vi.mocked(salesClient.addPayment).mockResolvedValue(
-      createApiSuccess(createMockSale())
-    );
+    vi.mocked(salesClient.addPayment).mockResolvedValue(createApiSuccess(createMockSale()));
 
     const payment = createMockPayment({ idempotencyKey: 'caller-key' });
     await store.addPayment(1, payment);
@@ -266,7 +261,9 @@ describe('salesStore — cancelSale', () => {
 
   it('returns ok on success', async () => {
     const { salesClient } = await import('@/api');
-    vi.mocked(salesClient.cancel).mockResolvedValue(createApiSuccess(createMockSale({ status: 'cancelled' })));
+    vi.mocked(salesClient.cancel).mockResolvedValue(
+      createApiSuccess(createMockSale({ status: 'cancelled' }))
+    );
 
     const result = await store.cancelSale(1);
     expect(result.ok).toBe(true);

@@ -33,8 +33,27 @@ export interface AuthSetupStatus {
   wizardCompleted: boolean;
 }
 
-/** Backend returns UserSafe (no token). Callers must login separately. */
-export type RegisterResponse = UserPublic;
+/** Backend returns full login response (with tokens) after register. */
+export type RegisterResponse = AuthLoginResponse;
+
+export interface InitializeAppRequest {
+  admin: {
+    username: string;
+    password: string;
+    fullName: string;
+    phone?: string;
+  };
+  companySettings?: {
+    name?: string;
+    currency?: string;
+    address?: string | null;
+    phone?: string | null;
+    phone2?: string | null;
+    email?: string | null;
+    taxId?: string | null;
+    logo?: string | null;
+  };
+}
 
 interface AuthChangePasswordRequest {
   currentPassword: string;
@@ -64,8 +83,7 @@ export const authClient = {
     apiGet<AuthSetupStatus>('/auth/setup-status'),
 
   /**
-   * Register the first admin user. Returns the created UserSafe (no token).
-   * Callers must login separately to obtain a token.
+   * Register the first admin user. Returns a full login response (with tokens).
    */
   createFirstUser: (userData: FirstUserInput): Promise<ApiResult<RegisterResponse>> =>
     apiPost<RegisterResponse>('/auth/register', userData),
@@ -83,8 +101,7 @@ export const authClient = {
    * Get the current authenticated user with their permissions.
    * Backend returns: { ...UserSafe, permissions: string[] }
    */
-  getCurrentUser: (): Promise<ApiResult<MeResponse>> =>
-    apiGet<MeResponse>('/auth/me'),
+  getCurrentUser: (): Promise<ApiResult<MeResponse>> => apiGet<MeResponse>('/auth/me'),
 
   changePassword: (
     payload: AuthChangePasswordRequest
@@ -94,6 +111,12 @@ export const authClient = {
   /**
    * Validate that the current access token is still valid by calling /auth/me.
    */
-  validateToken: (): Promise<ApiResult<MeResponse>> =>
-    apiGet<MeResponse>('/auth/me'),
+  validateToken: (): Promise<ApiResult<MeResponse>> => apiGet<MeResponse>('/auth/me'),
+
+  /**
+   * Initialize the application with admin user and company settings.
+   * Calls POST /settings/setup-wizard.
+   */
+  initializeApp: (payload: InitializeAppRequest): Promise<ApiResult<{ success: boolean }>> =>
+    apiPost<{ success: boolean }>('/settings/setup-wizard', payload),
 };

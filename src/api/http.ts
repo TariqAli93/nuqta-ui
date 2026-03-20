@@ -20,7 +20,6 @@ import { createFailure, normalizeApiError, normalizeApiResult, toPagedResult } f
 // ---------------------------------------------------------------------------
 // Axios instance
 // ---------------------------------------------------------------------------
-
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
 
 export const http: AxiosInstance = axios.create({
@@ -35,6 +34,7 @@ export const http: AxiosInstance = axios.create({
 // ---------------------------------------------------------------------------
 
 let _accessToken: string | null = null;
+let _refreshToken: string | null = null;
 
 /**
  * Store the access token used for Bearer auth.
@@ -45,6 +45,28 @@ export function setAccessToken(newToken: string | null): void {
 
 export function getAccessToken(): string | null {
   return _accessToken;
+}
+
+export function setRefreshToken(token: string | null): void {
+  _refreshToken = token;
+  try {
+    if (token) {
+      localStorage.setItem('refreshToken', token);
+    } else {
+      localStorage.removeItem('refreshToken');
+    }
+  } catch {
+    /* noop */
+  }
+}
+
+export function getRefreshToken(): string | null {
+  if (_refreshToken) return _refreshToken;
+  try {
+    return localStorage.getItem('refreshToken');
+  } catch {
+    return null;
+  }
 }
 
 // Request interceptor — attach Bearer token
@@ -107,19 +129,42 @@ http.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshResponse = await http.post('/auth/refresh');
-        const newToken =
-          refreshResponse.data?.data?.accessToken ?? refreshResponse.data?.accessToken ?? null;
+        const storedRefreshToken = getRefreshToken();
 
-        if (newToken) {
-          setAccessToken(newToken);
+        // No refresh token available — treat as immediate auth failure
+        if (!storedRefreshToken) {
+          setAccessToken(null);
+          setRefreshToken(null);
           try {
-            localStorage.setItem('token', newToken);
+            localStorage.removeItem('token');
           } catch {
             /* noop */
           }
-          onTokenRefreshed(newToken);
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+          if (unauthorizedHandler) {
+            unauthorizedHandler();
+          }
+          return Promise.reject(error);
+        }
+
+        const refreshResponse = await http.post('/auth/refresh', {
+          refreshToken: storedRefreshToken,
+        });
+        const data = refreshResponse.data?.data ?? refreshResponse.data ?? {};
+        const newToken = data.accessToken ?? data.token ?? null;
+        const newRefreshToken = data.refreshToken ?? null;
+
+        if ('accessToken' in data && newToken) {
+          setAccessToken(newToken ?? null);
+          try {
+            localStorage.setItem('token', newToken ?? '');
+          } catch {
+            /* noop */
+          }
+          if ('refreshToken' in data && newRefreshToken !== null) {
+            setRefreshToken(newRefreshToken ?? null);
+          }
+          onTokenRefreshed(newToken ?? '');
+          originalRequest.headers.Authorization = `Bearer ${newToken ?? ''}`;
           return http(originalRequest);
         }
       } catch (refreshErr) {
@@ -127,6 +172,7 @@ http.interceptors.response.use(
         const status = (refreshErr as AxiosError)?.response?.status;
         if (!status || status === 401 || status === 403) {
           setAccessToken(null);
+          setRefreshToken(null);
           try {
             localStorage.removeItem('token');
           } catch {
@@ -502,6 +548,7 @@ export async function apiDelete<T>(
 /** @internal Reset module state — for testing only */
 export function __resetForTests(): void {
   _accessToken = null;
+  _refreshToken = null;
   unauthorizedHandler = null;
   isRefreshing = false;
   refreshSubscribers = [];

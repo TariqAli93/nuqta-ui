@@ -122,8 +122,8 @@ export interface Sale {
   paymentType?: 'cash' | 'credit' | 'mixed';
   paidAmount?: number;
   remainingAmount?: number;
-  status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial';
-  // ^ 'refunded' and 'partial' align with backend schema enum
+  status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial' | 'partial_refund';
+  // ^ 'partial_refund' is the canonical backend enum value; 'partial' kept for compat
   notes?: string | null;
   idempotencyKey?: string | null;
   createdAt?: string;
@@ -444,6 +444,34 @@ export type SaleInput = Omit<Sale, 'id' | 'createdAt' | 'updatedAt' | 'createdBy
   referenceNumber?: string;
   idempotencyKey?: string;
 };
+
+/**
+ * Narrowed input type for creating a new sale — only the fields accepted
+ * by the backend `additionalProperties: false` schema.
+ */
+export interface SaleCreateInput {
+  items: {
+    productId: number;
+    quantity: number;
+    unitPrice: number;
+    discount?: number;
+    unitName?: string;
+    unitFactor?: number;
+    batchId?: number;
+  }[];
+  customerId?: number;
+  discount?: number;
+  tax?: number;
+  paymentType: 'cash' | 'credit' | 'mixed';
+  paidAmount?: number;
+  currency?: string;
+  notes?: string;
+  interestRate?: number;
+  interestRateBps?: number;
+  paymentMethod?: PaymentMethod;
+  referenceNumber?: string;
+  idempotencyKey?: string;
+}
 
 export type FirstUserInput = {
   username: string;

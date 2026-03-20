@@ -1,6 +1,6 @@
 ﻿import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
-import { authClient, registerUnauthorizedHandler, setAccessToken } from '../api';
+import { authClient, registerUnauthorizedHandler, setAccessToken, setRefreshToken } from '../api';
 import type { AuthSetupStatus, InitializeAppRequest } from '../api/endpoints/auth';
 import type { FirstUserInput, UserPublic } from '../types/domain';
 import { notifySuccess } from '@/utils/notify';
@@ -116,6 +116,7 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated.value = true;
 
     setAccessToken(data.accessToken);
+    if (data.refreshToken) setRefreshToken(data.refreshToken);
     localStorage.setItem('token', data.accessToken);
     localStorage.setItem('user', JSON.stringify(data.user));
     localStorage.setItem('permissions', JSON.stringify(data.permissions || []));
@@ -167,6 +168,7 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       setAccessToken(result.data.accessToken);
+      if (result.data.refreshToken) setRefreshToken(result.data.refreshToken);
       localStorage.setItem('token', result.data.accessToken);
       localStorage.setItem('user', JSON.stringify(result.data.user));
       localStorage.setItem('permissions', JSON.stringify(result.data.permissions || []));
@@ -198,7 +200,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const result = await authClient.getCurrentUser();
       if (result.ok) {
-        user.value = result.data.user;
+        user.value = result.data;
         permissions.value = result.data.permissions || [];
         isAuthenticated.value = true;
         return true;
@@ -240,9 +242,9 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function validateToken(token: string): Promise<boolean> {
+  async function validateToken(): Promise<boolean> {
     try {
-      const result = await authClient.validateToken({ token });
+      const result = await authClient.validateToken();
       return result.ok;
     } catch (err) {
       return false;
@@ -269,6 +271,7 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null;
 
       setAccessToken(null);
+      setRefreshToken(null);
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('permissions');

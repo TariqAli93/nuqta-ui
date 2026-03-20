@@ -119,6 +119,46 @@ export const accountingClient = {
     }>
   ): Promise<ApiResult<Account>> => apiPut<Account>(`/accounting/accounts/${id}`, data),
 
+  /**
+   * Reconcile journal lines (AR/AP matching).
+   * POST /accounting/reconcile
+   */
+  reconcile: (data: {
+    journalLineIds: number[];
+    amounts?: number[];
+    notes?: string;
+  }): Promise<ApiResult<any>> =>
+    apiPost<any>('/accounting/reconcile', data),
+
+  /**
+   * Unreconcile a reconciliation record.
+   * POST /accounting/unreconcile
+   */
+  unreconcile: (reconciliationId: number): Promise<ApiResult<any>> =>
+    apiPost<any>('/accounting/unreconcile', { reconciliationId }),
+
+  /**
+   * List reconciliation records.
+   * GET /accounting/reconciliations
+   */
+  getReconciliations: (params?: {
+    accountId?: number;
+    partnerId?: number;
+    limit?: number;
+    offset?: number;
+  }): Promise<ApiResult<PagedResult<any>>> =>
+    apiGetPaged<any>('/accounting/reconciliations', params),
+
+  /**
+   * List unreconciled journal lines.
+   * GET /accounting/unreconciled-lines
+   */
+  getUnreconciledLines: (params?: {
+    accountCode?: string;
+    partnerId?: number;
+  }): Promise<ApiResult<any[]>> =>
+    apiGet<any[]>('/accounting/unreconciled-lines', params),
+
   getAccountLedger: async (
     accountId: number,
     params?: {
