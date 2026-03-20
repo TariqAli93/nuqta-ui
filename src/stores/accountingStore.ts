@@ -302,6 +302,28 @@ export const useAccountingStore = defineStore('accounting', () => {
     }
   }
 
+  async function createAccount(data: {
+    code: string;
+    name: string;
+    nameAr: string;
+    accountType: Account['accountType'];
+    parentId?: number | null;
+  }) {
+    loading.value = true;
+    error.value = null;
+    try {
+      const result = await accountingClient.createAccount(data);
+      if (result.ok) accounts.value.push(result.data);
+      else error.value = result.error.message;
+      return result;
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'فشل في إنشاء الحساب';
+      return { ok: false as const, error: { code: 'CREATE_FAILED', message: error.value! } };
+    } finally {
+      loading.value = false;
+    }
+  }
+
   return {
     accounts,
     journalEntries,
@@ -328,5 +350,6 @@ export const useAccountingStore = defineStore('accounting', () => {
     createEntry,
     updateAccount,
     fetchAccountLedger,
+    createAccount,
   };
 });

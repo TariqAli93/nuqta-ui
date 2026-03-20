@@ -52,6 +52,13 @@ export interface RefundResult {
   status?: string;
 }
 
+export interface SettlePayload {
+  paymentMethod?: 'cash' | 'card' | 'bank_transfer' | 'credit';
+  referenceNumber?: string;
+  notes?: string;
+  idempotencyKey?: string;
+}
+
 export interface SaleReceiptStore {
   companyName: string;
   companyNameAr: string;
@@ -117,9 +124,7 @@ export const salesClient = {
   generateReceipt: (id: number): Promise<ApiResult<SaleReceiptData>> =>
     apiGet<SaleReceiptData>(`/sales/${id}/receipt`),
 
-  /** Settle outstanding credit balance for a sale */
-  settle: (
-    id: number,
-    data: { amount: number; paymentMethod?: string; notes?: string }
-  ): Promise<ApiResult<Sale>> => apiPost<Sale>(`/sales/${id}/settle`, data),
+  /** Backend returns { ok: true, data: null } on success */
+  settle: (id: number, payload?: SettlePayload): Promise<ApiResult<null>> =>
+    apiPost<null>(`/sales/${id}/settle`, payload),
 };

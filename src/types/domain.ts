@@ -244,7 +244,16 @@ export interface InventoryMovement {
   productId: number;
   batchId?: number;
   movementType: 'in' | 'out' | 'adjust';
-  reason: 'sale' | 'purchase' | 'return' | 'damage' | 'manual' | 'opening';
+  reason:
+    | 'sale'
+    | 'purchase'
+    | 'return'
+    | 'damage'
+    | 'manual'
+    | 'opening'
+    | 'adjustment'
+    | 'sale_cancellation'
+    | string;
   quantityBase: number;
   unitName?: string;
   unitFactor?: number;
@@ -252,7 +261,7 @@ export interface InventoryMovement {
   stockAfter: number;
   costPerUnit?: number;
   totalCost?: number;
-  sourceType?: 'sale' | 'purchase' | 'adjustment' | 'return';
+  sourceType?: 'sale' | 'purchase' | 'adjustment' | 'return' | 'sale_cancellation';
   sourceId?: number;
   notes?: string | null;
   createdAt?: string;
@@ -539,7 +548,10 @@ export interface Employee {
   createdBy?: number | null;
 }
 
-export type EmployeeInput = Pick<Employee, 'name' | 'salary' | 'position' | 'department' | 'isActive'>;
+export type EmployeeInput = Pick<
+  Employee,
+  'name' | 'salary' | 'position' | 'department' | 'isActive'
+>;
 
 // ── HR — Payroll Run ────────────────────────────────────────────────────────
 /**
