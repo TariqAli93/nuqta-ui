@@ -103,6 +103,8 @@ export interface SaleItem {
   subtotal: number;
   cogs?: number;
   weightedAverageCost?: number;
+  /** Cumulative base-units already returned to stock across partial refunds. */
+  returnedQuantityBase?: number;
   createdAt?: string;
   depletions?: SaleItemDepletion[];
 }

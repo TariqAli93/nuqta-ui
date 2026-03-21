@@ -42,8 +42,11 @@
             >
               تسوية
             </v-btn>
+            <!-- Cancel is only allowed when no refund payments exist.
+                 Backend blocks cancellation if a refund payment is present
+                 (partial_refund status) to prevent double inventory reversal. -->
             <v-btn
-              v-if="sale?.status === 'completed' || sale?.status === 'pending' || sale?.status === 'partial_refund'"
+              v-if="sale?.status === 'completed' || sale?.status === 'pending'"
               color="error"
               prepend-icon="mdi-close-circle-outline"
               :loading="cancelling"
@@ -243,9 +246,13 @@
             variant="outlined"
             density="comfortable"
             :min="1"
-            :max="sale?.paidAmount ?? 0"
+            :max="refundableBalance"
+            :hint="`الحد الأقصى: ${formatAmount(refundableBalance)}`"
             hide-details="auto"
-            :rules="[(v) => v > 0 || 'يجب أن يكون المبلغ أكبر من الصفر']"
+            :rules="[
+              (v) => v > 0 || 'يجب أن يكون المبلغ أكبر من الصفر',
+              (v) => v <= refundableBalance || 'المبلغ يتجاوز الرصيد القابل للاسترداد',
+            ]"
           />
         </v-card-text>
         <v-card-actions>
@@ -254,7 +261,7 @@
           <v-btn
             :color="refundReturnToStock ? 'deep-orange' : 'warning'"
             :loading="refunding"
-            :disabled="!refundAmount || refundAmount <= 0"
+            :disabled="!refundAmount || refundAmount <= 0 || refundAmount > refundableBalance"
             @click="executeRefund"
           >
             {{ refundReturnToStock ? 'استرجاع مع إرجاع البضاعة' : 'استرجاع مالي فقط' }}
@@ -394,6 +401,16 @@ watch(localizedError, (value) => {
   notifyError(value, { dedupeKey: 'sale-details-error' });
 });
 
+/**
+ * Maximum amount that can still be refunded for this sale.
+ * = paidAmount - totalRefundedSoFar
+ * Backend enforces the same rule; this computed is used only for UI hints.
+ */
+const refundableBalance = computed(() => {
+  if (!sale.value) return 0;
+  return Math.max(0, (sale.value.paidAmount ?? 0) - (sale.value.refundedAmount ?? 0));
+});
+
 const profitMarginPct = computed(() => {
   if (!sale.value || !sale.value.cogs || sale.value.total === 0) return '0';
   const margin = ((sale.value.total - sale.value.cogs) / sale.value.total) * 100;
@@ -484,7 +501,8 @@ function expiryLabel(dateStr: string): string {
 
 function openRefundDialog(returnToStock: boolean) {
   refundReturnToStock.value = returnToStock;
-  refundAmount.value = sale.value?.paidAmount ?? 0;
+  // Default to the full remaining refundable balance (paidAmount - alreadyRefunded).
+  refundAmount.value = refundableBalance.value;
   refundDialog.value = true;
 }
 

@@ -118,6 +118,7 @@ const statusOptions = computed(() => [
   { title: t('sales.completed'), value: 'completed' },
   { title: t('sales.cancelled'), value: 'cancelled' },
   { title: t('sales.refunded'), value: 'refunded' },
+  { title: t('sales.partialRefund'), value: 'partial_refund' },
 ]);
 
 const filteredSales = computed(() => {
