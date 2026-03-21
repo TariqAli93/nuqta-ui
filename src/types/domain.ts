@@ -121,6 +121,7 @@ export interface Sale {
   interestAmount?: number;
   paymentType?: 'cash' | 'credit' | 'mixed';
   paidAmount?: number;
+  refundedAmount?: number;
   remainingAmount?: number;
   status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial' | 'partial_refund';
   // ^ 'partial_refund' is the canonical backend enum value; 'partial' kept for compat
@@ -243,16 +244,18 @@ export interface InventoryMovement {
   id?: number;
   productId: number;
   batchId?: number;
-  movementType: 'purchase' | 'sale' | 'adjustment' | 'return' | 'damage';
+  /** Physical direction of stock change: "in" = increase, "out" = decrease, "adjust" = correction */
+  movementType: 'in' | 'out' | 'adjust';
+  /** Semantic reason for the movement */
   reason:
     | 'sale'
     | 'purchase'
     | 'return'
+    | 'refund'
     | 'damage'
     | 'manual'
     | 'opening'
-    | 'adjustment'
-    | 'sale_cancellation'
+    | 'cancellation'
     | string;
   quantityBase: number;
   unitName?: string;

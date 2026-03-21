@@ -127,13 +127,15 @@ export const salesClient = {
    * Backend returns { saleId, refundedAmount, newPaidAmount, newRemainingAmount, totalRefunded, status }.
    * NOTE: top-level returnToStock is NOT a valid field (backend has additionalProperties: false).
    * Use the returnItems array for per-item stock restoration control.
+   * When returnItems is provided with returnToStock=true, inventory is physically restored.
    */
   refund: (
     id: number,
     amount: number,
-    reason?: string
+    reason?: string,
+    returnItems?: { saleItemId: number; quantity: number; returnToStock: boolean }[]
   ): Promise<ApiResult<RefundResult>> =>
-    apiPost<RefundResult>(`/sales/${id}/refund`, { amount, reason }),
+    apiPost<RefundResult>(`/sales/${id}/refund`, { amount, reason, returnItems }),
 
   generateReceipt: (id: number): Promise<ApiResult<SaleReceiptData>> =>
     apiGet<SaleReceiptData>(`/sales/${id}/receipt`),

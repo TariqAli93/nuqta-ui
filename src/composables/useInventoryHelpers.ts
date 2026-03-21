@@ -41,6 +41,7 @@ export function useInventoryHelpers() {
     if (value === 'sale') return 'بيع';
     if (value === 'purchase') return 'شراء';
     if (value === 'return') return 'إرجاع';
+    if (value === 'refund') return 'استرجاع';
     if (value === 'adjustment') return 'تعديل';
     if (value === 'sale_cancellation') return 'إلغاء بيع';
     if (value === 'cancellation') return 'إلغاء فاتورة';
