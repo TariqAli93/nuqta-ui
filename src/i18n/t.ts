@@ -140,6 +140,13 @@ export function mapErrorToArabic(error: unknown, fallbackKey = 'errors.unexpecte
 
   // Code-level mapping for non-validation errors
   if (body?.code) {
+    // For INVALID_STATE errors the backend already returns a specific, user-
+    // facing Arabic message (e.g. "لا يمكن عكس قيد في دفعة مقفلة…").
+    // Prefer that over the generic fallback so accounting-lock rejections are
+    // clearly communicated to the user rather than swallowed.
+    if (body.code === 'INVALID_STATE' && body.message) {
+      return body.message;
+    }
     const codeMsg = ERROR_CODE_MAP[body.code];
     if (codeMsg) return codeMsg;
   }
