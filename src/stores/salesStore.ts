@@ -2,7 +2,7 @@
 import { ref, shallowRef } from 'vue';
 import { salesClient } from '../api';
 import type { SaleReceiptData, SettlePayload } from '../api/endpoints/sales';
-import type { Payment, Sale, SaleInput } from '../types/domain';
+import type { Payment, Sale, SaleCreateInput } from '../types/domain';
 import { generateIdempotencyKey } from '../utils/idempotency';
 
 export const useSalesStore = defineStore('sales', () => {
@@ -113,11 +113,11 @@ export const useSalesStore = defineStore('sales', () => {
     }
   }
 
-  async function refundSale(id: number, amount: number, reason: string) {
+  async function refundSale(id: number, amount: number, reason: string, returnToStock = true) {
     loading.value = true;
     error.value = null;
     try {
-      const result = await salesClient.refund(id, amount, reason);
+      const result = await salesClient.refund(id, amount, reason, returnToStock);
       if (!result.ok) {
         error.value = result.error.message;
       }

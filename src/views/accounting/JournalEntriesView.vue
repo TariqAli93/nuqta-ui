@@ -1,5 +1,5 @@
 <template>
-  <v-toolbar flat density="compact" color="transparent" class="px-2 mb-2">
+  <v-toolbar flat density="compact" class="px-2 mb-2">
     <v-tabs v-model="activeTab" color="primary" class="me-4">
       <v-tab value="all">الكل</v-tab>
       <v-tab value="posted">مرحل</v-tab>

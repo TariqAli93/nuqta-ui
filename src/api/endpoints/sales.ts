@@ -118,8 +118,13 @@ export const salesClient = {
   cancel: (id: number): Promise<ApiResult<null>> => apiPost<null>(`/sales/${id}/cancel`),
 
   /** Backend returns { saleId, refundedAmount, newPaidAmount, newRemainingAmount } */
-  refund: (id: number, amount: number, reason?: string): Promise<ApiResult<RefundResult>> =>
-    apiPost<RefundResult>(`/sales/${id}/refund`, { amount, reason }),
+  refund: (
+    id: number,
+    amount: number,
+    reason?: string,
+    returnToStock = true
+  ): Promise<ApiResult<RefundResult>> =>
+    apiPost<RefundResult>(`/sales/${id}/refund`, { amount, reason, returnToStock }),
 
   generateReceipt: (id: number): Promise<ApiResult<SaleReceiptData>> =>
     apiGet<SaleReceiptData>(`/sales/${id}/receipt`),

@@ -17,9 +17,18 @@
               color="warning"
               prepend-icon="mdi-cash-refund"
               :loading="refunding"
-              @click="refundDialog = true"
+              @click="openRefundDialog(false)"
             >
-              استرجاع
+              استرجاع مالي
+            </v-btn>
+            <v-btn
+              v-if="sale?.status === 'completed'"
+              color="deep-orange"
+              prepend-icon="mdi-package-variant-closed-remove"
+              :loading="refunding"
+              @click="openRefundDialog(true)"
+            >
+              استرجاع مع إرجاع البضاعة
             </v-btn>
             <!-- تسوية الفاتورة في حال المتبقي اكبر من 0 -->
             <v-btn
@@ -219,12 +228,23 @@
       <v-card>
         <v-card-title>تأكيد الاسترجاع</v-card-title>
         <v-card-text>
-          هل أنت متأكد من استرجاع هذه الفاتورة؟ سيتم إعادة البضاعة للمخزون وعكس القيود المحاسبية.
+          <template v-if="refundReturnToStock">
+            هل أنت متأكد من استرجاع هذه الفاتورة؟ سيتم إعادة البضاعة للمخزون وعكس القيود المحاسبية.
+          </template>
+          <template v-else>
+            هل أنت متأكد من الاسترجاع المالي؟ سيتم استرجاع المبلغ فقط بدون إعادة البضاعة للمخزون.
+          </template>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
           <v-btn variant="text" @click="refundDialog = false">إلغاء</v-btn>
-          <v-btn color="warning" :loading="refunding" @click="executeRefund">استرجاع</v-btn>
+          <v-btn
+            :color="refundReturnToStock ? 'deep-orange' : 'warning'"
+            :loading="refunding"
+            @click="executeRefund"
+          >
+            {{ refundReturnToStock ? 'استرجاع مع إرجاع البضاعة' : 'استرجاع مالي فقط' }}
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -331,6 +351,7 @@ const refundDialog = ref(false);
 const cancelDialog = ref(false);
 const settleDialog = ref(false);
 const settling = ref(false);
+const refundReturnToStock = ref(true);
 
 const settleForm = ref({
   paymentMethod: 'cash' as PaymentMethod,
@@ -438,6 +459,11 @@ function expiryLabel(dateStr: string): string {
   return 'صالح';
 }
 
+function openRefundDialog(returnToStock: boolean) {
+  refundReturnToStock.value = returnToStock;
+  refundDialog.value = true;
+}
+
 async function executeRefund() {
   if (!sale.value?.id) return;
   refunding.value = true;
@@ -448,7 +474,8 @@ async function executeRefund() {
     const result = await store.refundSale(
       sale.value.id,
       sale.value.paidAmount ?? 0,
-      'Refund from sale details view'
+      'Refund from sale details view',
+      refundReturnToStock.value
     );
     if (result.ok) {
       sale.value = result.data as unknown as Sale;

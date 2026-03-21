@@ -7,7 +7,6 @@
       </v-app-bar-title>
 
       <template #append>
-        <v-btn variant="text" icon="mdi-cog-outline" class="me-2" @click="settingsDialog?.open()" />
         <v-btn color="primary" prepend-icon="mdi-refresh" @click="refreshAll"> تحديث الكل </v-btn>
       </template>
     </v-app-bar>
@@ -24,7 +23,6 @@
     </v-tabs>
 
     <router-view />
-    <AccountingSettingsDialog ref="settingsDialog" />
   </v-container>
 </template>
 
@@ -33,9 +31,6 @@ import { ref, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { t } from '@/i18n/t';
-import AccountingSettingsDialog from '@/components/workspace/AccountingSettingsDialog.vue';
-
-const settingsDialog = ref<InstanceType<typeof AccountingSettingsDialog> | null>(null);
 
 const route = useRoute();
 const router = useRouter();
