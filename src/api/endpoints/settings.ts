@@ -33,9 +33,18 @@ export interface InvoiceSettings {
 }
 
 /**
- * GET /settings/modules returns ModuleSettings directly (not wrapped in { modules, ... }).
+ * GET /settings/modules returns the full nested structure from GetModuleSettingsUseCase:
+ * { modules, notifications, invoice, wizardCompleted }
  */
-export type ModuleSettingsResponse = ModuleSettings;
+export interface AllModuleSettings {
+  modules: ModuleSettings;
+  notifications: NotificationSettings;
+  invoice: InvoiceSettings;
+  wizardCompleted: boolean;
+}
+
+/** @deprecated Use AllModuleSettings — kept for backward compat */
+export type ModuleSettingsResponse = AllModuleSettings;
 
 interface SetupWizardPayload {
   modules?: Partial<ModuleSettings>;
@@ -107,7 +116,7 @@ export const settingsClient = {
     Promise.resolve({ ok: true as const, data: { printers: [] } }),
 
   /** GET /settings/modules — returns ModuleSettings directly */
-  getModules: (): Promise<ApiResult<ModuleSettingsResponse>> =>
+  getModules: (): Promise<ApiResult<AllModuleSettings>> =>
     apiGet<ModuleSettingsResponse>('/settings/modules'),
 
   /** POST /settings/setup-wizard — returns { completed: boolean } */

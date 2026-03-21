@@ -72,7 +72,7 @@ export interface Product {
   supplierId?: number | null;
   expireDate?: string | null;
   isExpire?: boolean;
-  status?: 'available' | 'out_of_stock' | 'discontinued';
+  status?: 'available' | 'discontinued' | 'inactive';
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -243,7 +243,7 @@ export interface InventoryMovement {
   id?: number;
   productId: number;
   batchId?: number;
-  movementType: 'in' | 'out' | 'adjust';
+  movementType: 'purchase' | 'sale' | 'adjustment' | 'return' | 'damage';
   reason:
     | 'sale'
     | 'purchase'

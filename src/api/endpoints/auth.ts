@@ -4,8 +4,8 @@
  * Replaces: ipc/authClient.ts
  */
 import type { ApiResult } from '../contracts';
-import type { UserPublic, FirstUserInput } from '../../types/domain';
-import { apiGet, apiPost } from '../http';
+import type { UserPublic, FirstUserInput, CompanySettings } from '../../types/domain';
+import { apiGet, apiPost, apiPut } from '../http';
 import { getAccessToken } from '../http';
 
 // ---------------------------------------------------------------------------
@@ -114,9 +114,23 @@ export const authClient = {
   validateToken: (): Promise<ApiResult<MeResponse>> => apiGet<MeResponse>('/auth/me'),
 
   /**
-   * Initialize the application with admin user and company settings.
-   * Calls POST /settings/setup-wizard.
+   * Initialize the application with optional company settings.
+   *
+   * Step 1: If companySettings provided, save via PUT /settings/company (requires auth).
+   * Step 2: Call POST /settings/setup-wizard with empty body to mark wizard as started.
+   *         The `admin` field in the payload is intentionally ignored here — user creation
+   *         is handled separately via createFirstUser (POST /auth/register).
    */
-  initializeApp: (payload: InitializeAppRequest): Promise<ApiResult<{ success: boolean }>> =>
-    apiPost<{ success: boolean }>('/settings/setup-wizard', payload),
+  initializeApp: async (payload: InitializeAppRequest): Promise<ApiResult<{ success: boolean }>> => {
+    if (payload.companySettings && Object.keys(payload.companySettings).length > 0) {
+      const settingsResult = await apiPut<CompanySettings>(
+        '/settings/company',
+        payload.companySettings
+      );
+      if (!settingsResult.ok) return settingsResult as ApiResult<{ success: boolean }>;
+    }
+    const wizardResult = await apiPost<{ completed: boolean }>('/settings/setup-wizard', {});
+    if (!wizardResult.ok) return wizardResult as ApiResult<{ success: boolean }>;
+    return { ok: true, data: { success: true } };
+  },
 };

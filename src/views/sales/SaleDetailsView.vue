@@ -474,8 +474,7 @@ async function executeRefund() {
     const result = await store.refundSale(
       sale.value.id,
       sale.value.paidAmount ?? 0,
-      'Refund from sale details view',
-      refundReturnToStock.value
+      'Refund from sale details view'
     );
     if (result.ok) {
       sale.value = result.data as unknown as Sale;
