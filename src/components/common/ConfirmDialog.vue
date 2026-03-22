@@ -5,16 +5,16 @@
     :persistent="persistent"
   >
     <v-card>
-      <v-card-title class="d-flex align-center ga-2 pt-4 px-6">
+      <v-card-title class="d-flex align-center ga-2 pt-5 px-6">
         <v-icon v-if="icon" :icon="icon" :color="iconColor" size="24" />
         {{ title }}
       </v-card-title>
 
-      <v-card-text class="px-6 py-3 text-body-1">
+      <v-card-text class="px-6 py-4 text-body-1">
         <slot>{{ message }}</slot>
       </v-card-text>
 
-      <v-card-actions class="px-6 pb-4 ga-2 justify-end">
+      <v-card-actions class="px-6 pb-5 ga-2 justify-end">
         <v-btn
           :disabled="loading"
           variant="text"

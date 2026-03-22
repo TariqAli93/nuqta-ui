@@ -1,119 +1,110 @@
-﻿<template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="mb-6" border="bottom">
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ t('categories.title') }}</div>
-          <div class="text-sm">{{ t('categories.subtitle') }}</div>
-        </v-app-bar-title>
+<template>
+  <div class="nq-page">
+    <PageHeader :title="t('categories.title')" :subtitle="t('categories.subtitle')">
+      <template #actions>
+        <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
+          {{ t('categories.add') }}
+        </v-btn>
+      </template>
+    </PageHeader>
 
-        <template #append>
-          <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
-            {{ t('categories.add') }}
-          </v-btn>
+    <v-card class="nq-table-card">
+      <v-skeleton-loader v-if="loading" type="table-row@3" class="ma-4" />
+
+      <v-data-table
+        v-else-if="categories.length > 0"
+        :headers="tableHeaders"
+        :items="categories"
+        density="comfortable"
+      >
+        <template #item.name="{ item }">
+          <div class="d-flex align-center ga-3">
+            <v-avatar size="32" color="primary" variant="tonal">
+              <v-icon size="18">mdi-shape-outline</v-icon>
+            </v-avatar>
+            <span class="font-weight-medium">{{ item.name }}</span>
+          </div>
         </template>
-      </v-app-bar>
-
-      <v-card class="win-card" flat>
-        <v-card-text class="pa-0">
-          <v-skeleton-loader v-if="loading" type="table-row@3" class="ma-4" />
-
-          <v-data-table
-            v-else-if="categories.length > 0"
-            :headers="tableHeaders"
-            :items="categories"
-            density="comfortable"
-            class="ds-table-enhanced ds-table-striped"
-            :hide-default-footer="true"
-          >
-            <template #item.name="{ item }">
-              <div class="d-flex align-center ga-3">
-                <v-avatar size="32" color="primary" variant="tonal">
-                  <v-icon size="18">mdi-shape-outline</v-icon>
-                </v-avatar>
-                <span class="font-weight-medium">{{ item.name }}</span>
-              </div>
-            </template>
-            <template #item.actions="{ item }">
-              <v-btn
-                size="small"
-                variant="text"
-                class="win-ghost-btn"
-                prepend-icon="mdi-pencil"
-                @click="openEditDialog(item)"
-              >
-                {{ t('common.edit') }}
-              </v-btn>
-              <v-btn
-                size="small"
-                variant="text"
-                color="error"
-                prepend-icon="mdi-delete-outline"
-                @click="openDeleteDialog(item)"
-              >
-                {{ t('common.delete') }}
-              </v-btn>
-            </template>
-          </v-data-table>
-
-          <EmptyState
-            v-else
-            icon="mdi-shape-outline"
-            :title="t('categories.empty')"
-            :description="t('categories.emptyHint')"
-            :action-label="t('categories.add')"
-            action-icon="mdi-plus"
-            @action="openCreateDialog"
-          />
-        </v-card-text>
-      </v-card>
-
-      <v-dialog v-model="dialogOpen" max-width="500">
-        <v-card rounded="lg" class="pa-6">
-          <v-card-title class="text-h6 pa-0 mb-4">
-            {{ editingId === null ? t('categories.dialogAdd') : t('categories.dialogEdit') }}
-          </v-card-title>
-          <v-card-text class="pa-0 mb-6">
-            <v-text-field v-model="name" :label="t('categories.name')" required autofocus />
-          </v-card-text>
-          <v-card-actions class="pa-0">
-            <v-spacer />
-            <v-btn variant="text" @click="dialogOpen = false">{{ t('common.cancel') }}</v-btn>
-            <v-btn color="primary" variant="flat" :loading="saving" @click="saveCategory">
-              {{ t('common.save') }}
+        <template #item.actions="{ item }">
+          <div class="d-flex ga-1">
+            <v-btn
+              size="small"
+              variant="text"
+              prepend-icon="mdi-pencil"
+              @click="openEditDialog(item)"
+            >
+              {{ t('common.edit') }}
             </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <v-dialog v-model="deleteDialog" max-width="420">
-        <v-card rounded="lg" class="pa-6">
-          <v-card-title class="text-h6 pa-0 mb-4">{{ t('common.delete') }}</v-card-title>
-          <v-card-text class="pa-0 mb-6">{{ t('categories.deleteConfirm') }}</v-card-text>
-          <v-card-actions class="pa-0">
-            <v-spacer />
-            <v-btn variant="text" @click="deleteDialog = false">{{ t('common.cancel') }}</v-btn>
-            <v-btn color="error" variant="flat" :loading="deleting" @click="confirmDelete">
+            <v-btn
+              size="small"
+              variant="text"
+              color="error"
+              prepend-icon="mdi-delete-outline"
+              @click="openDeleteDialog(item)"
+            >
               {{ t('common.delete') }}
             </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </div>
-  </v-container>
+          </div>
+        </template>
+      </v-data-table>
+
+      <EmptyState
+        v-else
+        icon="mdi-shape-outline"
+        :title="t('categories.empty')"
+        :description="t('categories.emptyHint')"
+        :action-label="t('categories.add')"
+        action-icon="mdi-plus"
+        @action="openCreateDialog"
+      />
+    </v-card>
+
+    <!-- Create/Edit Dialog -->
+    <v-dialog v-model="dialogOpen" max-width="480">
+      <v-card>
+        <v-card-title class="pt-5 px-6">
+          {{ editingId === null ? t('categories.dialogAdd') : t('categories.dialogEdit') }}
+        </v-card-title>
+        <v-card-text class="px-6 py-4">
+          <v-text-field v-model="name" :label="t('categories.name')" required autofocus />
+        </v-card-text>
+        <v-card-actions class="px-6 pb-5 ga-2 justify-end">
+          <v-btn variant="text" @click="dialogOpen = false">{{ t('common.cancel') }}</v-btn>
+          <v-btn color="primary" variant="flat" :loading="saving" @click="saveCategory">
+            {{ t('common.save') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Delete Dialog -->
+    <v-dialog v-model="deleteDialog" max-width="420">
+      <v-card>
+        <v-card-title class="pt-5 px-6">{{ t('common.delete') }}</v-card-title>
+        <v-card-text class="px-6 py-4">{{ t('categories.deleteConfirm') }}</v-card-text>
+        <v-card-actions class="px-6 pb-5 ga-2 justify-end">
+          <v-btn variant="text" @click="deleteDialog = false">{{ t('common.cancel') }}</v-btn>
+          <v-btn color="error" variant="flat" :loading="deleting" @click="confirmDelete">
+            {{ t('common.delete') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { mapErrorToArabic, t } from '../../i18n/t';
 import { categoriesClient } from '../../api';
-import EmptyState from '../../components/emptyState.vue';
+import EmptyState from '@/components/common/EmptyState.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 import type { Category } from '../../types/domain';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 
 const tableHeaders = computed(() => [
   { title: t('categories.name'), key: 'name' },
-  { title: '', key: 'actions', sortable: false, width: 180 },
+  { title: '', key: 'actions', sortable: false, width: 220 },
 ]);
 
 const categories = ref<Category[]>([]);

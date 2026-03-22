@@ -1,38 +1,35 @@
 <template>
-  <v-toolbar flat density="compact" class="px-2 mb-2">
-    <v-tabs v-model="activeTab" color="primary" class="me-4">
-      <v-tab value="all">الكل</v-tab>
-      <v-tab value="posted">مرحل</v-tab>
-      <v-tab value="unposted">غير مرحل</v-tab>
-    </v-tabs>
+  <div>
+    <v-card class="nq-table-card nq-section">
+      <div class="nq-filter-bar">
+        <v-tabs v-model="activeTab" color="primary" density="compact" class="flex-grow-0">
+          <v-tab value="all">الكل</v-tab>
+          <v-tab value="posted">مرحل</v-tab>
+          <v-tab value="unposted">غير مرحل</v-tab>
+        </v-tabs>
 
-    <v-select
-      v-model="filterSource"
-      :items="sourceOptions"
-      clearable
-      label="المصدر"
-      density="compact"
-      variant="outlined"
-      hide-details
-      style="max-width: 180px"
-      class="me-3"
-    />
+        <v-select
+          v-model="filterSource"
+          :items="sourceOptions"
+          clearable
+          label="المصدر"
+          hide-details
+          style="flex: 0 1 180px; min-width: 140px"
+        />
 
-    <v-spacer />
+        <v-spacer />
 
-    <v-btn
-      color="primary"
-      variant="flat"
-      size="small"
-      prepend-icon="mdi-plus"
-      :to="{ name: 'JournalEntryCreate' }"
-    >
-      إنشاء قيد
-    </v-btn>
-  </v-toolbar>
+        <v-btn
+          color="primary"
+          variant="flat"
+          size="small"
+          prepend-icon="mdi-plus"
+          :to="{ name: 'JournalEntryCreate' }"
+        >
+          إنشاء قيد
+        </v-btn>
+      </div>
 
-  <v-card>
-    <v-card-text>
       <v-data-table-server
         v-model:items-per-page="options.itemsPerPage"
         v-model:page="options.page"
@@ -62,44 +59,48 @@
         </template>
 
         <template #item.actions="{ item }">
-          <v-btn
-            v-if="!item.isPosted"
-            variant="text"
-            color="success"
-            size="small"
-            :loading="actionLoading === item.id"
-            @click="postEntry(item)"
-            class="me-2"
-          >
-            ترحيل
-          </v-btn>
-          <v-btn
-            v-if="item.isPosted"
-            variant="text"
-            color="warning"
-            size="small"
-            :loading="actionLoading === item.id"
-            @click="unpostEntry(item)"
-            class="me-2"
-          >
-            إلغاء الترحيل
-          </v-btn>
-          <v-btn
-            variant="text"
-            color="primary"
-            size="small"
-            :to="{ name: 'JournalEntryDetail', params: { id: item.id } }"
-          >
-            عرض التفاصيل
-          </v-btn>
+          <div class="d-flex ga-1">
+            <v-btn
+              v-if="!item.isPosted"
+              variant="text"
+              color="success"
+              size="small"
+              :loading="actionLoading === item.id"
+              @click="postEntry(item)"
+            >
+              ترحيل
+            </v-btn>
+            <v-btn
+              v-if="item.isPosted"
+              variant="text"
+              color="warning"
+              size="small"
+              :loading="actionLoading === item.id"
+              @click="unpostEntry(item)"
+            >
+              إلغاء الترحيل
+            </v-btn>
+            <v-btn
+              variant="text"
+              color="primary"
+              size="small"
+              :to="{ name: 'JournalEntryDetail', params: { id: item.id } }"
+            >
+              عرض التفاصيل
+            </v-btn>
+          </div>
         </template>
 
         <template #no-data>
-          <div class="text-center py-6 text-medium-emphasis">لا توجد قيود لعرضها</div>
+          <EmptyState
+            icon="mdi-book-open-page-variant"
+            title="لا توجد قيود لعرضها"
+            min-height="200px"
+          />
         </template>
       </v-data-table-server>
-    </v-card-text>
-  </v-card>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -110,6 +111,7 @@ import { postingClient } from '@/api/endpoints/posting';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
 import { formatDate, formatMoney } from '@/utils/formatters';
+import EmptyState from '@/components/common/EmptyState.vue';
 
 const route = useRoute();
 const store = useAccountingStore();
@@ -208,7 +210,6 @@ watch(filterSource, () => {
 });
 
 onMounted(() => {
-  // Check for accountId from route query (navigated from chart of accounts)
   const querySource = route.query.sourceType as string | undefined;
   if (querySource) filterSource.value = querySource;
 

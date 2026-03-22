@@ -1,49 +1,39 @@
 <template>
   <div>
-    <v-row dense class="mb-3">
-      <v-col cols="6" md="3">
-        <v-card variant="tonal" color="primary">
-          <v-card-text class="text-center">
-            <div class="text-caption">قيمة المخزون</div>
-            <div class="text-h6">
-              {{ (inventoryStore.dashboard?.totalValuation ?? 0).toLocaleString('en-US') }}
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="6" md="3">
-        <v-card variant="tonal" color="warning">
-          <v-card-text class="text-center">
-            <div class="text-caption">منتجات منخفضة</div>
-            <div class="text-h6">{{ inventoryStore.dashboard?.lowStockCount ?? 0 }}</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="6" md="3">
-        <v-card variant="tonal" color="error">
-          <v-card-text class="text-center">
-            <div class="text-caption">تنبيهات صلاحية</div>
-            <div class="text-h6">{{ inventoryStore.dashboard?.expiryAlertCount ?? 0 }}</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="6" md="3">
-        <v-card variant="tonal" color="success">
-          <v-card-text class="text-center">
-            <div class="text-caption">حركات مسجلة</div>
-            <div class="text-h6">{{ inventoryStore.movementsTotal }}</div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+    <div class="nq-stats-grid nq-section">
+      <StatCard
+        icon="mdi-package-variant-closed"
+        label="قيمة المخزون"
+        :value="(inventoryStore.dashboard?.totalValuation ?? 0).toLocaleString('en-US')"
+        color="primary"
+      />
+      <StatCard
+        icon="mdi-alert-outline"
+        label="منتجات منخفضة"
+        :value="String(inventoryStore.dashboard?.lowStockCount ?? 0)"
+        color="warning"
+      />
+      <StatCard
+        icon="mdi-calendar-clock"
+        label="تنبيهات صلاحية"
+        :value="String(inventoryStore.dashboard?.expiryAlertCount ?? 0)"
+        color="error"
+      />
+      <StatCard
+        icon="mdi-swap-horizontal"
+        label="حركات مسجلة"
+        :value="String(inventoryStore.movementsTotal)"
+        color="success"
+      />
+    </div>
 
-    <v-card>
-      <v-card-title class="text-subtitle-1 font-weight-bold">آخر حركات المخزون</v-card-title>
+    <v-card class="nq-table-card">
+      <v-card-title class="px-4 py-3">آخر حركات المخزون</v-card-title>
       <v-data-table
         :headers="movementHeaders"
         :items="inventoryStore.movements"
         :loading="inventoryStore.loadingMovements || inventoryStore.loadingDashboard"
-        density="compact"
+        density="comfortable"
         :items-per-page="10"
       >
         <template #item.createdAt="{ item }">
@@ -71,9 +61,12 @@
         </template>
         <template #item.productName="{ item }">{{ getProductName(item.productId) }}</template>
         <template #no-data>
-          <div class="text-center py-8 text-medium-emphasis">
-            لا توجد حركات مخزون بعد. ستظهر الحركات بعد البيع/الشراء/التعديل.
-          </div>
+          <EmptyState
+            icon="mdi-swap-horizontal"
+            title="لا توجد حركات مخزون بعد"
+            description="ستظهر الحركات بعد البيع/الشراء/التعديل"
+            min-height="200px"
+          />
         </template>
       </v-data-table>
     </v-card>
@@ -86,6 +79,8 @@ import { formatDate } from '@/utils/formatters';
 import { useInventoryStore } from '@/stores/inventoryStore';
 import { useInventoryHelpers } from '@/composables/useInventoryHelpers';
 import { useMovementTable } from '@/composables/useMovementTable';
+import StatCard from '@/components/common/StatCard.vue';
+import EmptyState from '@/components/common/EmptyState.vue';
 
 const inventoryStore = useInventoryStore();
 const {

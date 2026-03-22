@@ -11,20 +11,18 @@
       </v-btn>
     </div>
 
-    <v-card class="win-card win-card--padded mb-4" flat>
-      <v-card class="pa-4">
-        <v-card-title class="flex items-center justify-between mb-4">
-          <span>{{ t('settings.companyInfo') }}</span>
-        </v-card-title>
+    <v-card class="nq-section">
+      <v-card-title class="px-4 py-3">
+        {{ t('settings.companyInfo') }}
+      </v-card-title>
 
+      <v-card-text>
         <v-form @submit.prevent="saveCompanySettings">
-          <v-row>
+          <v-row dense>
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="companyForm.name"
                 :label="t('settings.companyName') + ' *'"
-                variant="outlined"
-                density="comfortable"
                 required
               />
             </v-col>
@@ -32,8 +30,6 @@
               <v-text-field
                 v-model="companyForm.email"
                 :label="t('settings.companyEmail')"
-                variant="outlined"
-                density="comfortable"
                 type="email"
               />
             </v-col>
@@ -41,24 +37,18 @@
               <v-text-field
                 v-model="companyForm.phone"
                 :label="t('settings.companyPhone')"
-                variant="outlined"
-                density="comfortable"
               />
             </v-col>
             <v-col cols="12" md="6">
               <v-text-field
                 v-model="companyForm.phone2"
                 :label="t('settings.companyPhone2')"
-                variant="outlined"
-                density="comfortable"
               />
             </v-col>
             <v-col cols="12">
               <v-textarea
                 v-model="companyForm.address"
                 :label="t('settings.companyAddress')"
-                variant="outlined"
-                density="comfortable"
                 rows="2"
               />
             </v-col>
@@ -66,8 +56,6 @@
               <v-text-field
                 v-model="companyForm.taxId"
                 :label="t('settings.companyTaxId')"
-                variant="outlined"
-                density="comfortable"
               />
             </v-col>
             <v-col cols="12" md="6">
@@ -75,8 +63,6 @@
                 v-model="companyForm.currency"
                 :items="currencyOptions"
                 :label="t('settings.companyCurrency') + ' *'"
-                variant="outlined"
-                density="comfortable"
                 required
               />
             </v-col>
@@ -84,8 +70,6 @@
               <v-text-field
                 v-model.number="companyForm.lowStockThreshold"
                 :label="t('settings.lowStockThreshold')"
-                variant="outlined"
-                density="comfortable"
                 type="number"
                 min="0"
                 :hint="t('settings.lowStockThresholdHint')"
@@ -100,8 +84,6 @@
                 item-title="name"
                 item-value="name"
                 :label="t('settings.receiptPrinter')"
-                variant="outlined"
-                density="comfortable"
                 clearable
                 @update:model-value="saveSelectedPrinter"
               >
@@ -122,13 +104,13 @@
             type="submit"
             color="primary"
             variant="flat"
-            class="win-btn mt-4"
+            class="mt-4"
             :loading="savingCompany"
           >
             {{ t('common.save') }}
           </v-btn>
         </v-form>
-      </v-card>
+      </v-card-text>
     </v-card>
   </div>
 </template>

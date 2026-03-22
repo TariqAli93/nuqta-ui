@@ -1,29 +1,28 @@
 <template>
-  <v-container>
-    <v-app-bar class="mb-6" border="bottom">
-      <v-app-bar-title>
-        <div class="win-title mb-0">{{ t('nav.inventoryManagement') }}</div>
-        <div class="text-sm">إدارة المخزون والحركات والمطابقة</div>
-      </v-app-bar-title>
-
-      <template #append>
-        <v-btn color="primary" prepend-icon="mdi-refresh" @click="refreshAll"> تحديث الكل </v-btn>
+  <div class="nq-page">
+    <PageHeader :title="t('nav.inventoryManagement')" subtitle="إدارة المخزون والحركات والمطابقة">
+      <template #actions>
+        <v-btn color="primary" prepend-icon="mdi-refresh" @click="refreshAll">تحديث الكل</v-btn>
       </template>
-    </v-app-bar>
+    </PageHeader>
 
-    <v-tabs v-model="activeTab" bg-color="surface" class="w-full mb-4">
-      <v-tab
-        v-for="tab in tabs"
-        :key="tab.value"
-        :value="tab.value"
-        @click="navigateToTab(tab.route)"
-      >
-        {{ tab.label }}
-      </v-tab>
-    </v-tabs>
+    <v-card class="nq-section">
+      <v-tabs v-model="activeTab" bg-color="surface" class="w-full">
+        <v-tab
+          v-for="tab in tabs"
+          :key="tab.value"
+          :value="tab.value"
+          @click="navigateToTab(tab.route)"
+        >
+          {{ tab.label }}
+        </v-tab>
+      </v-tabs>
+    </v-card>
 
-    <router-view />
-  </v-container>
+    <div class="mt-4">
+      <router-view />
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -31,6 +30,7 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useInventoryStore } from '@/stores/inventoryStore';
 import { t } from '@/i18n/t';
+import PageHeader from '@/components/common/PageHeader.vue';
 
 const route = useRoute();
 const router = useRouter();

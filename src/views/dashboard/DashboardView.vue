@@ -1,99 +1,51 @@
 <template>
-  <v-container fluid class="pa-6">
-    <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-6">
-      <div>
-        <h1 class="text-h5 font-weight-bold">{{ t('dashboard.title') }}</h1>
-        <p class="text-body-2 text-medium-emphasis mt-1">{{ t('dashboard.subtitle') }}</p>
-      </div>
-
-      <div class="d-flex flex-wrap ga-2">
+  <div class="nq-page">
+    <PageHeader :title="t('dashboard.title')" :subtitle="t('dashboard.subtitle')">
+      <template #actions>
         <v-btn variant="outlined" :loading="isDownloadingSales" @click="exportSales">
           تصدير المبيعات CSV
         </v-btn>
-        <v-btn
-          variant="outlined"
-          :loading="isDownloadingInventory"
-          @click="exportInventory"
-        >
+        <v-btn variant="outlined" :loading="isDownloadingInventory" @click="exportInventory">
           تصدير المخزون CSV
         </v-btn>
         <v-btn variant="text" icon size="small" :loading="loading" @click="loadStats">
           <v-icon>mdi-refresh</v-icon>
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <CardSkeleton :loading="loading" :count="4" :cols="3">
-      <v-row dense class="mb-6">
-        <v-col cols="12" sm="6" md="3">
-          <v-card class="pa-4">
-            <div class="d-flex align-center ga-3">
-              <v-avatar color="success" variant="tonal" size="48">
-                <v-icon>mdi-cash-register</v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-caption text-medium-emphasis">مبيعات اليوم</div>
-                <div class="text-h6 font-weight-bold">{{ stats?.salesToday?.totalSales ?? 0 }}</div>
-              </div>
-            </div>
-          </v-card>
-        </v-col>
-
-        <v-col cols="12" sm="6" md="3">
-          <v-card class="pa-4">
-            <div class="d-flex align-center ga-3">
-              <v-avatar color="primary" variant="tonal" size="48">
-                <v-icon>mdi-currency-usd</v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-caption text-medium-emphasis">إيرادات اليوم</div>
-                <div class="text-h6 font-weight-bold">
-                  {{ formatMoney(stats?.salesToday?.totalRevenue ?? 0) }}
-                </div>
-              </div>
-            </div>
-          </v-card>
-        </v-col>
-
-        <v-col cols="12" sm="6" md="3">
-          <v-card class="pa-4">
-            <div class="d-flex align-center ga-3">
-              <v-avatar color="info" variant="tonal" size="48">
-                <v-icon>mdi-calculator</v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-caption text-medium-emphasis">متوسط الفاتورة</div>
-                <div class="text-h6 font-weight-bold">
-                  {{ formatMoney(stats?.salesToday?.averageSaleAmount ?? 0) }}
-                </div>
-              </div>
-            </div>
-          </v-card>
-        </v-col>
-
-        <v-col cols="12" sm="6" md="3">
-          <v-card class="pa-4">
-            <div class="d-flex align-center ga-3">
-              <v-avatar
-                :color="(stats?.lowStockCount ?? 0) > 0 ? 'error' : 'grey'"
-                variant="tonal"
-                size="48"
-              >
-                <v-icon>mdi-alert-circle-outline</v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-caption text-medium-emphasis">منتجات منخفضة المخزون</div>
-                <div class="text-h6 font-weight-bold">{{ stats?.lowStockCount ?? 0 }}</div>
-              </div>
-            </div>
-          </v-card>
-        </v-col>
-      </v-row>
+      <div class="nq-stats-grid nq-section">
+        <StatCard
+          icon="mdi-cash-register"
+          label="مبيعات اليوم"
+          :value="String(stats?.salesToday?.totalSales ?? 0)"
+          color="success"
+        />
+        <StatCard
+          icon="mdi-currency-usd"
+          label="إيرادات اليوم"
+          :value="formatMoney(stats?.salesToday?.totalRevenue ?? 0)"
+          color="primary"
+        />
+        <StatCard
+          icon="mdi-calculator"
+          label="متوسط الفاتورة"
+          :value="formatMoney(stats?.salesToday?.averageSaleAmount ?? 0)"
+          color="info"
+        />
+        <StatCard
+          icon="mdi-alert-circle-outline"
+          label="منتجات منخفضة المخزون"
+          :value="String(stats?.lowStockCount ?? 0)"
+          :color="(stats?.lowStockCount ?? 0) > 0 ? 'error' : 'default'"
+        />
+      </div>
     </CardSkeleton>
 
-    <v-card>
-      <v-card-title class="d-flex align-center ga-2">
-        <v-icon color="primary">mdi-trending-up</v-icon>
+    <v-card class="nq-table-card">
+      <v-card-title class="d-flex align-center ga-2 px-4 py-3">
+        <v-icon color="primary" size="20">mdi-trending-up</v-icon>
         أفضل المنتجات
       </v-card-title>
 
@@ -107,7 +59,7 @@
         />
       </TableSkeleton>
     </v-card>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -119,6 +71,8 @@ import {
 } from '@/api/endpoints/reports';
 import CardSkeleton from '@/components/shared/CardSkeleton.vue';
 import TableSkeleton from '@/components/shared/TableSkeleton.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
+import StatCard from '@/components/common/StatCard.vue';
 import { useApiError } from '@/composables/useApiError';
 import { useFileDownload } from '@/composables/useFileDownload';
 import { t } from '@/i18n/t';

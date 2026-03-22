@@ -1,39 +1,23 @@
 <template>
   <div>
-    <v-row dense class="mb-3">
-      <v-col cols="12" md="6">
-        <v-card variant="tonal" color="warning">
-          <v-card-title class="text-subtitle-1 font-weight-bold"
-            >منتجات منخفضة المخزون</v-card-title
-          >
-          <v-card-text>
-            <div class="text-h5 text-center mb-2">
-              {{ inventoryStore.dashboard?.lowStockCount ?? 0 }}
-            </div>
-            <div class="text-caption text-center text-medium-emphasis">
-              منتجات وصلت لحد إعادة الطلب
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-card variant="tonal" color="error">
-          <v-card-title class="text-subtitle-1 font-weight-bold">تنبيهات الصلاحية</v-card-title>
-          <v-card-text>
-            <div class="text-h5 text-center mb-2">
-              {{ inventoryStore.expiryAlerts.length }}
-            </div>
-            <div class="text-caption text-center text-medium-emphasis">
-              منتجات قاربت أو تجاوزت تاريخ الصلاحية
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+    <div class="nq-stats-grid nq-section">
+      <StatCard
+        icon="mdi-alert-outline"
+        label="منتجات منخفضة المخزون"
+        :value="String(inventoryStore.dashboard?.lowStockCount ?? 0)"
+        color="warning"
+      />
+      <StatCard
+        icon="mdi-clock-alert-outline"
+        label="تنبيهات الصلاحية"
+        :value="String(inventoryStore.expiryAlerts.length)"
+        color="error"
+      />
+    </div>
 
     <!-- Expiry Alerts Table -->
-    <v-card class="mb-4">
-      <v-card-title class="text-subtitle-1 font-weight-bold d-flex align-center">
+    <v-card class="nq-table-card">
+      <v-card-title class="d-flex align-center px-4 py-3">
         <v-icon start color="error" size="20">mdi-clock-alert-outline</v-icon>
         تنبيهات الصلاحية
         <v-spacer />
@@ -43,7 +27,6 @@
           label="أيام للأمام"
           density="compact"
           hide-details
-          variant="outlined"
           style="max-width: 140px"
           min="1"
           @change="refreshAlerts"
@@ -53,7 +36,7 @@
         :headers="expiryHeaders"
         :items="inventoryStore.expiryAlerts"
         :loading="inventoryStore.loadingAlerts"
-        density="compact"
+        density="comfortable"
         :items-per-page="15"
       >
         <template #item.expiryDate="{ item }">
@@ -71,10 +54,12 @@
           </span>
         </template>
         <template #no-data>
-          <div class="text-center py-8 text-medium-emphasis">
-            <v-icon size="48" color="success" class="mb-2">mdi-check-circle-outline</v-icon>
-            <div>لا توجد تنبيهات صلاحية حالياً</div>
-          </div>
+          <EmptyState
+            icon="mdi-check-circle-outline"
+            icon-color="success"
+            title="لا توجد تنبيهات صلاحية حالياً"
+            min-height="200px"
+          />
         </template>
       </v-data-table>
     </v-card>
@@ -85,6 +70,8 @@
 import { onMounted, ref } from 'vue';
 import { formatDate } from '@/utils/formatters';
 import { useInventoryStore } from '@/stores/inventoryStore';
+import StatCard from '@/components/common/StatCard.vue';
+import EmptyState from '@/components/common/EmptyState.vue';
 
 const inventoryStore = useInventoryStore();
 
@@ -98,15 +85,9 @@ const expiryHeaders = [
   { title: 'الكمية', key: 'quantityOnHand', align: 'center' as const, width: 80 },
 ];
 
-/**
- * Compare dates at the day level only — normalise both to
- * midnight local time so Baghdad timezone doesn't cause
- * "today" to appear expired.
- */
 function isExpired(expiryDate: string): boolean {
   const expiry = new Date(expiryDate);
   const today = new Date();
-  // Zero out the time portion for both
   expiry.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
   return expiry <= today;

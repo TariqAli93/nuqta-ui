@@ -1,29 +1,23 @@
 <template>
-  <v-card flat>
+  <v-card class="nq-table-card">
     <!-- Toolbar -->
-    <v-toolbar flat density="compact" color="transparent" class="px-2">
+    <div class="nq-filter-bar">
       <v-text-field
         v-model="search"
-        density="compact"
-        variant="outlined"
         hide-details
         prepend-inner-icon="mdi-magnify"
         placeholder="بحث بالاسم أو الكود..."
         clearable
-        class="me-3"
-        style="max-width: 280px"
+        style="flex: 1 1 280px; min-width: 180px"
       />
 
       <v-select
         v-model="filterType"
         :items="accountTypeOptions"
-        density="compact"
-        variant="outlined"
         hide-details
         clearable
         placeholder="تصفية حسب النوع"
-        class="me-3"
-        style="max-width: 200px"
+        style="flex: 0 1 200px; min-width: 160px"
       />
 
       <v-spacer />
@@ -33,13 +27,12 @@
         variant="flat"
         color="primary"
         prepend-icon="mdi-plus"
-        class="me-2"
         @click="accountFormDialog?.open()"
       >
         إضافة حساب
       </v-btn>
 
-      <v-chip variant="tonal" size="small" class="me-2">
+      <v-chip variant="tonal" size="small">
         {{ filteredAccounts.length }} حساب
       </v-chip>
 
@@ -50,16 +43,14 @@
         :loading="accountingStore.loading"
         @click="refresh"
       />
-    </v-toolbar>
-
-    <v-divider />
+    </div>
 
     <!-- Error State -->
     <v-alert
       v-if="accountingStore.error && !accountingStore.loading"
       type="error"
       variant="tonal"
-      class="ma-4"
+      class="mx-4 mb-4"
       closable
     >
       {{ accountingStore.error }}
@@ -75,7 +66,7 @@
       :items="filteredAccounts"
       :loading="accountingStore.loading"
       :search="search ?? undefined"
-      density="compact"
+      density="comfortable"
       :items-per-page="25"
       :items-per-page-options="[10, 25, 50, 100]"
       hover
@@ -135,7 +126,7 @@
       </template>
 
       <template #no-data>
-        <empty-state
+        <EmptyState
           v-if="!accountingStore.loading"
           icon="mdi-chart-timeline-variant-shimmer"
           :title="search || filterType ? 'لا توجد نتائج' : 'لا توجد حسابات'"
@@ -158,7 +149,7 @@ import { useAccountingStore } from '@/stores/accountingStore';
 import { useAccountingHelpers } from '@/composables/useAccountingHelpers';
 import { useCurrency } from '@/composables/useCurrency';
 import type { Account } from '@/types/domain';
-import EmptyState from '@/components/emptyState.vue';
+import EmptyState from '@/components/common/EmptyState.vue';
 import AccountFormDialog from '@/components/workspace/AccountFormDialog.vue';
 
 const router = useRouter();
@@ -168,7 +159,6 @@ const { formatCurrency } = useCurrency();
 
 const accountFormDialog = ref<InstanceType<typeof AccountFormDialog> | null>(null);
 
-// ── Toolbar state ──────────────────────────────────────────
 const search = ref<string | null>(null);
 const filterType = ref<Account['accountType'] | null>(null);
 
@@ -180,7 +170,6 @@ const accountTypeOptions: { title: string; value: Account['accountType'] }[] = [
   { title: 'مصاريف', value: 'expense' },
 ];
 
-// ── Table headers ──────────────────────────────────────────
 const accountHeaders: {
   title: string;
   key: string;
@@ -195,7 +184,6 @@ const accountHeaders: {
   { title: '', key: 'actions', width: 50, sortable: false },
 ];
 
-// ── Filtered data ──────────────────────────────────────────
 const filteredAccounts = computed(() => {
   let result = accountingStore.accounts;
 
@@ -213,7 +201,6 @@ const filteredAccounts = computed(() => {
   return result;
 });
 
-// ── Hierarchy helpers ──────────────────────────────────────
 function isParentAccount(account: Account): boolean {
   return accountingStore.accounts.some((a) => a.parentId === account.id);
 }
@@ -229,14 +216,12 @@ function getIndent(account: Account): number {
   return depth * 16;
 }
 
-// ── Balance display ────────────────────────────────────────
 function balanceClass(balance: number): string {
   if (balance > 0) return 'text-success';
   if (balance < 0) return 'text-error';
   return 'text-medium-emphasis';
 }
 
-// ── Navigation ─────────────────────────────────────────────
 function onRowClick(account: Account) {
   navigateToAccount(account);
 }
@@ -255,7 +240,6 @@ function navigateToLedger(account: Account) {
   });
 }
 
-// ── Data fetching ──────────────────────────────────────────
 function refresh() {
   accountingStore.fetchAccounts(true);
 }

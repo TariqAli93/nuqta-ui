@@ -1,17 +1,14 @@
-﻿<template>
+<template>
   <v-app>
     <v-navigation-drawer
       v-model="appNavigationDrawer"
       location="right"
       border="left"
       permanent
-      width="300"
+      width="280"
       class="pos-nav-drawer"
     >
-      <div
-        class="border-0 border-b border-(--v-theme-background) mb-2 px-3 h-12.25 flex items-center ga-3"
-      >
-        <!-- add logo here -->
+      <div class="nav-brand">
         <v-img
           :src="logo"
           lazy-src="../assets/logo.png"
@@ -20,8 +17,9 @@
           max-width="32"
           max-height="32"
         />
-        <span class="text-subtitle-2">نقطة بلس</span>
+        <span class="text-subtitle-2 font-weight-medium">نقطة بلس</span>
       </div>
+
       <v-list nav density="compact" :opened="openedGroups" class="px-2 py-2">
         <template v-for="entry in primaryNav" :key="entry.type === 'item' ? entry.to : entry.id">
           <v-list-item
@@ -62,8 +60,8 @@
       </v-list>
 
       <template #append>
-        <v-divider class="my-2" />
-        <v-list nav density="compact" class="px-2 pb-2">
+        <v-divider class="mx-3" />
+        <v-list nav density="compact" class="px-2 py-2">
           <v-list-subheader class="text-caption">النظام</v-list-subheader>
           <v-list-item
             v-for="item in footerNav"
@@ -77,53 +75,56 @@
       </template>
     </v-navigation-drawer>
 
-    <v-app-bar flat density="comfortable" height="56" border="bottom">
-      <v-sheet class="d-flex align-center ga-4 px-6">
-        <v-app-bar-nav-icon @click="appNavigationDrawer = !appNavigationDrawer" />
-        <div>
-          <div class="text-caption text-medium-emphasis">
-            {{ currentDate }} <span class="mx-2">|</span> {{ currentUser }}
-          </div>
+    <v-app-bar flat density="comfortable" height="56" border="bottom" color="surface">
+      <div class="d-flex align-center ga-3 px-4">
+        <v-app-bar-nav-icon
+          size="small"
+          variant="text"
+          @click="appNavigationDrawer = !appNavigationDrawer"
+        />
+        <div class="text-caption text-medium-emphasis">
+          {{ currentDate }} <span class="mx-1">|</span> {{ currentUser }}
         </div>
-        <v-card class="d-flex align-center ga-2 px-3 py-1">
-          <v-icon size="16">mdi-clock-outline</v-icon>
-          <span class="text-caption">{{ t('pos.shift') }}:</span>
-          <span class="text-caption">{{ shiftTime }}</span>
-        </v-card>
-      </v-sheet>
+        <v-chip size="small" variant="tonal" class="d-none d-sm-flex">
+          <v-icon size="14" start>mdi-clock-outline</v-icon>
+          {{ t('pos.shift') }}: {{ shiftTime }}
+        </v-chip>
+      </div>
 
       <v-spacer />
 
-      <v-tooltip :text="sseConnected ? t('layout.sseConnected') : t('layout.sseDisconnected')">
-        <template #activator="{ props }">
-          <v-btn v-bind="props" variant="text" icon size="small" class="mr-2">
-            <v-icon :color="sseConnected ? 'success' : 'grey'">
-              {{ sseConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
-            </v-icon>
-          </v-btn>
-        </template>
-      </v-tooltip>
+      <div class="d-flex align-center ga-1 px-2">
+        <v-tooltip :text="sseConnected ? t('layout.sseConnected') : t('layout.sseDisconnected')">
+          <template #activator="{ props }">
+            <v-btn v-bind="props" variant="text" icon size="small">
+              <v-icon :color="sseConnected ? 'success' : 'grey'" size="20">
+                {{ sseConnected ? 'mdi-lan-connect' : 'mdi-lan-disconnect' }}
+              </v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
 
-      <v-btn variant="text" class="win-ghost-btn" @click="toggleTheme">
-        <v-icon> mdi-theme-light-dark </v-icon>
-      </v-btn>
+        <v-btn variant="text" icon size="small" @click="toggleTheme">
+          <v-icon size="20">mdi-theme-light-dark</v-icon>
+        </v-btn>
 
-      <v-menu>
-        <template #activator="{ props }">
-          <v-btn variant="text" icon size="small" v-bind="props">
-            <v-icon>mdi-account-circle</v-icon>
-          </v-btn>
-        </template>
-        <v-list nav density="comfortable">
-          <v-list-item to="/profile" prepend-icon="mdi-account-outline">
-            <v-list-item-title>{{ t('nav.profile') }}</v-list-item-title>
-          </v-list-item>
-          <v-divider />
-          <v-list-item prepend-icon="mdi-logout" @click="logout">
-            <v-list-item-title>{{ t('common.logout') }}</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </v-menu>
+        <v-menu>
+          <template #activator="{ props }">
+            <v-btn variant="text" icon size="small" v-bind="props">
+              <v-icon size="20">mdi-account-circle</v-icon>
+            </v-btn>
+          </template>
+          <v-list nav density="comfortable" min-width="180">
+            <v-list-item to="/profile" prepend-icon="mdi-account-outline">
+              <v-list-item-title>{{ t('nav.profile') }}</v-list-item-title>
+            </v-list-item>
+            <v-divider class="my-1" />
+            <v-list-item prepend-icon="mdi-logout" @click="logout">
+              <v-list-item-title>{{ t('common.logout') }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </div>
     </v-app-bar>
 
     <v-main>
@@ -522,22 +523,32 @@ onUnmounted(() => {
 });
 </script>
 <style scoped>
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  height: 56px;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
 :deep(.v-list-group__items) {
   padding-inline-start: 0; /* يمنع Vuetify يزود indent زائد */
 }
 
 .nav-group-children {
-  background: rgba(var(--v-theme-on-surface), 0.08);
+  background: rgba(var(--v-theme-on-surface), 0.05);
   border-radius: 10px;
-  padding: 6px;
-  margin-inline-start: 10px;
+  padding: 4px;
+  margin-inline-start: 8px;
   margin-block: 4px;
 }
 
 .nav-group-children :deep(.v-list-item) {
-  border-radius: 10px;
+  border-radius: 8px;
   margin-block: 2px;
-  padding-inline-start: 18px !important;
+  padding-inline-start: 16px !important;
+  min-height: 36px;
 }
 
 .nav-group-children :deep(.v-list-item:hover) {
@@ -545,6 +556,6 @@ onUnmounted(() => {
 }
 
 .nav-group-children :deep(.v-list-item.v-list-item--active) {
-  background: rgba(var(--v-theme-primary), 0.18);
+  background: rgba(var(--v-theme-primary), 0.15);
 }
 </style>

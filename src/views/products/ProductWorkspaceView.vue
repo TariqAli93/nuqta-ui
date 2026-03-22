@@ -1,19 +1,12 @@
 <template>
-  <v-container fluid>
-    <v-app-bar class="mb-6" border="bottom">
-      <v-app-bar-title>
-        <div class="win-title mb-0">مساحة عمل المنتجات</div>
-        <div class="text-sm">
-          إدارة المنتج في شاشة واحدة: معلومات، حركات، مبيعات، مشتريات، وحدات، دفعات، وتعديل مخزون.
-        </div>
-      </v-app-bar-title>
-
-      <template #append>
+  <div class="nq-page nq-page--fluid">
+    <PageHeader title="مساحة عمل المنتجات" subtitle="إدارة المنتج في شاشة واحدة: معلومات، حركات، مبيعات، مشتريات، وحدات، دفعات، وتعديل مخزون.">
+      <template #actions>
         <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreateDialog">
           إضافة منتج
         </v-btn>
       </template>
-    </v-app-bar>
+    </PageHeader>
 
     <v-row dense>
       <v-col cols="12" md="4">
@@ -133,10 +126,11 @@
       @submit="onSubmitAdjustment"
     />
 
+    <!-- Product form dialog -->
     <v-dialog v-model="productDialog" max-width="720" persistent>
       <v-card>
-        <v-card-title>{{ editMode ? 'تعديل المنتج' : 'إضافة منتج' }}</v-card-title>
-        <v-card-text>
+        <v-card-title class="pt-5 px-6">{{ editMode ? 'تعديل المنتج' : 'إضافة منتج' }}</v-card-title>
+        <v-card-text class="px-6 py-4">
           <FormSkeleton :loading="workspaceStore.loading.product && editMode" :fields="8">
             <v-form @submit.prevent="submitProduct">
               <v-row dense>
@@ -225,8 +219,7 @@
             </v-form>
           </FormSkeleton>
         </v-card-text>
-        <v-card-actions>
-          <v-spacer />
+        <v-card-actions class="px-6 pb-5 ga-2 justify-end">
           <v-btn variant="text" @click="productDialog = false">إلغاء</v-btn>
           <v-btn color="primary" :loading="workspaceStore.loading.save" @click="submitProduct">
             حفظ
@@ -235,12 +228,12 @@
       </v-card>
     </v-dialog>
 
+    <!-- Delete dialog -->
     <v-dialog v-model="deleteDialog" max-width="420">
       <v-card>
-        <v-card-title>حذف المنتج</v-card-title>
-        <v-card-text>سيتم حذف المنتج المحدد. هل تريد المتابعة؟</v-card-text>
-        <v-card-actions>
-          <v-spacer />
+        <v-card-title class="pt-5 px-6">حذف المنتج</v-card-title>
+        <v-card-text class="px-6 py-4">سيتم حذف المنتج المحدد. هل تريد المتابعة؟</v-card-text>
+        <v-card-actions class="px-6 pb-5 ga-2 justify-end">
           <v-btn variant="text" @click="deleteDialog = false">إلغاء</v-btn>
           <v-btn color="error" :loading="workspaceStore.loading.save" @click="confirmDelete">
             حذف
@@ -248,7 +241,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -266,6 +259,7 @@ import type {
   ProductUnitInput,
   ProductWorkspaceFilters,
 } from '@/types/workspace';
+import PageHeader from '@/components/common/PageHeader.vue';
 import ProductListPanel from '@/components/workspace/ProductListPanel.vue';
 import ProductSummaryPanel from '@/components/workspace/ProductSummaryPanel.vue';
 import ProductMovementsTab from '@/components/workspace/ProductMovementsTab.vue';
@@ -282,7 +276,6 @@ const router = useRouter();
 const workspaceStore = useProductWorkspaceStore();
 const { can } = useRBAC();
 
-// Load system settings to determine feature availability (e.g. stock adjustment)
 const settingsStore = useSystemSettingsStore();
 
 const categories = ref<Array<{ id: number; name: string }>>([]);
@@ -363,18 +356,10 @@ watch(
   }
 );
 
-/**
- * Lazy-load tab data only when the tab is activated AND the data is
- * for the current product. `loadProductWorkspace` already fetches
- * everything on product selection, so this watcher only matters when
- * the user switches tabs (to pick up data that wasn't loaded upfront
- * or to start/stop barcode polling).
- */
 watch(activeTab, (tab) => {
   const productId = selectedProductId.value;
   if (!productId) return;
 
-  // Start/stop barcode polling based on active tab
   if (tab === 'units') {
     startBarcodePolling(productId);
   } else {
@@ -452,7 +437,6 @@ async function applyRouteSelection(): Promise<void> {
 }
 
 async function selectProduct(productId: number): Promise<void> {
-  // Stop any existing polling for previous product
   stopBarcodePolling();
 
   await workspaceStore.loadProductWorkspace(productId);
@@ -464,7 +448,6 @@ async function selectProduct(productId: number): Promise<void> {
     },
   });
 
-  // Re-start polling if we're already on the units tab
   if (activeTab.value === 'units') {
     startBarcodePolling(productId);
   }

@@ -1,9 +1,13 @@
 <template>
-  <v-card :flat="flat" :elevation="flat ? 0 : undefined">
-    <v-card-title v-if="title" class="d-flex align-center justify-space-between">
-      <span class="text-subtitle-1 font-weight-bold">{{ title }}</span>
-      <slot name="actions" />
+  <v-card :flat="flat" :elevation="flat ? 0 : undefined" class="nq-table-card">
+    <v-card-title v-if="title || $slots.actions" class="d-flex align-center justify-space-between px-4 py-3">
+      <span v-if="title" class="text-subtitle-1 font-weight-bold">{{ title }}</span>
+      <div v-if="$slots.actions" class="d-flex align-center ga-2">
+        <slot name="actions" />
+      </div>
     </v-card-title>
+
+    <slot name="filters" />
 
     <v-data-table-server
       v-if="serverSide"
@@ -15,7 +19,6 @@
       :loading="loading"
       :density="density"
       :no-data-text="noDataText"
-      class="nuqta-data-table"
       @update:page="onPageChange"
       @update:items-per-page="onPageSizeChange"
     >
@@ -32,7 +35,6 @@
       :density="density"
       :items-per-page="pageSize"
       :no-data-text="noDataText"
-      class="nuqta-data-table"
     >
       <template v-for="(_, name) in $slots" #[name]="slotData">
         <slot :name="name" v-bind="slotData ?? {}" />

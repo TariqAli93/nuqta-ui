@@ -1,86 +1,80 @@
 <template>
-  <v-container fluid>
-    <v-row class="mb-4" align="center">
-      <v-col>
-        <h1 class="text-h5 font-weight-bold">المشتريات</h1>
-      </v-col>
-      <v-col cols="auto">
+  <div class="nq-page">
+    <PageHeader title="المشتريات">
+      <template #actions>
         <v-btn color="primary" prepend-icon="mdi-plus" :to="{ name: 'PurchaseCreate' }">
           فاتورة مشتريات جديدة
         </v-btn>
-      </v-col>
-    </v-row>
+      </template>
+    </PageHeader>
 
-    <v-card>
-      <v-card-text>
-        <v-row class="mb-4" dense>
-          <v-col cols="12" sm="4">
-            <v-text-field
-              v-model="search"
-              prepend-inner-icon="mdi-magnify"
-              label="بحث..."
-              variant="outlined"
-              density="compact"
-              hide-details
-              @update:model-value="onSearch"
-            />
-          </v-col>
-          <v-col cols="12" sm="4">
-            <v-select
-              v-model="statusFilter"
-              :items="statuses"
-              label="الحالة"
-              variant="outlined"
-              density="compact"
-              hide-details
-              clearable
-              @update:model-value="onSearch"
-            />
-          </v-col>
-        </v-row>
+    <v-card class="nq-table-card">
+      <div class="nq-filter-bar">
+        <v-text-field
+          v-model="search"
+          prepend-inner-icon="mdi-magnify"
+          label="بحث..."
+          hide-details
+          style="flex: 1 1 280px; min-width: 180px"
+          @update:model-value="onSearch"
+        />
+        <v-select
+          v-model="statusFilter"
+          :items="statuses"
+          label="الحالة"
+          hide-details
+          clearable
+          style="flex: 0 1 200px; min-width: 160px"
+          @update:model-value="onSearch"
+        />
+      </div>
 
-        <v-data-table
-          :headers="headers"
-          :items="purchasesStore.items"
-          :loading="purchasesStore.loading"
-          :items-per-page="20"
-          density="compact"
-          @click:row="
-            (_: Event, { item }: { item: any }) =>
-              router.push({ name: 'PurchaseDetails', params: { id: item.id } })
-          "
-        >
-          <template #item.total="{ item }">
-            <MoneyDisplay :amount="item.total" size="sm" />
-          </template>
-          <template #item.paidAmount="{ item }">
-            <MoneyDisplay :amount="item.paidAmount ?? 0" size="sm" colored />
-          </template>
-          <template #item.status="{ item }">
-            <v-chip
-              :color="
-                item.status === 'completed'
-                  ? 'success'
-                  : item.status === 'pending'
-                    ? 'warning'
-                    : 'error'
-              "
-              size="small"
-              variant="tonal"
-            >
-              {{ statusLabel(item.status) }}
-            </v-chip>
-          </template>
-          <template #item.createdAt="{ item }">
-            {{ formatDate(item.createdAt) }}
-          </template>
-          <template #no-data>
-            <div class="text-center py-8 text-medium-emphasis">لا توجد مشتريات</div>
-          </template>
-        </v-data-table>
-      </v-card-text>
+      <v-data-table
+        :headers="headers"
+        :items="purchasesStore.items"
+        :loading="purchasesStore.loading"
+        :items-per-page="20"
+        density="comfortable"
+        @click:row="
+          (_: Event, { item }: { item: any }) =>
+            router.push({ name: 'PurchaseDetails', params: { id: item.id } })
+        "
+      >
+        <template #item.total="{ item }">
+          <MoneyDisplay :amount="item.total" size="sm" />
+        </template>
+        <template #item.paidAmount="{ item }">
+          <MoneyDisplay :amount="item.paidAmount ?? 0" size="sm" colored />
+        </template>
+        <template #item.status="{ item }">
+          <v-chip
+            :color="
+              item.status === 'completed'
+                ? 'success'
+                : item.status === 'pending'
+                  ? 'warning'
+                  : 'error'
+            "
+            size="small"
+            variant="tonal"
+          >
+            {{ statusLabel(item.status) }}
+          </v-chip>
+        </template>
+        <template #item.createdAt="{ item }">
+          {{ formatDate(item.createdAt) }}
+        </template>
+        <template #no-data>
+          <EmptyState
+            icon="mdi-cart-arrow-down"
+            title="لا توجد مشتريات"
+            description="ستظهر المشتريات هنا بعد إنشاء فاتورة مشتريات جديدة"
+            min-height="200px"
+          />
+        </template>
+      </v-data-table>
     </v-card>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -89,6 +83,8 @@ import { formatDate } from '@/utils/formatters';
 import { useRouter } from 'vue-router';
 import { usePurchasesStore } from '../../stores/purchasesStore';
 import MoneyDisplay from '../../components/shared/MoneyDisplay.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
+import EmptyState from '@/components/common/EmptyState.vue';
 
 const router = useRouter();
 const purchasesStore = usePurchasesStore();

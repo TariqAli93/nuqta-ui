@@ -1,114 +1,93 @@
 <template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="mb-6" border="bottom">
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ t('hr.employees.title') }}</div>
-          <div class="text-sm">{{ t('hr.employees.subtitle') }}</div>
-        </v-app-bar-title>
+  <div class="nq-page">
+    <PageHeader :title="t('hr.employees.title')" :subtitle="t('hr.employees.subtitle')">
+      <template #actions>
+        <v-btn color="primary" :to="'/hr/employees/new'" prepend-icon="mdi-plus">
+          {{ t('hr.employees.new') }}
+        </v-btn>
+      </template>
+    </PageHeader>
 
-        <template #append>
-          <v-btn color="primary" :to="'/hr/employees/new'" prepend-icon="mdi-plus">
-            {{ t('hr.employees.new') }}
-          </v-btn>
+    <v-card class="nq-table-card">
+      <div class="nq-filter-bar">
+        <v-text-field
+          v-model="searchQuery"
+          :placeholder="t('hr.employees.search')"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          autofocus
+          hide-details
+          style="flex: 1 1 280px; min-width: 180px"
+        />
+        <v-select
+          v-model="statusFilter"
+          :items="statusOptions"
+          :label="t('common.status')"
+          clearable
+          hide-details
+          style="flex: 0 1 200px; min-width: 160px"
+        />
+      </div>
+
+      <v-data-table
+        :headers="tableHeaders"
+        :items="store.items"
+        density="comfortable"
+      >
+        <template #item.fullName="{ item }">
+          <span class="font-weight-medium">{{ item.fullName }}</span>
         </template>
-      </v-app-bar>
-
-      <v-card class="win-card mb-4" flat>
-        <v-card-text class="pa-4">
-          <div class="d-flex ga-4">
-            <v-text-field
-              v-model="searchQuery"
-              :placeholder="t('hr.employees.search')"
-              variant="outlined"
-              density="comfortable"
-              prepend-inner-icon="mdi-magnify"
-              clearable
-              autofocus
-              hide-details
-              class="flex-grow-1"
-            />
-            <v-select
-              v-model="statusFilter"
-              :items="statusOptions"
-              :label="t('common.status')"
-              variant="outlined"
-              density="comfortable"
-              clearable
-              hide-details
-              style="max-width: 200px"
-            />
+        <template #item.phone="{ item }">
+          <span class="text-medium-emphasis">{{ item.phone || t('common.none') }}</span>
+        </template>
+        <template #item.designation="{ item }">
+          <span class="text-medium-emphasis">{{ item.designation || t('common.none') }}</span>
+        </template>
+        <template #item.status="{ item }">
+          <StatusBadge :status="item.status ?? 'active'" />
+        </template>
+        <template #item.actions="{ item }">
+          <div class="d-flex ga-1">
+            <v-btn
+              size="small"
+              variant="text"
+              :to="`/hr/employees/${item.id}`"
+              prepend-icon="mdi-eye"
+            >
+              {{ t('common.details') }}
+            </v-btn>
+            <v-btn
+              size="small"
+              variant="text"
+              :to="`/hr/employees/${item.id}/edit`"
+              prepend-icon="mdi-pencil"
+            >
+              {{ t('common.edit') }}
+            </v-btn>
           </div>
-        </v-card-text>
-      </v-card>
+        </template>
+      </v-data-table>
 
-      <v-card class="win-card" flat>
-        <v-card-text class="pa-0">
-          <v-data-table
-            :headers="tableHeaders"
-            :items="store.items"
-            density="comfortable"
-            class="ds-table-enhanced ds-table-striped"
-            :no-data-text="''"
-            :hide-default-footer="true"
-          >
-            <template #item.fullName="{ item }">
-              <span class="font-weight-medium">{{ item.fullName }}</span>
-            </template>
-            <template #item.phone="{ item }">
-              <span class="text-medium-emphasis">{{ item.phone || t('common.none') }}</span>
-            </template>
-            <template #item.designation="{ item }">
-              <span class="text-medium-emphasis">{{ item.designation || t('common.none') }}</span>
-            </template>
-            <template #item.status="{ item }">
-              <StatusBadge :status="item.status ?? 'active'" />
-            </template>
-            <template #item.actions="{ item }">
-              <div class="d-flex ga-1">
-                <v-btn
-                  size="small"
-                  variant="text"
-                  class="win-ghost-btn"
-                  :to="`/hr/employees/${item.id}`"
-                  prepend-icon="mdi-eye"
-                >
-                  {{ t('common.details') }}
-                </v-btn>
-                <v-btn
-                  size="small"
-                  variant="text"
-                  class="win-ghost-btn"
-                  :to="`/hr/employees/${item.id}/edit`"
-                  prepend-icon="mdi-pencil"
-                >
-                  {{ t('common.edit') }}
-                </v-btn>
-              </div>
-            </template>
-          </v-data-table>
-
-          <EmptyState
-            v-if="store.items.length === 0 && !store.loading"
-            icon="mdi-account-group-outline"
-            :title="t('hr.employees.noEmployees')"
-            :description="t('hr.employees.noEmployeesHint')"
-            :action-label="t('hr.employees.new')"
-            action-to="/hr/employees/new"
-            action-icon="mdi-plus"
-          />
-        </v-card-text>
-      </v-card>
-    </div>
-  </v-container>
+      <EmptyState
+        v-if="store.items.length === 0 && !store.loading"
+        icon="mdi-account-group-outline"
+        :title="t('hr.employees.noEmployees')"
+        :description="t('hr.employees.noEmployeesHint')"
+        :action-label="t('hr.employees.new')"
+        action-to="/hr/employees/new"
+        action-icon="mdi-plus"
+      />
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { mapErrorToArabic, t } from '../../i18n/t';
 import { useEmployeesStore } from '../../stores/employeesStore';
-import EmptyState from '../../components/emptyState.vue';
-import StatusBadge from '../../components/common/StatusBadge.vue';
+import EmptyState from '@/components/common/EmptyState.vue';
+import StatusBadge from '@/components/common/StatusBadge.vue';
+import PageHeader from '@/components/common/PageHeader.vue';
 import { notifyError } from '@/utils/notify';
 
 const store = useEmployeesStore();
@@ -158,5 +137,3 @@ onMounted(() => {
   fetchWithSearch();
 });
 </script>
-
-<style scoped></style>

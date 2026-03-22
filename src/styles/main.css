@@ -29,3 +29,209 @@ body,
 ::-webkit-scrollbar-button {
   display: none !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   NUQTA DESIGN SYSTEM — Spacing & Layout Utilities
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Page content wrapper — consistent padding for all routed pages */
+.nq-page {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.nq-page--fluid {
+  max-width: none;
+}
+
+@media (max-width: 959px) {
+  .nq-page {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 599px) {
+  .nq-page {
+    padding: 12px;
+  }
+}
+
+/* Page header — title + subtitle + actions row */
+.nq-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.nq-page-header__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.nq-page-header__subtitle {
+  font-size: 0.8125rem;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.nq-page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 599px) {
+  .nq-page-header {
+    margin-bottom: 16px;
+  }
+  .nq-page-header__actions {
+    width: 100%;
+  }
+}
+
+/* Section spacing */
+.nq-section {
+  margin-bottom: 24px;
+}
+
+.nq-section:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 599px) {
+  .nq-section {
+    margin-bottom: 16px;
+  }
+}
+
+/* Filter bar — consistent filter row above tables */
+.nq-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+@media (max-width: 599px) {
+  .nq-filter-bar {
+    padding: 12px;
+  }
+  .nq-filter-bar > * {
+    flex: 1 1 100%;
+  }
+}
+
+/* Stats grid — consistent dashboard stat cards */
+.nq-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 599px) {
+  .nq-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+}
+
+/* Stat card inner layout */
+.nq-stat-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.nq-stat-card__info {
+  min-width: 0;
+}
+
+.nq-stat-card__label {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nq-stat-card__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+/* Dialog consistent spacing */
+.nq-dialog-body {
+  padding: 0 24px 8px;
+}
+
+.nq-dialog-actions {
+  padding: 8px 24px 20px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Table improvements */
+.nq-table-card .v-card-text {
+  padding: 0;
+}
+
+/* Consistent table striping (light theme) */
+.v-theme--light .nq-table-card .v-data-table__tr:nth-child(even) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.v-theme--dark .nq-table-card .v-data-table__tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Form section grouping */
+.nq-form-section {
+  margin-bottom: 24px;
+}
+
+.nq-form-section__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+
+/* Action bar for table headers with search + actions */
+.nq-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+}
+
+.nq-action-bar > .v-text-field,
+.nq-action-bar > .v-select {
+  flex: 0 1 280px;
+  min-width: 180px;
+}
+
+@media (max-width: 599px) {
+  .nq-action-bar {
+    padding: 12px;
+  }
+  .nq-action-bar > .v-text-field,
+  .nq-action-bar > .v-select {
+    flex: 1 1 100%;
+  }
+}

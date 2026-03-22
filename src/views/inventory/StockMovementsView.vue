@@ -1,35 +1,29 @@
 <template>
-  <v-card flat>
-    <v-card-text class="d-flex align-center ga-3 flex-wrap">
+  <v-card class="nq-table-card">
+    <div class="nq-filter-bar">
       <v-text-field
         v-model="dateFrom"
         type="date"
         label="من تاريخ"
-        density="compact"
         hide-details
-        variant="outlined"
-        style="max-width: 200px"
         clearable
+        style="flex: 0 1 200px; min-width: 160px"
       />
       <v-text-field
         v-model="dateTo"
         type="date"
         label="إلى تاريخ"
-        density="compact"
         hide-details
-        variant="outlined"
-        style="max-width: 200px"
         clearable
+        style="flex: 0 1 200px; min-width: 160px"
       />
       <v-select
         v-model="movementTypeFilter"
         :items="movementTypes"
         label="نوع الحركة"
-        density="compact"
         hide-details
-        variant="outlined"
-        style="max-width: 180px"
         clearable
+        style="flex: 0 1 180px; min-width: 140px"
       />
       <v-btn
         color="primary"
@@ -39,13 +33,13 @@
       >
         تصفية
       </v-btn>
-    </v-card-text>
+    </div>
 
     <v-data-table
       :headers="movementHeaders"
       :items="inventoryStore.movements"
       :loading="inventoryStore.loadingMovements"
-      density="compact"
+      density="comfortable"
       :items-per-page="25"
     >
       <template #item.createdAt="{ item }">
@@ -73,7 +67,11 @@
       </template>
       <template #item.productName="{ item }">{{ getProductName(item.productId) }}</template>
       <template #no-data>
-        <div class="text-center py-8 text-medium-emphasis">لا توجد حركات مخزون بعد.</div>
+        <EmptyState
+          icon="mdi-swap-horizontal"
+          title="لا توجد حركات مخزون بعد"
+          min-height="200px"
+        />
       </template>
     </v-data-table>
   </v-card>
@@ -85,6 +83,7 @@ import { formatDate } from '@/utils/formatters';
 import { useInventoryStore } from '@/stores/inventoryStore';
 import { useInventoryHelpers } from '@/composables/useInventoryHelpers';
 import { useMovementTable } from '@/composables/useMovementTable';
+import EmptyState from '@/components/common/EmptyState.vue';
 
 const inventoryStore = useInventoryStore();
 const {

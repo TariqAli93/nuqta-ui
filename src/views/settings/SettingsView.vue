@@ -1,51 +1,44 @@
-﻿<template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="mb-6" border="bottom">
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ t('settings.title') }}</div>
-          <div class="text-sm">{{ t('settings.subtitle') }}</div>
-        </v-app-bar-title>
-      </v-app-bar>
+<template>
+  <div class="nq-page">
+    <PageHeader :title="t('settings.title')" :subtitle="t('settings.subtitle')" />
 
-      <v-card class="win-card" flat>
-        <v-tabs v-model="activeTab" color="primary">
-          <v-tab value="system">إعدادات النظام</v-tab>
-          <v-tab value="pos">نقطة البيع</v-tab>
-          <v-tab value="accounting">المحاسبة</v-tab>
-          <v-tab v-if="canManageUsers" value="users">المستخدمين</v-tab>
-        </v-tabs>
+    <v-card>
+      <v-tabs v-model="activeTab" color="primary">
+        <v-tab value="system">إعدادات النظام</v-tab>
+        <v-tab value="pos">نقطة البيع</v-tab>
+        <v-tab value="accounting">المحاسبة</v-tab>
+        <v-tab v-if="canManageUsers" value="users">المستخدمين</v-tab>
+      </v-tabs>
 
-        <v-divider />
+      <v-divider />
 
-        <v-window v-model="activeTab">
-          <v-window-item value="system">
-            <v-card-text>
-              <SystemSettingsTab />
-            </v-card-text>
-          </v-window-item>
+      <v-window v-model="activeTab">
+        <v-window-item value="system">
+          <v-card-text>
+            <SystemSettingsTab />
+          </v-card-text>
+        </v-window-item>
 
-          <v-window-item value="pos">
-            <v-card-text>
-              <PosSettingsTab />
-            </v-card-text>
-          </v-window-item>
+        <v-window-item value="pos">
+          <v-card-text>
+            <PosSettingsTab />
+          </v-card-text>
+        </v-window-item>
 
-          <v-window-item value="accounting">
-            <v-card-text>
-              <AccountingSettingsTab />
-            </v-card-text>
-          </v-window-item>
+        <v-window-item value="accounting">
+          <v-card-text>
+            <AccountingSettingsTab />
+          </v-card-text>
+        </v-window-item>
 
-          <v-window-item v-if="canManageUsers" value="users">
-            <v-card-text>
-              <UsersTab />
-            </v-card-text>
-          </v-window-item>
-        </v-window>
-      </v-card>
-    </div>
-  </v-container>
+        <v-window-item v-if="canManageUsers" value="users">
+          <v-card-text>
+            <UsersTab />
+          </v-card-text>
+        </v-window-item>
+      </v-window>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -53,6 +46,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { t } from '../../i18n/t';
 import { useRBAC } from '../../composables/useRBAC';
+import PageHeader from '@/components/common/PageHeader.vue';
 import SystemSettingsTab from '@/components/settings/SystemSettingsTab.vue';
 import PosSettingsTab from '@/components/settings/PosSettingsTab.vue';
 import AccountingSettingsTab from '@/components/settings/AccountingSettingsTab.vue';
