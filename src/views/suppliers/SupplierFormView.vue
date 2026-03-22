@@ -1,10 +1,13 @@
 <template>
-  <v-container fluid>
-    <v-row class="mb-4" align="center">
-      <v-col>
-        <h1 class="text-h5 font-weight-bold">{{ isEdit ? 'تعديل مورد' : 'إضافة مورد' }}</h1>
-      </v-col>
-    </v-row>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-2">
+        <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" />
+        <div>
+          <div class="win-title">{{ isEdit ? 'تعديل مورد' : 'إضافة مورد' }}</div>
+        </div>
+      </div>
+    </div>
 
     <v-card max-width="600">
       <v-card-text>
@@ -65,13 +68,13 @@
         </v-form>
       </v-card-text>
     </v-card>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { useSuppliersStore } from '../../stores/suppliersStore';
+import { useSuppliersStore } from '@/stores/suppliersStore';
 
 const route = useRoute();
 const router = useRouter();

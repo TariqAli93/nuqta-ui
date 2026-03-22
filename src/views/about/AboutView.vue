@@ -1,5 +1,5 @@
 <template>
-  <v-container class="about-view py-6">
+  <div class="about-view py-6">
     <!-- ─── 1) Header Section ─── -->
     <v-sheet class="about-hero pa-6 rounded-xl mb-4">
       <div class="d-flex flex-column flex-md-row align-md-center justify-space-between ga-4">
@@ -379,7 +379,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

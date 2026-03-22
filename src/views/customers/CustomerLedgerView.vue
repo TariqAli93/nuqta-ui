@@ -1,12 +1,11 @@
 <template>
-  <v-container>
-    <v-app-bar class="mb-6" border="bottom">
-      <v-app-bar-title>
-        <div class="win-title mb-0">دفتر العملاء (حسابات القبض)</div>
-        <div class="text-sm">كشف حسابات العملاء والمطابقة المالية</div>
-      </v-app-bar-title>
-
-      <template #append>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div>
+        <div class="win-title">دفتر العملاء (حسابات القبض)</div>
+        <div class="win-subtitle">كشف حسابات العملاء والمطابقة المالية</div>
+      </div>
+      <div class="ds-page-header__actions">
         <v-btn
           variant="tonal"
           color="warning"
@@ -16,8 +15,8 @@
         >
           مطابقة AR
         </v-btn>
-      </template>
-    </v-app-bar>
+      </div>
+    </div>
 
     <v-row dense>
       <!-- Customer selector -->
@@ -116,7 +115,7 @@
         />
       </v-col>
     </v-row>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

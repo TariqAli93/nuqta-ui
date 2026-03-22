@@ -169,11 +169,11 @@
 import { computed, onMounted, ref } from 'vue';
 import { formatDate } from '@/utils/formatters';
 import { useRoute, useRouter } from 'vue-router';
-import { usePurchasesStore } from '../../stores/purchasesStore';
-import MoneyDisplay from '../../components/shared/MoneyDisplay.vue';
-import MoneyInput from '../../components/shared/MoneyInput.vue';
-import { purchasesClient } from '../../api/endpoints/purchases';
-import { generateIdempotencyKey } from '../../utils/idempotency';
+import { usePurchasesStore } from '@/stores/purchasesStore';
+import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
+import MoneyInput from '@/components/shared/MoneyInput.vue';
+import { purchasesClient } from '@/api/endpoints/purchases';
+import { generateIdempotencyKey } from '@/utils/idempotency';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 import { mapErrorToArabic } from '@/i18n/t';
 

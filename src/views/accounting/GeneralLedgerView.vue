@@ -1,20 +1,19 @@
 <template>
-  <v-container>
-    <v-app-bar class="mb-6" border="bottom">
-      <v-app-bar-title>
-        <div class="win-title mb-0">{{ account ? account.name : '' }}</div>
-        <div class="text-sm">
-          عرض دفتر الأستاذ العام
-          <span v-if="account">للحساب {{ account.code }}</span>
-        </div>
-      </v-app-bar-title>
-
-      <template #prepend>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-2">
         <v-btn icon="mdi-arrow-right" variant="text" @click="goBack" />
-      </template>
-    </v-app-bar>
+        <div>
+          <div class="win-title">{{ account ? account.name : '' }}</div>
+          <div class="win-subtitle">
+            عرض دفتر الأستاذ العام
+            <span v-if="account">للحساب {{ account.code }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    <!-- Account header -->
+    <!-- Account header with date filters -->
     <v-card class="mb-4">
       <v-card-text class="d-flex align-center ga-4 flex-wrap">
         <div v-if="account">
@@ -98,7 +97,7 @@
 
         <template #bottom>
           <v-divider />
-          <v-row dense class="px-4 py-3" v-if="entries.length > 0">
+          <v-row v-if="entries.length > 0" dense class="px-4 py-3">
             <v-col class="text-end font-weight-bold">
               إجمالي المدين: {{ formatCurrency(totalDebit) }}
             </v-col>
@@ -112,7 +111,7 @@
         </template>
       </v-data-table>
     </v-card>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

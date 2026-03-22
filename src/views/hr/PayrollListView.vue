@@ -83,10 +83,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { usePayrollStore } from '../../stores/payrollStore';
-import EmptyState from '../../components/emptyState.vue';
-import StatusBadge from '../../components/common/StatusBadge.vue';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { usePayrollStore } from '@/stores/payrollStore';
+import EmptyState from '@/components/common/EmptyState.vue';
+import StatusBadge from '@/components/common/StatusBadge.vue';
 import { notifyError } from '@/utils/notify';
 
 const store = usePayrollStore();

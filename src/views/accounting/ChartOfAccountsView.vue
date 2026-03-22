@@ -158,7 +158,7 @@ import { useAccountingStore } from '@/stores/accountingStore';
 import { useAccountingHelpers } from '@/composables/useAccountingHelpers';
 import { useCurrency } from '@/composables/useCurrency';
 import type { Account } from '@/types/domain';
-import EmptyState from '@/components/emptyState.vue';
+import EmptyState from '@/components/common/EmptyState.vue';
 import AccountFormDialog from '@/components/workspace/AccountFormDialog.vue';
 
 const router = useRouter();

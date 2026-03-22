@@ -1,50 +1,45 @@
 <template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="mb-6" border="bottom">
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ t('settings.title') }}</div>
-          <div class="text-sm">{{ t('settings.subtitle') }}</div>
-        </v-app-bar-title>
-
-        <template #append>
-          <v-tabs v-model="activeTab" color="primary" show-arrows>
-            <v-tab value="system" @click="navigateTo('system')">
-              <v-icon start size="18">mdi-cog</v-icon>
-              النظام
-            </v-tab>
-            <v-tab value="pos" @click="navigateTo('pos')">
-              <v-icon start size="18">mdi-point-of-sale</v-icon>
-              نقاط البيع
-            </v-tab>
-            <v-tab value="accounting" @click="navigateTo('accounting')">
-              <v-icon start size="18">mdi-calculator</v-icon>
-              المحاسبة
-            </v-tab>
-            <v-tab v-if="canManageUsers" value="users" @click="navigateTo('users')">
-              <v-icon start size="18">mdi-account-group</v-icon>
-              المستخدمين
-            </v-tab>
-          </v-tabs>
-        </template>
-      </v-app-bar>
-
-      <v-card flat>
-        <v-divider />
-
-        <div style="padding: var(--ds-card-py) var(--ds-card-px)">
-          <router-view />
-        </div>
-      </v-card>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div>
+        <div class="win-title">{{ t('settings.title') }}</div>
+        <div class="win-subtitle">{{ t('settings.subtitle') }}</div>
+      </div>
     </div>
-  </v-container>
+
+    <v-tabs v-model="activeTab" color="primary" show-arrows class="mb-2">
+      <v-tab value="system" @click="navigateTo('system')">
+        <v-icon start size="18">mdi-cog</v-icon>
+        النظام
+      </v-tab>
+      <v-tab value="pos" @click="navigateTo('pos')">
+        <v-icon start size="18">mdi-point-of-sale</v-icon>
+        نقاط البيع
+      </v-tab>
+      <v-tab value="accounting" @click="navigateTo('accounting')">
+        <v-icon start size="18">mdi-calculator</v-icon>
+        المحاسبة
+      </v-tab>
+      <v-tab v-if="canManageUsers" value="users" @click="navigateTo('users')">
+        <v-icon start size="18">mdi-account-group</v-icon>
+        المستخدمين
+      </v-tab>
+    </v-tabs>
+
+    <v-card flat>
+      <v-divider />
+      <div style="padding: var(--ds-card-py) var(--ds-card-px)">
+        <router-view />
+      </div>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { t } from '../../i18n/t';
-import { useRBAC } from '../../composables/useRBAC';
+import { t } from '@/i18n/t';
+import { useRBAC } from '@/composables/useRBAC';
 
 type SettingsTab = 'system' | 'pos' | 'accounting' | 'users';
 

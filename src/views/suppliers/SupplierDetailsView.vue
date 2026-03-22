@@ -1,25 +1,26 @@
 <template>
-  <v-container fluid>
+  <div class="win-page">
     <v-skeleton-loader v-if="loading" type="card" />
 
     <template v-else-if="supplier">
-      <v-row class="mb-4" align="center">
-        <v-col>
-          <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" class="me-2" />
-          <span class="text-h5 font-weight-bold">{{ supplier.name }}</span>
-        </v-col>
-        <v-col cols="auto" class="d-flex ga-2">
+      <div class="ds-page-header-block">
+        <div class="d-flex align-center ga-2">
+          <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" />
+          <div class="win-title">{{ supplier.name }}</div>
+        </div>
+        <div class="ds-page-header__actions">
           <v-btn
             variant="tonal"
             prepend-icon="mdi-pencil"
             :to="{ name: 'SupplierEdit', params: { id: supplier.id } }"
-            >تعديل</v-btn
           >
-          <v-btn color="primary" prepend-icon="mdi-cash-minus" @click="showPaymentDialog = true"
-            >تسجيل دفعة</v-btn
-          >
-        </v-col>
-      </v-row>
+            تعديل
+          </v-btn>
+          <v-btn color="primary" prepend-icon="mdi-cash-minus" @click="showPaymentDialog = true">
+            تسجيل دفعة
+          </v-btn>
+        </div>
+      </div>
 
       <v-row class="mb-4" dense>
         <v-col cols="6" sm="3">
@@ -108,8 +109,8 @@
       </v-window>
     </template>
 
-    <v-dialog v-model="showPaymentDialog" max-width="400" persistent>
-      <v-card>
+    <v-dialog v-model="showPaymentDialog" max-width="400" persistent class="ds-dialog">
+      <v-card rounded="lg">
         <v-card-title>تسجيل دفعة مورد</v-card-title>
         <v-card-text>
           <MoneyInput v-model="paymentAmount" label="المبلغ" class="mb-3" />
@@ -128,21 +129,21 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { formatDate } from '@/utils/formatters';
 import { useRoute, useRouter } from 'vue-router';
-import { suppliersClient, supplierLedgerClient, purchasesClient } from '../../api';
+import { suppliersClient, supplierLedgerClient, purchasesClient } from '@/api';
 import type { Supplier } from '@/types/domain';
-import type { LedgerEntry } from '../../components/shared/LedgerTable.vue';
+import type { LedgerEntry } from '@/components/shared/LedgerTable.vue';
 import type { Purchase } from '@/types/domain';
-import LedgerTable from '../../components/shared/LedgerTable.vue';
-import MoneyDisplay from '../../components/shared/MoneyDisplay.vue';
-import MoneyInput from '../../components/shared/MoneyInput.vue';
-import { generateIdempotencyKey } from '../../utils/idempotency';
+import LedgerTable from '@/components/shared/LedgerTable.vue';
+import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
+import MoneyInput from '@/components/shared/MoneyInput.vue';
+import { generateIdempotencyKey } from '@/utils/idempotency';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
 

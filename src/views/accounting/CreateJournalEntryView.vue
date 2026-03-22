@@ -1,17 +1,16 @@
 <template>
-  <v-container>
-    <v-app-bar class="mb-6" border="bottom">
-      <v-app-bar-title>
-        <div class="win-title mb-0">إنشاء قيد يومي جديد</div>
-        <div class="text-sm">
-          قم بإنشاء قيد يومي يدوي لتسجيل المعاملات غير التلقائية أو لتعديل قيود سابقة
-        </div>
-      </v-app-bar-title>
-
-      <template #prepend>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-2">
         <v-btn icon="mdi-arrow-right" variant="text" @click="goBack" />
-      </template>
-    </v-app-bar>
+        <div>
+          <div class="win-title">إنشاء قيد يومي جديد</div>
+          <div class="win-subtitle">
+            قم بإنشاء قيد يومي يدوي لتسجيل المعاملات غير التلقائية أو لتعديل قيود سابقة
+          </div>
+        </div>
+      </div>
+    </div>
 
     <v-card>
       <v-toolbar density="compact" color="transparent" class="px-2">
@@ -188,7 +187,7 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

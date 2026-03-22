@@ -184,10 +184,10 @@
 </template>
 
 <script setup lang="ts">
-import { t } from '../../i18n/t';
-import { useSystemSettingsStore } from '../../stores/settings/useSystemSettingsStore';
-import { useSettingsForm } from '../../composables/useSettingsForm';
-import type { SystemSettings } from '../../types/settings/SystemSettings';
+import { t } from '@/i18n/t';
+import { useSystemSettingsStore } from '@/stores/settings/useSystemSettingsStore';
+import { useSettingsForm } from '@/composables/useSettingsForm';
+import type { SystemSettings } from '@/types/settings/SystemSettings';
 
 const store = useSystemSettingsStore();
 

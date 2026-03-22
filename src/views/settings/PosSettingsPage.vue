@@ -83,9 +83,9 @@
 </template>
 
 <script setup lang="ts">
-import { usePosSettingsStore } from '../../stores/settings/usePosSettingsStore';
-import { useSettingsForm } from '../../composables/useSettingsForm';
-import type { PosSettings } from '../../types/settings/PosSettings';
+import { usePosSettingsStore } from '@/stores/settings/usePosSettingsStore';
+import { useSettingsForm } from '@/composables/useSettingsForm';
+import type { PosSettings } from '@/types/settings/PosSettings';
 
 const store = usePosSettingsStore();
 

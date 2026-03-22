@@ -193,12 +193,12 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { usePurchasesStore } from '../../stores/purchasesStore';
-import { useSuppliersStore } from '../../stores/suppliersStore';
-import { productsClient } from '../../api';
-import MoneyInput from '../../components/shared/MoneyInput.vue';
-import { generateIdempotencyKey } from '../../utils/idempotency';
-import MoneyDisplay from '../../components/shared/MoneyDisplay.vue';
+import { usePurchasesStore } from '@/stores/purchasesStore';
+import { useSuppliersStore } from '@/stores/suppliersStore';
+import { productsClient } from '@/api';
+import MoneyInput from '@/components/shared/MoneyInput.vue';
+import { generateIdempotencyKey } from '@/utils/idempotency';
+import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 import { mapErrorToArabic } from '@/i18n/t';
 

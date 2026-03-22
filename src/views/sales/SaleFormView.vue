@@ -106,14 +106,14 @@
 <script setup lang="ts">
 import { computed, reactive, ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { useSalesStore } from '../../stores/salesStore';
-import { useProductsStore } from '../../stores/productsStore';
-import { useGlobalBarcodeScanner } from '../../composables/useGlobalBarcodeScanner';
-import { useCurrency } from '../../composables/useCurrency';
-import { productsClient } from '../../api';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { useSalesStore } from '@/stores/salesStore';
+import { useProductsStore } from '@/stores/productsStore';
+import { useGlobalBarcodeScanner } from '@/composables/useGlobalBarcodeScanner';
+import { useCurrency } from '@/composables/useCurrency';
+import { productsClient } from '@/api';
 import MoneyInput from '@/components/shared/MoneyInput.vue';
-import type { SaleCreateInput, SaleItem, Product } from '../../types/domain';
+import type { SaleCreateInput, SaleItem, Product } from '@/types/domain';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 
 const store = useSalesStore();
