@@ -125,8 +125,7 @@ export interface Sale {
   paidAmount?: number;
   refundedAmount?: number;
   remainingAmount?: number;
-  status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial' | 'partial_refund';
-  // ^ 'partial_refund' is the canonical backend enum value; 'partial' kept for compat
+  status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial_refund';
   notes?: string | null;
   idempotencyKey?: string | null;
   createdAt?: string;
