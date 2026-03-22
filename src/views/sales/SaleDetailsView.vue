@@ -358,7 +358,7 @@ import { useSalesStore } from '../../stores/salesStore';
 import EmptyState from '../../components/emptyState.vue';
 import PaymentInfoCard from '../../components/shared/PaymentInfoCard.vue';
 import AuditLogTab from '../../components/shared/AuditLogTab.vue';
-import type { Sale } from '../../types/domain';
+import type { Sale, SaleItem } from '../../types/domain';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { useSystemSettingsStore } from '@/stores/settings';
 import type { PaymentMethod } from '@/types/domain';
@@ -519,15 +519,7 @@ async function executeRefund() {
   try {
     // Build per-item return list when the cashier requested goods return.
     // Each item with a valid id is included; backend restores inventory per-item (LIFO on batches).
-    const returnItems = refundReturnToStock.value
-      ? (sale.value.items ?? [])
-          .filter((item) => item.id != null)
-          .map((item) => ({
-            saleItemId: item.id!,
-            quantity: item.quantity,
-            returnToStock: true as const,
-          }))
-      : undefined;
+    const returnItems = refundReturnToStock.value ? returnableItems.value : undefined;
 
     const result = await store.refundSale(
       sale.value.id,
@@ -606,6 +598,27 @@ async function loadSale() {
   }
   loading.value = false;
 }
+
+function getRemainingReturnQuantity(item: SaleItem): number {
+  const unitFactor = item.unitFactor && item.unitFactor > 0 ? item.unitFactor : 1;
+  const soldBase = item.quantityBase != null ? item.quantityBase : item.quantity * unitFactor;
+  const returnedBase = item.returnedQuantityBase ?? 0;
+  const remainingBase = Math.max(0, soldBase - returnedBase);
+  return Math.floor(remainingBase / unitFactor);
+}
+
+const returnableItems = computed(() =>
+  (sale.value?.items ?? [])
+    .filter((item) => item.id != null)
+    .map((item) => ({
+      saleItemId: item.id!,
+      quantity: getRemainingReturnQuantity(item),
+      returnToStock: true as const,
+    }))
+    .filter((item) => item.quantity > 0)
+);
+
+const hasReturnableItems = computed(() => returnableItems.value.length > 0);
 
 onMounted(() => {
   void loadSale();

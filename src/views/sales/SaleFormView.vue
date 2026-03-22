@@ -9,7 +9,6 @@
     <v-card flat>
       <v-form class="win-form" @submit.prevent="submit">
         <div class="d-flex flex-wrap ga-2">
-          <v-text-field v-model="form.invoiceNumber" :label="t('sales.invoice')" required />
           <v-text-field
             v-model.number="form.customerId"
             :label="t('sales.customerId')"
@@ -114,7 +113,7 @@ import { useGlobalBarcodeScanner } from '../../composables/useGlobalBarcodeScann
 import { useCurrency } from '../../composables/useCurrency';
 import { productsClient } from '../../api';
 import MoneyInput from '@/components/shared/MoneyInput.vue';
-import type { SaleInput, SaleItem, Product } from '../../types/domain';
+import type { SaleCreateInput, SaleItem, Product } from '../../types/domain';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 
 const store = useSalesStore();
@@ -231,13 +230,13 @@ const itemHeaders = computed(() => [
 
 const paymentTypes = computed(() => [
   { title: t('sales.cash'), value: 'cash' },
+  { title: t('sales.credit'), value: 'credit' },
   { title: t('sales.mixed'), value: 'mixed' },
 ]);
 
 const form = reactive({
-  invoiceNumber: '',
   customerId: null as number | null,
-  paymentType: 'cash' as SaleInput['paymentType'],
+  paymentType: 'cash' as 'cash' | 'credit' | 'mixed',
   currency: currency.value,
   discount: 0,
   tax: 0,
@@ -286,33 +285,22 @@ function removeItem(index: number) {
 
 async function submit() {
   // Send minimal payload — server handles FIFO depletion, COGS, totals, batch allocation
-  const payload: SaleInput = {
-    invoiceNumber: form.invoiceNumber,
-    customerId: form.customerId,
-    // Server computes authoritative subtotal/total — send 0 so backend overrides
-    subtotal: 0,
-    discount: form.discount,
-    tax: form.tax,
-    total: 0,
-    currency: form.currency,
-    exchangeRate: 1,
-    interestRate: 0,
-    interestAmount: 0,
-    paymentType: form.paymentType,
-    paidAmount: form.paidAmount,
-    remainingAmount: 0,
-    status: 'pending',
-    notes: form.notes,
-    // Items: NO batchId — server assigns via FIFO; NO client subtotal
+  const payload: SaleCreateInput = {
+    customerId: form.customerId ?? undefined,
+    discount: form.discount || 0,
+    tax: form.tax || 0,
+    paymentType: form.paymentType as 'cash' | 'credit' | 'mixed',
+    paidAmount: form.paidAmount || 0,
+    currency: form.currency || undefined,
+    notes: form.notes ?? undefined,
     items: items.value.map((item: SaleItem) => ({
       productId: item.productId,
-      productName: item.productName,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       discount: item.discount || 0,
-      subtotal: 0, // server computes
-      unitName: item.unitName,
-      unitFactor: item.unitFactor,
+      unitName: item.unitName || undefined,
+      unitFactor: item.unitFactor || undefined,
+      batchId: item.batchId || undefined,
     })),
   };
 
