@@ -51,10 +51,14 @@
         density="compact"
         :items-per-page="20"
       >
-        <template #item.debitTotal="{ item }">{{ formatCurrency(item.debitTotal || 0) }}</template>
-        <template #item.creditTotal="{ item }">{{
-          formatCurrency(item.creditTotal || 0)
-        }}</template>
+        <template #item.debit="{ item }">{{ formatCurrency(item.debit || 0) }}</template>
+        <template #item.credit="{ item }">{{ formatCurrency(item.credit || 0) }}</template>
+        <template #item.accountType="{ item }">
+          <v-chip :color="accountTypeColor(item.accountType)" size="small" variant="tonal">
+            {{ accountTypeLabel(item.accountType) }}
+          </v-chip>
+        </template>
+
         <template #item.balance="{ item }">{{ formatCurrency(item.balance || 0) }}</template>
         <template #no-data>
           <div class="text-center py-8 text-medium-emphasis">لا توجد بيانات ميزان مراجعة بعد.</div>
@@ -85,29 +89,31 @@ import { computed, onMounted, ref } from 'vue';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { useCurrency } from '@/composables/useCurrency';
 import { useExportReport } from '@/composables/useExportReport';
+import { useAccountingHelpers } from '@/composables/useAccountingHelpers';
 
 const accountingStore = useAccountingStore();
 const { isZeroDecimal, formatCurrency } = useCurrency();
 const { exportToCSV, printReport } = useExportReport();
+const { accountTypeColor, accountTypeLabel } = useAccountingHelpers();
 
 const dateFrom = ref<string | null>(null);
 const dateTo = ref<string | null>(null);
 
 const trialHeaders = [
-  { title: 'الكود', key: 'code', width: 90 },
-  { title: 'الحساب', key: 'name' },
+  { title: 'الكود', key: 'accountCode', width: 90 },
+  { title: 'الحساب', key: 'accountName', width: 150 },
   { title: 'نوع الحساب', key: 'accountType', width: 120 },
-  { title: 'مدين', key: 'debitTotal', align: 'end' as const, width: 120 },
-  { title: 'دائن', key: 'creditTotal', align: 'end' as const, width: 120 },
+  { title: 'مدين', key: 'debit', align: 'end' as const, width: 120 },
+  { title: 'دائن', key: 'credit', align: 'end' as const, width: 120 },
   { title: 'الرصيد', key: 'balance', align: 'end' as const, width: 120 },
 ];
 
 const totalDebit = computed(() =>
-  accountingStore.trialBalance.reduce((sum, row) => sum + (row.debitTotal || 0), 0)
+  accountingStore.trialBalance.reduce((sum, row) => sum + (row.debit || 0), 0)
 );
 
 const totalCredit = computed(() =>
-  accountingStore.trialBalance.reduce((sum, row) => sum + (row.creditTotal || 0), 0)
+  accountingStore.trialBalance.reduce((sum, row) => sum + (row.credit || 0), 0)
 );
 
 // For zero-decimal currencies (IQD, JPY) use exact match;
@@ -133,11 +139,11 @@ function exportCSV() {
     accountingStore.trialBalance as unknown as Record<string, unknown>[],
     'trial-balance',
     {
-      code: 'الكود',
-      name: 'الحساب',
+      accountCode: 'الكود',
+      accountName: 'الحساب',
       accountType: 'نوع الحساب',
-      debitTotal: 'مدين',
-      creditTotal: 'دائن',
+      debit: 'مدين',
+      credit: 'دائن',
       balance: 'الرصيد',
     }
   );
