@@ -1,107 +1,107 @@
 ﻿<template>
-  <v-container>
-    <div class="win-page">
+  <div class="win-page">
+    <div class="ds-page-header-block">
       <div>
         <div class="win-title">{{ t('sales.new') }}</div>
-        <div class="win-subtitle">{{ t('sales.formHint') }}</div>
+        <div class="text-sm text-medium-emphasis">{{ t('sales.formHint') }}</div>
       </div>
-      <v-card class="win-card win-card--padded" flat>
-        <v-form class="win-form" @submit.prevent="submit">
-          <div class="d-flex flex-wrap ga-2">
-            <v-text-field v-model="form.invoiceNumber" :label="t('sales.invoice')" required />
-            <v-text-field
-              v-model.number="form.customerId"
-              :label="t('sales.customerId')"
-              type="number"
-            />
-            <v-select
-              v-model="form.paymentType"
-              :items="paymentTypes"
-              :label="t('sales.paymentType')"
-              item-title="title"
-              item-value="value"
-            />
-            <v-text-field v-model="form.currency" :label="t('products.currency')" />
-            <MoneyInput v-model="form.discount" :label="t('sales.discount')" />
-            <MoneyInput v-model="form.tax" :label="t('sales.tax')" />
-            <MoneyInput v-model="form.paidAmount" :label="t('sales.paidAmount')" />
-          </div>
-
-          <v-divider class="my-4" />
-
-          <div class="d-flex align-center justify-space-between">
-            <div class="text-subtitle-1">{{ t('sales.lineItems') }}</div>
-            <v-btn size="small" variant="text" class="win-ghost-btn" @click="addItem">{{
-              t('sales.addItem')
-            }}</v-btn>
-          </div>
-          <v-data-table
-            :headers="itemHeaders"
-            :items="items"
-            density="comfortable"
-            class="win-table mt-2"
-            :hide-default-footer="true"
-          >
-            <template #item.productName="{ item }">
-              <v-text-field v-model="item.productName" density="compact" hide-details />
-            </template>
-            <template #item.quantity="{ item }">
-              <v-text-field
-                v-model.number="item.quantity"
-                type="number"
-                step="1"
-                min="1"
-                density="compact"
-                hide-details
-                @update:model-value="checkStockForItem(item)"
-              />
-            </template>
-            <template #item.unitPrice="{ item }">
-              <MoneyInput v-model="item.unitPrice" density="compact" hide-details />
-            </template>
-            <template #item.discount="{ item }">
-              <MoneyInput v-model="item.discount" density="compact" hide-details />
-            </template>
-            <template #item.subtotal="{ item }">
-              {{ formatCurrency(itemSubtotal(item)) }}
-            </template>
-            <template #item.actions="{ item }">
-              <v-btn
-                size="x-small"
-                variant="text"
-                class="win-ghost-btn"
-                @click="removeItem(items.indexOf(item))"
-              >
-                {{ t('sales.remove') }}
-              </v-btn>
-            </template>
-          </v-data-table>
-
-          <v-divider class="my-4" />
-          <div class="d-flex justify-end ga-4">
-            <div>{{ t('sales.subtotal') }}: {{ formatCurrency(displaySubtotal) }}</div>
-            <div>{{ t('sales.total') }}: {{ formatCurrency(displayTotal) }}</div>
-          </div>
-
-          <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" class="mt-4" />
-
-          <div class="d-flex ga-2 mt-4">
-            <v-btn
-              type="submit"
-              color="primary"
-              variant="flat"
-              class="win-btn"
-              :loading="store.loading"
-              :disabled="hasStockWarnings"
-            >
-              {{ t('sales.create') }}
-            </v-btn>
-            <v-btn variant="text" class="win-ghost-btn" to="/sales">{{ t('common.cancel') }}</v-btn>
-          </div>
-        </v-form>
-      </v-card>
     </div>
-  </v-container>
+    <v-card flat>
+      <v-form class="win-form" @submit.prevent="submit">
+        <div class="d-flex flex-wrap ga-2">
+          <v-text-field v-model="form.invoiceNumber" :label="t('sales.invoice')" required />
+          <v-text-field
+            v-model.number="form.customerId"
+            :label="t('sales.customerId')"
+            type="number"
+          />
+          <v-select
+            v-model="form.paymentType"
+            :items="paymentTypes"
+            :label="t('sales.paymentType')"
+            item-title="title"
+            item-value="value"
+          />
+          <v-text-field v-model="form.currency" :label="t('products.currency')" />
+          <MoneyInput v-model="form.discount" :label="t('sales.discount')" />
+          <MoneyInput v-model="form.tax" :label="t('sales.tax')" />
+          <MoneyInput v-model="form.paidAmount" :label="t('sales.paidAmount')" />
+        </div>
+
+        <v-divider class="my-4" />
+
+        <div class="d-flex align-center justify-space-between">
+          <div class="text-subtitle-1">{{ t('sales.lineItems') }}</div>
+          <v-btn size="small" variant="text" class="win-ghost-btn" @click="addItem">{{
+            t('sales.addItem')
+          }}</v-btn>
+        </div>
+        <v-data-table
+          :headers="itemHeaders"
+          :items="items"
+          density="comfortable"
+          class="win-table mt-2"
+          :hide-default-footer="true"
+        >
+          <template #item.productName="{ item }">
+            <v-text-field v-model="item.productName" density="compact" hide-details />
+          </template>
+          <template #item.quantity="{ item }">
+            <v-text-field
+              v-model.number="item.quantity"
+              type="number"
+              step="1"
+              min="1"
+              density="compact"
+              hide-details
+              @update:model-value="checkStockForItem(item)"
+            />
+          </template>
+          <template #item.unitPrice="{ item }">
+            <MoneyInput v-model="item.unitPrice" density="compact" hide-details />
+          </template>
+          <template #item.discount="{ item }">
+            <MoneyInput v-model="item.discount" density="compact" hide-details />
+          </template>
+          <template #item.subtotal="{ item }">
+            {{ formatCurrency(itemSubtotal(item)) }}
+          </template>
+          <template #item.actions="{ item }">
+            <v-btn
+              size="x-small"
+              variant="text"
+              class="win-ghost-btn"
+              @click="removeItem(items.indexOf(item))"
+            >
+              {{ t('sales.remove') }}
+            </v-btn>
+          </template>
+        </v-data-table>
+
+        <v-divider class="my-4" />
+        <div class="d-flex justify-end ga-4">
+          <div>{{ t('sales.subtotal') }}: {{ formatCurrency(displaySubtotal) }}</div>
+          <div>{{ t('sales.total') }}: {{ formatCurrency(displayTotal) }}</div>
+        </div>
+
+        <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" class="mt-4" />
+
+        <div class="d-flex ga-2 mt-4">
+          <v-btn
+            type="submit"
+            color="primary"
+            variant="flat"
+            class="win-btn"
+            :loading="store.loading"
+            :disabled="hasStockWarnings"
+          >
+            {{ t('sales.create') }}
+          </v-btn>
+          <v-btn variant="text" class="win-ghost-btn" to="/sales">{{ t('common.cancel') }}</v-btn>
+        </div>
+      </v-form>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">

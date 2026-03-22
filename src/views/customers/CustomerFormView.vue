@@ -1,43 +1,41 @@
 ﻿<template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="ds-page-header d-flex align-center justify-space-between mb-6">
-        <template #prepend>
-          <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" />
-        </template>
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ isEdit ? t('customers.edit') : t('customers.new') }}</div>
-          <div class="text-sm">{{ t('customers.formHint') }}</div>
-        </v-app-bar-title>
-      </v-app-bar>
-
-      <v-card class="win-card win-card--padded" flat>
-        <v-form class="win-form" @submit.prevent="submit">
-          <v-text-field v-model="form.name" :label="t('common.name')" required />
-          <div class="d-flex flex-wrap ga-2">
-            <v-text-field v-model="form.phone" :label="t('common.phone')" />
-            <v-text-field v-model="form.city" :label="t('common.city')" />
-          </div>
-          <v-text-field v-model="form.address" :label="t('customers.address')" />
-          <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" />
-          <div class="d-flex ga-2">
-            <v-btn
-              type="submit"
-              color="primary"
-              variant="flat"
-              class="win-btn"
-              :loading="store.loading"
-            >
-              {{ t('common.save') }}
-            </v-btn>
-            <v-btn variant="text" class="win-ghost-btn" to="/customers">{{
-              t('common.cancel')
-            }}</v-btn>
-          </div>
-        </v-form>
-      </v-card>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-3">
+        <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
+        <div>
+          <div class="win-title">{{ isEdit ? t('customers.edit') : t('customers.new') }}</div>
+          <div class="text-sm text-medium-emphasis">{{ t('customers.formHint') }}</div>
+        </div>
+      </div>
     </div>
-  </v-container>
+
+    <v-card flat>
+      <v-form class="win-form" @submit.prevent="submit">
+        <v-text-field v-model="form.name" :label="t('common.name')" required />
+        <div class="d-flex flex-wrap ga-2">
+          <v-text-field v-model="form.phone" :label="t('common.phone')" />
+          <v-text-field v-model="form.city" :label="t('common.city')" />
+        </div>
+        <v-text-field v-model="form.address" :label="t('customers.address')" />
+        <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" />
+        <div class="d-flex ga-2">
+          <v-btn
+            type="submit"
+            color="primary"
+            variant="flat"
+            class="win-btn"
+            :loading="store.loading"
+          >
+            {{ t('common.save') }}
+          </v-btn>
+          <v-btn variant="text" class="win-ghost-btn" to="/customers">{{
+            t('common.cancel')
+          }}</v-btn>
+        </div>
+      </v-form>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">

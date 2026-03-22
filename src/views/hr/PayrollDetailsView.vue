@@ -1,174 +1,166 @@
 <template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="ds-page-header d-flex align-center justify-space-between mb-6">
-        <template #prepend>
-          <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" />
-        </template>
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ t('hr.payroll.details') }}</div>
-          <div class="text-sm">{{ payrollRun?.title ?? '' }}</div>
-        </v-app-bar-title>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-3">
+        <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
+        <div>
+          <div class="win-title">{{ t('hr.payroll.details') }}</div>
+          <div class="text-sm text-medium-emphasis">{{ payrollRun?.title ?? '' }}</div>
+        </div>
+      </div>
+      <div class="ds-page-header__actions ds-stack-xs">
+        <v-btn
+          v-if="payrollRun?.status === 'draft'"
+          variant="tonal"
+          size="small"
+          :to="`/hr/payroll/${route.params.id}/edit`"
+          prepend-icon="mdi-pencil"
+        >
+          {{ t('common.edit') }}
+        </v-btn>
+        <v-btn
+          v-if="payrollRun?.status === 'draft'"
+          variant="tonal"
+          color="info"
+          size="small"
+          prepend-icon="mdi-send"
+          :loading="store.loading"
+          @click="handleSubmit"
+        >
+          {{ t('payroll.submitAction') }}
+        </v-btn>
+        <v-btn
+          v-if="payrollRun?.status === 'submitted' && canApprove"
+          variant="tonal"
+          color="success"
+          size="small"
+          prepend-icon="mdi-check-all"
+          :loading="store.loading"
+          @click="handleApprove"
+        >
+          {{ t('payroll.statusApproved') }}
+        </v-btn>
+        <v-btn
+          v-if="payrollRun?.status === 'approved' && canApprove"
+          variant="tonal"
+          color="primary"
+          size="small"
+          prepend-icon="mdi-cash-multiple"
+          :loading="store.loading"
+          @click="handleDisburse"
+        >
+          {{ t('payroll.disburseAction') }}
+        </v-btn>
+        <v-btn
+          v-if="
+            payrollRun?.status &&
+            payrollRun.status !== 'cancelled' &&
+            payrollRun.status !== 'disbursed'
+          "
+          variant="tonal"
+          color="error"
+          size="small"
+          prepend-icon="mdi-close-circle"
+          :loading="store.loading"
+          @click="confirmCancel = true"
+        >
+          {{ t('payroll.cancelAction') }}
+        </v-btn>
+      </div>
+    </div>
 
-        <template #append>
-          <v-btn
-            v-if="payrollRun?.status === 'draft'"
-            variant="text"
-            class="win-ghost-btn"
-            :to="`/hr/payroll/${route.params.id}/edit`"
-            prepend-icon="mdi-pencil"
-          >
-            {{ t('common.edit') }}
-          </v-btn>
+    <v-progress-linear v-if="store.loading" indeterminate color="primary" />
 
-          <v-btn
-            v-if="payrollRun?.status === 'draft'"
-            variant="tonal"
-            color="info"
-            prepend-icon="mdi-send"
-            :loading="store.loading"
-            @click="handleSubmit"
-          >
-            {{ t('payroll.submitAction') }}
-          </v-btn>
+    <v-card v-if="payrollRun" flat>
+      <v-card-text>
+        <v-row dense>
+          <v-col cols="12" md="6">
+            <div class="text-caption text-medium-emphasis">{{ t('hr.payroll.runTitle') }}</div>
+            <div class="text-body-1 font-weight-medium">{{ payrollRun.title }}</div>
+          </v-col>
+          <v-col cols="12" md="6">
+            <div class="text-caption text-medium-emphasis">{{ t('common.status') }}</div>
+            <StatusBadge :status="payrollRun.status ?? 'draft'" />
+          </v-col>
+          <v-col cols="12" md="6">
+            <div class="text-caption text-medium-emphasis">
+              {{ t('hr.payroll.periodStart') }}
+            </div>
+            <div>{{ payrollRun.periodStart }}</div>
+          </v-col>
+          <v-col cols="12" md="6">
+            <div class="text-caption text-medium-emphasis">{{ t('hr.payroll.periodEnd') }}</div>
+            <div>{{ payrollRun.periodEnd }}</div>
+          </v-col>
+          <v-col cols="12" md="6">
+            <div class="text-caption text-medium-emphasis">{{ t('common.total') }}</div>
+            <div class="font-weight-bold text-h6">
+              {{
+                payrollRun.totalAmount != null
+                  ? formatNumber(payrollRun.totalAmount)
+                  : t('common.none')
+              }}
+            </div>
+          </v-col>
+          <v-col v-if="payrollRun.notes" cols="12">
+            <div class="text-caption text-medium-emphasis">{{ t('common.notes') }}</div>
+            <div>{{ payrollRun.notes }}</div>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
 
-          <v-btn
-            v-if="payrollRun?.status === 'submitted' && canApprove"
-            variant="tonal"
-            color="success"
-            prepend-icon="mdi-check-all"
-            :loading="store.loading"
-            @click="handleApprove"
-          >
-            {{ t('payroll.statusApproved') }}
-          </v-btn>
+    <!-- Payroll entries table -->
+    <v-card v-if="payrollRun?.entries?.length" class="win-card" flat>
+      <v-card-title class="pa-4">{{ t('hr.payroll.entries') }}</v-card-title>
+      <v-card-text class="pa-0">
+        <v-data-table
+          :headers="entryHeaders"
+          :items="payrollRun.entries"
+          density="comfortable"
+          class="ds-table-enhanced ds-table-striped"
+          :hide-default-footer="true"
+        >
+          <template #item.basicSalary="{ item }">
+            {{ formatNumber(item.basicSalary) }}
+          </template>
+          <template #item.allowances="{ item }">
+            {{ formatNumber(item.allowances ?? 0) }}
+          </template>
+          <template #item.deductions="{ item }">
+            {{ formatNumber(item.deductions ?? 0) }}
+          </template>
+          <template #item.netSalary="{ item }">
+            <span class="font-weight-bold">{{ formatNumber(item.netSalary) }}</span>
+          </template>
+        </v-data-table>
+      </v-card-text>
+    </v-card>
 
-          <v-btn
-            v-if="payrollRun?.status === 'approved' && canApprove"
-            variant="tonal"
-            color="primary"
-            prepend-icon="mdi-cash-multiple"
-            :loading="store.loading"
-            @click="handleDisburse"
-          >
-            {{ t('payroll.disburseAction') }}
-          </v-btn>
+    <EmptyState
+      v-if="!payrollRun && !store.loading"
+      icon="mdi-cash-remove"
+      :title="t('hr.payroll.notFound')"
+      :description="t('hr.payroll.notFoundHint')"
+      :action-label="t('hr.payroll.title')"
+      action-to="/hr/payroll"
+      action-icon="mdi-arrow-right"
+    />
 
-          <v-btn
-            v-if="
-              payrollRun?.status &&
-              payrollRun.status !== 'cancelled' &&
-              payrollRun.status !== 'disbursed'
-            "
-            variant="text"
-            color="error"
-            prepend-icon="mdi-close-circle"
-            :loading="store.loading"
-            @click="confirmCancel = true"
-          >
+    <v-dialog v-model="confirmCancel" max-width="400" class="ds-dialog">
+      <v-card rounded="lg">
+        <v-card-title>{{ t('hr.payroll.cancelConfirm') }}</v-card-title>
+        <v-card-text>{{ t('hr.payroll.cancelHint') }}</v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="confirmCancel = false">{{ t('common.cancel') }}</v-btn>
+          <v-btn color="error" variant="flat" :loading="store.loading" @click="handleCancel">
             {{ t('payroll.cancelAction') }}
           </v-btn>
-        </template>
-      </v-app-bar>
-
-      <v-progress-linear v-if="store.loading" indeterminate color="primary" />
-
-      <v-card v-if="payrollRun" class="win-card win-card--padded mb-4" flat>
-        <v-card-text>
-          <v-row dense>
-            <v-col cols="12" md="6">
-              <div class="text-caption text-medium-emphasis">{{ t('hr.payroll.runTitle') }}</div>
-              <div class="text-body-1 font-weight-medium">{{ payrollRun.title }}</div>
-            </v-col>
-            <v-col cols="12" md="6">
-              <div class="text-caption text-medium-emphasis">{{ t('common.status') }}</div>
-              <StatusBadge :status="payrollRun.status ?? 'draft'" />
-            </v-col>
-            <v-col cols="12" md="6">
-              <div class="text-caption text-medium-emphasis">
-                {{ t('hr.payroll.periodStart') }}
-              </div>
-              <div>{{ payrollRun.periodStart }}</div>
-            </v-col>
-            <v-col cols="12" md="6">
-              <div class="text-caption text-medium-emphasis">{{ t('hr.payroll.periodEnd') }}</div>
-              <div>{{ payrollRun.periodEnd }}</div>
-            </v-col>
-            <v-col cols="12" md="6">
-              <div class="text-caption text-medium-emphasis">{{ t('common.total') }}</div>
-              <div class="font-weight-bold text-h6">
-                {{
-                  payrollRun.totalAmount != null
-                    ? formatNumber(payrollRun.totalAmount)
-                    : t('common.none')
-                }}
-              </div>
-            </v-col>
-            <v-col v-if="payrollRun.notes" cols="12">
-              <div class="text-caption text-medium-emphasis">{{ t('common.notes') }}</div>
-              <div>{{ payrollRun.notes }}</div>
-            </v-col>
-          </v-row>
-        </v-card-text>
+        </v-card-actions>
       </v-card>
-
-      <!-- Payroll entries table -->
-      <v-card v-if="payrollRun?.entries?.length" class="win-card" flat>
-        <v-card-title class="pa-4">{{ t('hr.payroll.entries') }}</v-card-title>
-        <v-card-text class="pa-0">
-          <v-data-table
-            :headers="entryHeaders"
-            :items="payrollRun.entries"
-            density="comfortable"
-            class="ds-table-enhanced ds-table-striped"
-            :hide-default-footer="true"
-          >
-            <template #item.basicSalary="{ item }">
-              {{ formatNumber(item.basicSalary) }}
-            </template>
-            <template #item.allowances="{ item }">
-              {{ formatNumber(item.allowances ?? 0) }}
-            </template>
-            <template #item.deductions="{ item }">
-              {{ formatNumber(item.deductions ?? 0) }}
-            </template>
-            <template #item.netSalary="{ item }">
-              <span class="font-weight-bold">{{ formatNumber(item.netSalary) }}</span>
-            </template>
-          </v-data-table>
-        </v-card-text>
-      </v-card>
-
-      <EmptyState
-        v-if="!payrollRun && !store.loading"
-        icon="mdi-cash-remove"
-        :title="t('hr.payroll.notFound')"
-        :description="t('hr.payroll.notFoundHint')"
-        :action-label="t('hr.payroll.title')"
-        action-to="/hr/payroll"
-        action-icon="mdi-arrow-right"
-      />
-
-      <v-dialog v-model="confirmCancel" max-width="400">
-        <v-card>
-          <v-card-title>{{ t('hr.payroll.cancelConfirm') }}</v-card-title>
-          <v-card-text>{{ t('hr.payroll.cancelHint') }}</v-card-text>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn variant="text" @click="confirmCancel = false">{{ t('common.cancel') }}</v-btn>
-            <v-btn
-              color="error"
-              variant="flat"
-              :loading="store.loading"
-              @click="handleCancel"
-            >
-              {{ t('payroll.cancelAction') }}
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </div>
-  </v-container>
+    </v-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">

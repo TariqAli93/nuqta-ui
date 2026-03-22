@@ -1,85 +1,83 @@
 <template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="ds-page-header d-flex align-center justify-space-between mb-6">
-        <template #prepend>
-          <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" />
-        </template>
-        <v-app-bar-title>
-          <div class="win-title mb-0">
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-3">
+        <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
+        <div>
+          <div class="win-title">
             {{ isEdit ? t('hr.employees.edit') : t('hr.employees.new') }}
           </div>
-          <div class="text-sm">{{ t('hr.employees.formHint') }}</div>
-        </v-app-bar-title>
-      </v-app-bar>
-
-      <v-card class="win-card win-card--padded" flat>
-        <v-form class="win-form" @submit.prevent="submit">
-          <v-text-field v-model="form.fullName" :label="t('common.fullName')" required />
-          <div class="d-flex flex-wrap ga-2">
-            <v-text-field v-model="form.phone" :label="t('common.phone')" />
-            <v-text-field v-model="form.email" :label="t('hr.employees.email')" />
-          </div>
-          <div class="d-flex flex-wrap ga-2">
-            <v-select
-              v-model="form.departmentId"
-              :items="departmentItems"
-              :label="t('hr.departments.singular')"
-              item-title="name"
-              item-value="id"
-              clearable
-              variant="outlined"
-              density="comfortable"
-            />
-            <v-text-field v-model="form.designation" :label="t('hr.employees.designation')" />
-          </div>
-          <div class="d-flex flex-wrap ga-2">
-            <v-text-field
-              v-model="form.dateOfJoining"
-              :label="t('hr.employees.dateOfJoining')"
-              type="date"
-            />
-            <v-text-field
-              v-model="form.dateOfBirth"
-              :label="t('hr.employees.dateOfBirth')"
-              type="date"
-            />
-          </div>
-          <div class="d-flex flex-wrap ga-2">
-            <v-text-field
-              v-model.number="form.salary"
-              :label="t('hr.employees.salary')"
-              type="number"
-            />
-            <v-select
-              v-model="form.status"
-              :items="statusOptions"
-              :label="t('common.status')"
-              variant="outlined"
-              density="comfortable"
-            />
-          </div>
-          <v-text-field v-model="form.address" :label="t('hr.employees.address')" />
-          <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" />
-
-          <div class="d-flex ga-2">
-            <v-btn
-              type="submit"
-              color="primary"
-              variant="flat"
-              class="win-btn"
-              :loading="store.loading"
-            >
-              {{ t('common.save') }}
-            </v-btn>
-            <v-btn variant="text" class="win-ghost-btn" to="/hr/employees">
-              {{ t('common.cancel') }}
-            </v-btn>
-          </div>
-        </v-form>
-      </v-card>
+          <div class="text-sm text-medium-emphasis">{{ t('hr.employees.formHint') }}</div>
+        </div>
+      </div>
     </div>
-  </v-container>
+
+    <v-card flat>
+      <v-form class="win-form" @submit.prevent="submit">
+        <v-text-field v-model="form.fullName" :label="t('common.fullName')" required />
+        <div class="d-flex flex-wrap ga-2">
+          <v-text-field v-model="form.phone" :label="t('common.phone')" />
+          <v-text-field v-model="form.email" :label="t('hr.employees.email')" />
+        </div>
+        <div class="d-flex flex-wrap ga-2">
+          <v-select
+            v-model="form.departmentId"
+            :items="departmentItems"
+            :label="t('hr.departments.singular')"
+            item-title="name"
+            item-value="id"
+            clearable
+            variant="outlined"
+            density="comfortable"
+          />
+          <v-text-field v-model="form.designation" :label="t('hr.employees.designation')" />
+        </div>
+        <div class="d-flex flex-wrap ga-2">
+          <v-text-field
+            v-model="form.dateOfJoining"
+            :label="t('hr.employees.dateOfJoining')"
+            type="date"
+          />
+          <v-text-field
+            v-model="form.dateOfBirth"
+            :label="t('hr.employees.dateOfBirth')"
+            type="date"
+          />
+        </div>
+        <div class="d-flex flex-wrap ga-2">
+          <v-text-field
+            v-model.number="form.salary"
+            :label="t('hr.employees.salary')"
+            type="number"
+          />
+          <v-select
+            v-model="form.status"
+            :items="statusOptions"
+            :label="t('common.status')"
+            variant="outlined"
+            density="comfortable"
+          />
+        </div>
+        <v-text-field v-model="form.address" :label="t('hr.employees.address')" />
+        <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" />
+
+        <div class="d-flex ga-2">
+          <v-btn
+            type="submit"
+            color="primary"
+            variant="flat"
+            class="win-btn"
+            :loading="store.loading"
+          >
+            {{ t('common.save') }}
+          </v-btn>
+          <v-btn variant="text" class="win-ghost-btn" to="/hr/employees">
+            {{ t('common.cancel') }}
+          </v-btn>
+        </div>
+      </v-form>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">

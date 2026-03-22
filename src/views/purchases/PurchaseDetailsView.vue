@@ -1,16 +1,21 @@
 <template>
-  <v-container fluid>
-    <v-row class="mb-4" align="center">
-      <v-col>
-        <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" class="me-2" />
-        <span class="text-h5 font-weight-bold">تفاصيل فاتورة المشتريات</span>
-      </v-col>
-      <v-col cols="auto" v-if="purchase && (purchase.remainingAmount ?? 0) > 0">
-        <v-btn color="primary" prepend-icon="mdi-cash-minus" @click="showPaymentDialog = true">
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-3">
+        <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
+        <div class="win-title">تفاصيل فاتورة المشتريات</div>
+      </div>
+      <div class="ds-page-header__actions" v-if="purchase && (purchase.remainingAmount ?? 0) > 0">
+        <v-btn
+          color="primary"
+          size="small"
+          prepend-icon="mdi-cash-minus"
+          @click="showPaymentDialog = true"
+        >
           تسجيل دفعة
         </v-btn>
-      </v-col>
-    </v-row>
+      </div>
+    </div>
 
     <v-skeleton-loader v-if="purchasesStore.loading" type="card" />
 
@@ -41,12 +46,13 @@
         </v-card-text>
       </v-card>
 
-      <v-card class="mb-4">
+      <v-card flat class="ds-table-wrapper">
         <v-card-title class="text-subtitle-1 font-weight-bold">المنتجات</v-card-title>
         <v-data-table
           :headers="itemHeaders"
           :items="purchase.items ?? []"
           density="compact"
+          class="ds-table-enhanced ds-table-striped"
           :items-per-page="-1"
           hide-default-footer
         >
@@ -136,8 +142,8 @@
       </v-card>
     </template>
 
-    <v-dialog v-model="showPaymentDialog" max-width="400" persistent>
-      <v-card>
+    <v-dialog v-model="showPaymentDialog" max-width="400" persistent class="ds-dialog">
+      <v-card rounded="lg">
         <v-card-title>تسجيل دفعة</v-card-title>
         <v-card-text>
           <MoneyInput v-model="paymentAmount" label="المبلغ" class="mb-3" />
@@ -156,7 +162,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

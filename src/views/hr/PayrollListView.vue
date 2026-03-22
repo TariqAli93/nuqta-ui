@@ -1,87 +1,84 @@
 <template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="mb-6" border="bottom">
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ t('hr.payroll.title') }}</div>
-          <div class="text-sm">{{ t('hr.payroll.subtitle') }}</div>
-        </v-app-bar-title>
-
-        <template #append>
-          <v-btn color="primary" :to="'/hr/payroll/new'" prepend-icon="mdi-plus">
-            {{ t('hr.payroll.new') }}
-          </v-btn>
-        </template>
-      </v-app-bar>
-
-      <v-card class="win-card mb-4" flat>
-        <v-card-text class="pa-4">
-          <v-select
-            v-model="statusFilter"
-            :items="statusOptions"
-            :label="t('common.status')"
-            variant="outlined"
-            density="comfortable"
-            clearable
-            hide-details
-            style="max-width: 250px"
-          />
-        </v-card-text>
-      </v-card>
-
-      <v-card class="win-card" flat>
-        <v-card-text class="pa-0">
-          <v-data-table
-            :headers="tableHeaders"
-            :items="store.items"
-            density="comfortable"
-            class="ds-table-enhanced ds-table-striped"
-            :no-data-text="''"
-            :hide-default-footer="true"
-          >
-            <template #item.title="{ item }">
-              <span class="font-weight-medium">{{ item.title }}</span>
-            </template>
-            <template #item.periodStart="{ item }">
-              <span class="text-medium-emphasis">{{ item.periodStart }}</span>
-            </template>
-            <template #item.periodEnd="{ item }">
-              <span class="text-medium-emphasis">{{ item.periodEnd }}</span>
-            </template>
-            <template #item.totalAmount="{ item }">
-              <span class="font-weight-bold">
-                {{ item.totalAmount != null ? formatNumber(item.totalAmount) : t('common.none') }}
-              </span>
-            </template>
-            <template #item.status="{ item }">
-              <StatusBadge :status="item.status ?? 'draft'" />
-            </template>
-            <template #item.actions="{ item }">
-              <v-btn
-                size="small"
-                variant="text"
-                class="win-ghost-btn"
-                :to="`/hr/payroll/${item.id}`"
-                prepend-icon="mdi-eye"
-              >
-                {{ t('common.details') }}
-              </v-btn>
-            </template>
-          </v-data-table>
-
-          <EmptyState
-            v-if="store.items.length === 0 && !store.loading"
-            icon="mdi-cash-multiple"
-            :title="t('hr.payroll.noPayrollRuns')"
-            :description="t('hr.payroll.noPayrollRunsHint')"
-            :action-label="t('hr.payroll.new')"
-            action-to="/hr/payroll/new"
-            action-icon="mdi-plus"
-          />
-        </v-card-text>
-      </v-card>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div>
+        <div class="win-title">{{ t('hr.payroll.title') }}</div>
+        <div class="text-sm text-medium-emphasis">{{ t('hr.payroll.subtitle') }}</div>
+      </div>
+      <div class="ds-page-header__actions">
+        <v-btn color="primary" size="small" :to="'/hr/payroll/new'" prepend-icon="mdi-plus">
+          {{ t('hr.payroll.new') }}
+        </v-btn>
+      </div>
     </div>
-  </v-container>
+
+    <v-card class="ds-filter-bar" flat>
+      <v-card-text class="pa-4">
+        <v-select
+          v-model="statusFilter"
+          :items="statusOptions"
+          :label="t('common.status')"
+          variant="outlined"
+          density="comfortable"
+          clearable
+          hide-details
+          style="max-width: 250px"
+        />
+      </v-card-text>
+    </v-card>
+
+    <v-card class="win-card" flat>
+      <v-card-text class="pa-0">
+        <v-data-table
+          :headers="tableHeaders"
+          :items="store.items"
+          density="comfortable"
+          class="ds-table-enhanced ds-table-striped"
+          :no-data-text="''"
+          :hide-default-footer="true"
+        >
+          <template #item.title="{ item }">
+            <span class="font-weight-medium">{{ item.title }}</span>
+          </template>
+          <template #item.periodStart="{ item }">
+            <span class="text-medium-emphasis">{{ item.periodStart }}</span>
+          </template>
+          <template #item.periodEnd="{ item }">
+            <span class="text-medium-emphasis">{{ item.periodEnd }}</span>
+          </template>
+          <template #item.totalAmount="{ item }">
+            <span class="font-weight-bold">
+              {{ item.totalAmount != null ? formatNumber(item.totalAmount) : t('common.none') }}
+            </span>
+          </template>
+          <template #item.status="{ item }">
+            <StatusBadge :status="item.status ?? 'draft'" />
+          </template>
+          <template #item.actions="{ item }">
+            <v-btn
+              size="small"
+              variant="text"
+              class="win-ghost-btn"
+              :to="`/hr/payroll/${item.id}`"
+              prepend-icon="mdi-eye"
+            >
+              {{ t('common.details') }}
+            </v-btn>
+          </template>
+        </v-data-table>
+
+        <EmptyState
+          v-if="store.items.length === 0 && !store.loading"
+          icon="mdi-cash-multiple"
+          :title="t('hr.payroll.noPayrollRuns')"
+          :description="t('hr.payroll.noPayrollRunsHint')"
+          :action-label="t('hr.payroll.new')"
+          action-to="/hr/payroll/new"
+          action-icon="mdi-plus"
+        />
+      </v-card-text>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">

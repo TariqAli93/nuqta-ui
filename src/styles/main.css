@@ -1,7 +1,53 @@
 @import 'tailwindcss';
 @import './fonts.css';
 
-/* Custom styles can be added here */
+/* ═══════════════════════════════════════════════════════════════
+   NUQTA ERP — DESIGN SYSTEM LAYER  v2
+   Spacing tokens, layout primitives, and component utilities.
+   Extends the Vuetify blueprint — do not duplicate blueprint rules.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Design Tokens (CSS custom properties) ──────────────────── */
+:root {
+  /* Spacing scale — 4px base */
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 20px;
+  --ds-space-6: 24px;
+  --ds-space-8: 32px;
+
+  /* Page-level spacing */
+  --ds-page-px: 24px;
+  --ds-page-py: 24px;
+  --ds-section-gap: 16px;
+
+  /* Card internal spacing */
+  --ds-card-px: 20px;
+  --ds-card-py: 16px;
+
+  /* Dialog spacing */
+  --ds-dialog-px: 24px;
+  --ds-dialog-py: 20px;
+
+  /* Shared radii */
+  --ds-radius: 12px;
+  --ds-radius-sm: 8px;
+
+  /* Transitions */
+  --ds-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 599px) {
+  :root {
+    --ds-page-px: 16px;
+    --ds-page-py: 16px;
+    --ds-section-gap: 12px;
+  }
+}
+
+/* ─── Global defaults ────────────────────────────────────────── */
 html,
 body,
 * {
@@ -13,13 +59,13 @@ body,
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.18);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-track {
@@ -28,4 +74,221 @@ body,
 
 ::-webkit-scrollbar-button {
   display: none !important;
+}
+
+/* ─── Text utilities ─────────────────────────────────────────── */
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* ─── Page structure ─────────────────────────────────────────── */
+.win-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-section-gap);
+  padding: var(--ds-page-py) var(--ds-page-px);
+}
+
+/* ─── Typography ─────────────────────────────────────────────── */
+.win-title {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.win-subtitle {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: rgb(var(--v-theme-on-surface-variant));
+}
+
+/* ─── Layout shell ───────────────────────────────────────────── */
+.win-command-bar {
+  border-inline-end-width: 0 !important;
+}
+
+.win-footer {
+  display: flex;
+  align-items: center;
+  padding: 5px 20px;
+  font-size: 0.6875rem;
+  border-top: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
+  background: rgb(var(--v-theme-surface));
+  color: rgb(var(--v-theme-on-surface-variant));
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* ─── Page header ────────────────────────────────────────────── */
+/* Standard inline page header: strips Vuetify app-bar chrome */
+.ds-page-header,
+.v-app-bar.ds-page-header,
+.ds-page-header.v-toolbar {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding-inline: 0 !important;
+}
+
+/* Standalone page header block (non-app-bar) */
+.ds-page-header-block {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ds-space-4);
+  flex-wrap: wrap;
+  min-height: 48px;
+}
+
+.ds-page-header-block .ds-page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-2);
+  flex-wrap: wrap;
+}
+
+/* ─── Card system ────────────────────────────────────────────── */
+.win-card--padded {
+  padding: var(--ds-card-py) var(--ds-card-px);
+}
+
+/* ─── Filter bar ─────────────────────────────────────────────── */
+.ds-filter-bar {
+  padding: var(--ds-card-py) var(--ds-card-px);
+}
+
+/* ─── Form system ────────────────────────────────────────────── */
+.win-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── Button modifiers ───────────────────────────────────────── */
+.win-ghost-btn.v-btn {
+  color: rgb(var(--v-theme-on-surface-variant)) !important;
+}
+.win-ghost-btn.v-btn:hover {
+  color: rgb(var(--v-theme-on-surface)) !important;
+}
+
+.win-btn.v-btn {
+  min-width: 96px;
+}
+
+/* ─── Table system ───────────────────────────────────────────── */
+.ds-table-enhanced .v-data-table__th {
+  font-size: 0.6875rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgb(var(--v-theme-on-surface-variant)) !important;
+  white-space: nowrap;
+}
+
+.ds-table-striped .v-data-table__tr:nth-child(even) > td {
+  background-color: rgba(var(--v-theme-on-surface), 0.025);
+}
+
+/* Row hover for interactive tables */
+.ds-table-enhanced .v-data-table__tr:hover > td {
+  background-color: rgba(var(--v-theme-primary), 0.04);
+  transition: background-color var(--ds-transition);
+}
+
+/* Table wrapper: unifies card + table with consistent structure */
+.ds-table-wrapper {
+  overflow: hidden;
+}
+
+.ds-table-wrapper > .v-card-text {
+  padding: 0;
+}
+
+/* ─── Summary / stat card system ─────────────────────────────── */
+.ds-stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--ds-space-3);
+  padding: var(--ds-card-py) var(--ds-card-px);
+}
+
+.ds-stat-card__info {
+  min-width: 0;
+  flex: 1;
+}
+
+.ds-stat-card__label {
+  font-size: 0.75rem;
+  color: rgb(var(--v-theme-on-surface-variant));
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ds-stat-card__value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: rgb(var(--v-theme-on-surface));
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Dialog system ──────────────────────────────────────────── */
+.ds-dialog .v-card {
+  border-radius: var(--ds-radius) !important;
+}
+
+.ds-dialog .v-card-title {
+  padding: var(--ds-dialog-py) var(--ds-dialog-px) var(--ds-space-2);
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.ds-dialog .v-card-text {
+  padding: var(--ds-space-3) var(--ds-dialog-px);
+}
+
+.ds-dialog .v-card-actions {
+  padding: var(--ds-space-3) var(--ds-dialog-px) var(--ds-dialog-py);
+  gap: var(--ds-space-2);
+}
+
+/* ─── Responsive helpers ─────────────────────────────────────── */
+/* Hide on mobile, show on sm+ */
+@media (max-width: 599px) {
+  .ds-hide-xs {
+    display: none !important;
+  }
+}
+
+/* Stack flex children vertically on mobile */
+@media (max-width: 599px) {
+  .ds-stack-xs {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+}
+
+/* ─── Navigation drawer polish ───────────────────────────────── */
+.pos-nav-drawer .v-list-item {
+  border-radius: var(--ds-radius-sm);
+  margin-block: 1px;
+  transition: background-color var(--ds-transition);
+}
+
+/* ─── Misc polish ────────────────────────────────────────────── */
+/* Subtle card hover lift — opt-in only */
+.ds-card-hover {
+  transition:
+    box-shadow var(--ds-transition),
+    transform var(--ds-transition);
+}
+.ds-card-hover:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
 }

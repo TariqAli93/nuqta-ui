@@ -42,7 +42,7 @@ defineEmits<{
   gap: 10px;
   align-items: center;
   justify-content: center;
-  padding: var(--ds-spacing-5xl) var(--ds-spacing-lg);
+  padding: 64px 16px;
   text-align: center;
 }
 
@@ -54,7 +54,7 @@ defineEmits<{
   height: 96px;
   border-radius: 50%;
   background: rgba(var(--v-theme-primary), 0.08);
-  margin-bottom: var(--ds-spacing-xl);
+  margin-bottom: 24px;
   transition: transform 0.25s ease;
 }
 
@@ -68,20 +68,20 @@ defineEmits<{
 }
 
 .empty-state__title {
-  font-size: var(--ds-font-size-xl);
-  font-weight: var(--ds-font-weight-bold);
+  font-size: 1.125rem;
+  font-weight: 700;
   color: rgba(var(--v-theme-on-surface), 0.75);
-  margin-bottom: var(--ds-spacing-xs);
+  margin-bottom: 4px;
 }
 
 .empty-state__desc {
-  font-size: var(--ds-font-size-sm);
+  font-size: 0.875rem;
   color: rgba(var(--v-theme-on-surface), 0.45);
   max-width: 320px;
   line-height: 1.6;
 }
 
 .empty-state__action {
-  margin-top: var(--ds-spacing-lg);
+  margin-top: 16px;
 }
 </style>

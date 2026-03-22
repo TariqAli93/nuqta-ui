@@ -8,8 +8,8 @@
         </v-app-bar-title>
       </v-app-bar>
 
-      <v-card class="win-card" flat>
-        <v-tabs v-model="activeTab" color="primary">
+      <v-card flat>
+        <v-tabs v-model="activeTab" color="primary" show-arrows>
           <v-tab value="system">إعدادات النظام</v-tab>
           <v-tab value="pos">نقطة البيع</v-tab>
           <v-tab value="accounting">المحاسبة</v-tab>
@@ -20,27 +20,27 @@
 
         <v-window v-model="activeTab">
           <v-window-item value="system">
-            <v-card-text>
+            <div style="padding: var(--ds-card-py) var(--ds-card-px)">
               <SystemSettingsTab />
-            </v-card-text>
+            </div>
           </v-window-item>
 
           <v-window-item value="pos">
-            <v-card-text>
+            <div style="padding: var(--ds-card-py) var(--ds-card-px)">
               <PosSettingsTab />
-            </v-card-text>
+            </div>
           </v-window-item>
 
           <v-window-item value="accounting">
-            <v-card-text>
+            <div style="padding: var(--ds-card-py) var(--ds-card-px)">
               <AccountingSettingsTab />
-            </v-card-text>
+            </div>
           </v-window-item>
 
           <v-window-item v-if="canManageUsers" value="users">
-            <v-card-text>
+            <div style="padding: var(--ds-card-py) var(--ds-card-px)">
               <UsersTab />
-            </v-card-text>
+            </div>
           </v-window-item>
         </v-window>
       </v-card>

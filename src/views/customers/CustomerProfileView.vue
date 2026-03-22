@@ -1,106 +1,139 @@
 <template>
-  <v-container fluid>
+  <div class="win-page">
     <v-skeleton-loader v-if="loading" type="card" />
 
     <template v-else-if="customer">
       <!-- Header -->
-      <v-row class="mb-4" align="center">
-        <v-col>
-          <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" class="me-2" />
-          <span class="text-h5 font-weight-bold">{{ customer.name }}</span>
-        </v-col>
-        <v-col cols="auto">
+      <div class="ds-page-header-block">
+        <div class="d-flex align-center ga-3">
+          <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
+          <div class="win-title">{{ customer.name }}</div>
+        </div>
+        <div class="ds-page-header__actions">
           <v-btn
             variant="tonal"
+            size="small"
             prepend-icon="mdi-pencil"
             :to="{ name: 'CustomerEdit', params: { id: customer.id } }"
             >تعديل</v-btn
           >
-        </v-col>
-      </v-row>
+        </div>
+      </div>
 
       <!-- Info Cards -->
-      <v-row class="mb-4" dense>
+      <v-row dense>
         <v-col cols="6" sm="3">
-          <v-card variant="tonal">
-            <v-card-text class="text-center">
-              <div class="text-caption">الهاتف</div>
-              <div class="text-body-1 font-weight-medium" dir="ltr">
-                {{ customer.phone || '—' }}
+          <v-card flat>
+            <div class="ds-stat-card">
+              <v-avatar color="grey" variant="tonal" size="40">
+                <v-icon size="20">mdi-phone</v-icon>
+              </v-avatar>
+              <div class="ds-stat-card__info">
+                <div class="ds-stat-card__label">الهاتف</div>
+                <div class="ds-stat-card__value" style="font-size: 0.95rem" dir="ltr">
+                  {{ customer.phone || '—' }}
+                </div>
               </div>
-            </v-card-text>
+            </div>
           </v-card>
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card variant="tonal">
-            <v-card-text class="text-center">
-              <div class="text-caption">المدينة</div>
-              <div class="text-body-1 font-weight-medium">{{ customer.city || '—' }}</div>
-            </v-card-text>
+          <v-card flat>
+            <div class="ds-stat-card">
+              <v-avatar color="grey" variant="tonal" size="40">
+                <v-icon size="20">mdi-city</v-icon>
+              </v-avatar>
+              <div class="ds-stat-card__info">
+                <div class="ds-stat-card__label">المدينة</div>
+                <div class="ds-stat-card__value" style="font-size: 0.95rem">
+                  {{ customer.city || '—' }}
+                </div>
+              </div>
+            </div>
           </v-card>
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card variant="tonal" :color="(customer.totalDebt ?? 0) > 0 ? 'error' : 'success'">
-            <v-card-text class="text-center">
-              <div class="text-caption">الرصيد المستحق</div>
-              <MoneyDisplay :amount="customer.totalDebt ?? 0" size="lg" />
-            </v-card-text>
+          <v-card flat>
+            <div class="ds-stat-card">
+              <v-avatar
+                :color="(customer.totalDebt ?? 0) > 0 ? 'error' : 'success'"
+                variant="tonal"
+                size="40"
+              >
+                <v-icon size="20">mdi-cash-clock</v-icon>
+              </v-avatar>
+              <div class="ds-stat-card__info">
+                <div class="ds-stat-card__label">الرصيد المستحق</div>
+                <MoneyDisplay :amount="customer.totalDebt ?? 0" size="lg" />
+              </div>
+            </div>
           </v-card>
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card variant="tonal" color="primary">
-            <v-card-text class="text-center">
-              <div class="text-caption">إجمالي المشتريات</div>
-              <MoneyDisplay :amount="customer.totalPurchases ?? 0" size="lg" />
-            </v-card-text>
+          <v-card flat>
+            <div class="ds-stat-card">
+              <v-avatar color="primary" variant="tonal" size="40">
+                <v-icon size="20">mdi-cart</v-icon>
+              </v-avatar>
+              <div class="ds-stat-card__info">
+                <div class="ds-stat-card__label">إجمالي المشتريات</div>
+                <MoneyDisplay :amount="customer.totalPurchases ?? 0" size="lg" />
+              </div>
+            </div>
           </v-card>
         </v-col>
       </v-row>
 
       <!-- Tabs -->
-      <v-tabs v-model="activeTab" class="mb-4">
-        <v-tab value="ledger">كشف الحساب</v-tab>
-        <v-tab value="info">معلومات</v-tab>
-      </v-tabs>
+      <v-card flat>
+        <v-tabs v-model="activeTab" color="primary" density="comfortable">
+          <v-tab value="ledger">كشف الحساب</v-tab>
+          <v-tab value="info">معلومات</v-tab>
+        </v-tabs>
+        <v-divider />
 
-      <v-window v-model="activeTab">
-        <!-- Ledger Tab -->
-        <v-window-item value="ledger">
-          <v-row class="mb-3">
-            <v-col cols="auto" class="d-flex ga-2">
-              <v-btn color="primary" prepend-icon="mdi-cash-plus" @click="showPaymentDialog = true"
-                >تسجيل دفعة</v-btn
-              >
-              <v-btn
-                variant="tonal"
-                color="warning"
-                prepend-icon="mdi-scale-balance"
-                @click="showAdjustmentDialog = true"
-                >تعديل رصيد</v-btn
-              >
-            </v-col>
-          </v-row>
-          <LedgerTable :entries="ledgerEntries" :loading="ledgerLoading" entity-type="customer" />
-        </v-window-item>
+        <v-window v-model="activeTab">
+          <!-- Ledger Tab -->
+          <v-window-item value="ledger">
+            <v-row class="mb-3">
+              <v-col cols="auto" class="d-flex ga-2">
+                <v-btn
+                  color="primary"
+                  prepend-icon="mdi-cash-plus"
+                  @click="showPaymentDialog = true"
+                  >تسجيل دفعة</v-btn
+                >
+                <v-btn
+                  variant="tonal"
+                  color="warning"
+                  prepend-icon="mdi-scale-balance"
+                  @click="showAdjustmentDialog = true"
+                  >تعديل رصيد</v-btn
+                >
+              </v-col>
+            </v-row>
+            <LedgerTable :entries="ledgerEntries" :loading="ledgerLoading" entity-type="customer" />
+          </v-window-item>
 
-        <!-- Info Tab -->
-        <v-window-item value="info">
-          <v-card max-width="500">
-            <v-card-text>
-              <div class="mb-2"><strong>الاسم:</strong> {{ customer.name }}</div>
-              <div class="mb-2"><strong>الهاتف:</strong> {{ customer.phone || '—' }}</div>
-              <div class="mb-2"><strong>العنوان:</strong> {{ customer.address || '—' }}</div>
-              <div class="mb-2"><strong>المدينة:</strong> {{ customer.city || '—' }}</div>
-              <div class="mb-2"><strong>ملاحظات:</strong> {{ customer.notes || '—' }}</div>
-            </v-card-text>
-          </v-card>
-        </v-window-item>
-      </v-window>
+          <!-- Info Tab -->
+          <v-window-item value="info">
+            <v-card max-width="500">
+              <v-card-text>
+                <div class="mb-2"><strong>الاسم:</strong> {{ customer.name }}</div>
+                <div class="mb-2"><strong>الهاتف:</strong> {{ customer.phone || '—' }}</div>
+                <div class="mb-2"><strong>العنوان:</strong> {{ customer.address || '—' }}</div>
+                <div class="mb-2"><strong>المدينة:</strong> {{ customer.city || '—' }}</div>
+                <div class="mb-2"><strong>ملاحظات:</strong> {{ customer.notes || '—' }}</div>
+              </v-card-text>
+            </v-card>
+          </v-window-item>
+        </v-window>
+      </v-card>
     </template>
 
     <!-- Payment Dialog -->
-    <v-dialog v-model="showPaymentDialog" max-width="400" persistent>
-      <v-card>
+    <v-dialog v-model="showPaymentDialog" max-width="400" persistent class="ds-dialog">
+      <v-card rounded="lg">
         <v-card-title>تسجيل دفعة</v-card-title>
         <v-card-text>
           <MoneyInput v-model="paymentAmount" label="المبلغ" class="mb-3" />
@@ -121,8 +154,8 @@
     </v-dialog>
 
     <!-- Adjustment Dialog -->
-    <v-dialog v-model="showAdjustmentDialog" max-width="400" persistent>
-      <v-card>
+    <v-dialog v-model="showAdjustmentDialog" max-width="400" persistent class="ds-dialog">
+      <v-card rounded="lg">
         <v-card-title>تعديل رصيد يدوي</v-card-title>
         <v-card-text>
           <v-text-field
@@ -149,7 +182,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

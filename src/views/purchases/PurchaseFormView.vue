@@ -1,10 +1,8 @@
 <template>
-  <v-container fluid>
-    <v-row class="mb-4" align="center">
-      <v-col>
-        <h1 class="text-h5 font-weight-bold">فاتورة مشتريات جديدة</h1>
-      </v-col>
-    </v-row>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="win-title">فاتورة مشتريات جديدة</div>
+    </div>
 
     <v-form ref="formRef" @submit.prevent="onSubmit">
       <v-card class="mb-4">
@@ -189,7 +187,7 @@
         <v-btn variant="text" @click="router.back()">إلغاء</v-btn>
       </div>
     </v-form>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

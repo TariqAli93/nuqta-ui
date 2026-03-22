@@ -1,46 +1,44 @@
 <template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="ds-page-header d-flex align-center justify-space-between mb-6">
-        <template #prepend>
-          <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" />
-        </template>
-        <v-app-bar-title>
-          <div class="win-title mb-0">
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-3">
+        <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
+        <div>
+          <div class="win-title">
             {{ isEdit ? t('hr.departments.edit') : t('hr.departments.new') }}
           </div>
-          <div class="text-sm">{{ t('hr.departments.formHint') }}</div>
-        </v-app-bar-title>
-      </v-app-bar>
-
-      <v-card class="win-card win-card--padded" flat>
-        <v-form class="win-form" @submit.prevent="submit">
-          <v-text-field v-model="form.name" :label="t('common.name')" required />
-          <v-textarea v-model="form.description" :label="t('common.description')" rows="3" />
-          <v-switch
-            v-model="form.isActive"
-            :label="form.isActive ? t('common.active') : t('common.inactive')"
-            color="primary"
-          />
-
-          <div class="d-flex ga-2">
-            <v-btn
-              type="submit"
-              color="primary"
-              variant="flat"
-              class="win-btn"
-              :loading="store.loading"
-            >
-              {{ t('common.save') }}
-            </v-btn>
-            <v-btn variant="text" class="win-ghost-btn" to="/hr/departments">
-              {{ t('common.cancel') }}
-            </v-btn>
-          </div>
-        </v-form>
-      </v-card>
+          <div class="text-sm text-medium-emphasis">{{ t('hr.departments.formHint') }}</div>
+        </div>
+      </div>
     </div>
-  </v-container>
+
+    <v-card flat>
+      <v-form class="win-form" @submit.prevent="submit">
+        <v-text-field v-model="form.name" :label="t('common.name')" required />
+        <v-textarea v-model="form.description" :label="t('common.description')" rows="3" />
+        <v-switch
+          v-model="form.isActive"
+          :label="form.isActive ? t('common.active') : t('common.inactive')"
+          color="primary"
+        />
+
+        <div class="d-flex ga-2">
+          <v-btn
+            type="submit"
+            color="primary"
+            variant="flat"
+            class="win-btn"
+            :loading="store.loading"
+          >
+            {{ t('common.save') }}
+          </v-btn>
+          <v-btn variant="text" class="win-ghost-btn" to="/hr/departments">
+            {{ t('common.cancel') }}
+          </v-btn>
+        </div>
+      </v-form>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">

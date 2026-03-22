@@ -1,33 +1,20 @@
 <template>
-  <v-dialog
-    v-model="isOpen"
-    :max-width="maxWidth"
-    :persistent="persistent"
-  >
-    <v-card>
-      <v-card-title class="d-flex align-center ga-2 pt-4 px-6">
+  <v-dialog v-model="isOpen" :max-width="maxWidth" :persistent="persistent" class="ds-dialog">
+    <v-card rounded="lg">
+      <v-card-title class="d-flex align-center ga-2">
         <v-icon v-if="icon" :icon="icon" :color="iconColor" size="24" />
         {{ title }}
       </v-card-title>
 
-      <v-card-text class="px-6 py-3 text-body-1">
+      <v-card-text class="text-body-1">
         <slot>{{ message }}</slot>
       </v-card-text>
 
-      <v-card-actions class="px-6 pb-4 ga-2 justify-end">
-        <v-btn
-          :disabled="loading"
-          variant="text"
-          @click="cancel"
-        >
+      <v-card-actions class="justify-end">
+        <v-btn :disabled="loading" variant="text" @click="cancel">
           {{ cancelLabel }}
         </v-btn>
-        <v-btn
-          :color="confirmColor"
-          :loading="loading"
-          variant="elevated"
-          @click="confirm"
-        >
+        <v-btn :color="confirmColor" :loading="loading" variant="elevated" @click="confirm">
           {{ confirmLabel }}
         </v-btn>
       </v-card-actions>
@@ -76,7 +63,9 @@ const isOpen = ref(props.modelValue);
 
 watch(
   () => props.modelValue,
-  (v) => { isOpen.value = v; }
+  (v) => {
+    isOpen.value = v;
+  }
 );
 
 watch(isOpen, (v) => {

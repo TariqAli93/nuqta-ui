@@ -1,9 +1,20 @@
 <template>
-  <v-card :flat="flat" :elevation="flat ? 0 : undefined">
-    <v-card-title v-if="title" class="d-flex align-center justify-space-between">
-      <span class="text-subtitle-1 font-weight-bold">{{ title }}</span>
+  <v-card
+    :flat="flat"
+    :elevation="flat ? 0 : undefined"
+    class="ds-table-wrapper"
+    :rounded="flat ? 0 : 'lg'"
+  >
+    <v-card-title
+      v-if="title || $slots.actions"
+      class="d-flex align-center justify-space-between"
+      style="padding: var(--ds-card-py) var(--ds-card-px) var(--ds-space-2)"
+    >
+      <span v-if="title" class="text-subtitle-1 font-weight-bold">{{ title }}</span>
       <slot name="actions" />
     </v-card-title>
+
+    <slot name="filters" />
 
     <v-data-table-server
       v-if="serverSide"
@@ -15,7 +26,7 @@
       :loading="loading"
       :density="density"
       :no-data-text="noDataText"
-      class="nuqta-data-table"
+      class="ds-table-enhanced ds-table-striped"
       @update:page="onPageChange"
       @update:items-per-page="onPageSizeChange"
     >
@@ -32,7 +43,7 @@
       :density="density"
       :items-per-page="pageSize"
       :no-data-text="noDataText"
-      class="nuqta-data-table"
+      class="ds-table-enhanced ds-table-striped"
     >
       <template v-for="(_, name) in $slots" #[name]="slotData">
         <slot :name="name" v-bind="slotData ?? {}" />
@@ -86,8 +97,18 @@ const emit = defineEmits<{
 const localPage = ref(props.page);
 const localPageSize = ref(props.pageSize);
 
-watch(() => props.page, (v) => { localPage.value = v; });
-watch(() => props.pageSize, (v) => { localPageSize.value = v; });
+watch(
+  () => props.page,
+  (v) => {
+    localPage.value = v;
+  }
+);
+watch(
+  () => props.pageSize,
+  (v) => {
+    localPageSize.value = v;
+  }
+);
 
 function onPageChange(page: number) {
   emit('update:page', page);

@@ -6,33 +6,35 @@
           <div class="win-title mb-0">{{ t('settings.title') }}</div>
           <div class="text-sm">{{ t('settings.subtitle') }}</div>
         </v-app-bar-title>
+
+        <template #append>
+          <v-tabs v-model="activeTab" color="primary" show-arrows>
+            <v-tab value="system" @click="navigateTo('system')">
+              <v-icon start size="18">mdi-cog</v-icon>
+              النظام
+            </v-tab>
+            <v-tab value="pos" @click="navigateTo('pos')">
+              <v-icon start size="18">mdi-point-of-sale</v-icon>
+              نقاط البيع
+            </v-tab>
+            <v-tab value="accounting" @click="navigateTo('accounting')">
+              <v-icon start size="18">mdi-calculator</v-icon>
+              المحاسبة
+            </v-tab>
+            <v-tab v-if="canManageUsers" value="users" @click="navigateTo('users')">
+              <v-icon start size="18">mdi-account-group</v-icon>
+              المستخدمين
+            </v-tab>
+          </v-tabs>
+        </template>
       </v-app-bar>
 
-      <v-card class="win-card" flat>
-        <v-tabs v-model="activeTab" color="primary">
-          <v-tab value="system" @click="navigateTo('system')">
-            <v-icon start>mdi-cog</v-icon>
-            النظام
-          </v-tab>
-          <v-tab value="pos" @click="navigateTo('pos')">
-            <v-icon start>mdi-point-of-sale</v-icon>
-            نقاط البيع
-          </v-tab>
-          <v-tab value="accounting" @click="navigateTo('accounting')">
-            <v-icon start>mdi-calculator</v-icon>
-            المحاسبة
-          </v-tab>
-          <v-tab v-if="canManageUsers" value="users" @click="navigateTo('users')">
-            <v-icon start>mdi-account-group</v-icon>
-            المستخدمين
-          </v-tab>
-        </v-tabs>
-
+      <v-card flat>
         <v-divider />
 
-        <v-card-text>
+        <div style="padding: var(--ds-card-py) var(--ds-card-px)">
           <router-view />
-        </v-card-text>
+        </div>
       </v-card>
     </div>
   </v-container>

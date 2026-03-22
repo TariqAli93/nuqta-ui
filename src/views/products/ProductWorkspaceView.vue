@@ -7,12 +7,11 @@
           إدارة المنتج في شاشة واحدة: معلومات، حركات، مبيعات، مشتريات، وحدات، دفعات، وتعديل مخزون.
         </div>
       </v-app-bar-title>
-
-      <template #append>
-        <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreateDialog">
+      <div class="ds-page-header__actions">
+        <v-btn color="primary" size="small" prepend-icon="mdi-plus" @click="openCreateDialog">
           إضافة منتج
         </v-btn>
-      </template>
+      </div>
     </v-app-bar>
 
     <v-row dense>
@@ -133,8 +132,8 @@
       @submit="onSubmitAdjustment"
     />
 
-    <v-dialog v-model="productDialog" max-width="720" persistent>
-      <v-card>
+    <v-dialog v-model="productDialog" max-width="720" persistent class="ds-dialog">
+      <v-card rounded="lg">
         <v-card-title>{{ editMode ? 'تعديل المنتج' : 'إضافة منتج' }}</v-card-title>
         <v-card-text>
           <FormSkeleton :loading="workspaceStore.loading.product && editMode" :fields="8">
@@ -235,8 +234,8 @@
       </v-card>
     </v-dialog>
 
-    <v-dialog v-model="deleteDialog" max-width="420">
-      <v-card>
+    <v-dialog v-model="deleteDialog" max-width="420" class="ds-dialog">
+      <v-card rounded="lg">
         <v-card-title>حذف المنتج</v-card-title>
         <v-card-text>سيتم حذف المنتج المحدد. هل تريد المتابعة؟</v-card-text>
         <v-card-actions>

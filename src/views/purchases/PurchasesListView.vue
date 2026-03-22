@@ -1,26 +1,25 @@
 <template>
-  <v-container fluid>
-    <v-row class="mb-4" align="center">
-      <v-col>
-        <h1 class="text-h5 font-weight-bold">المشتريات</h1>
-      </v-col>
-      <v-col cols="auto">
-        <v-btn color="primary" prepend-icon="mdi-plus" :to="{ name: 'PurchaseCreate' }">
-          فاتورة مشتريات جديدة
-        </v-btn>
-      </v-col>
-    </v-row>
+  <v-container>
+    <div class="win-page">
+      <v-app-bar class="mb-4" border="bottom">
+        <v-app-bar-title>
+          <div class="win-title mb-0">المشتريات</div>
+          <div class="text-sm">إدارة فواتير المشتريات والموردين</div>
+        </v-app-bar-title>
+        <template #append>
+          <v-btn color="primary" prepend-icon="mdi-plus" :to="{ name: 'PurchaseCreate' }">
+            فاتورة مشتريات جديدة
+          </v-btn>
+        </template>
+      </v-app-bar>
 
-    <v-card>
-      <v-card-text>
-        <v-row class="mb-4" dense>
-          <v-col cols="12" sm="4">
+      <v-card class="pa-4 mb-4">
+        <v-row dense>
+          <v-col cols="12" sm="8">
             <v-text-field
               v-model="search"
               prepend-inner-icon="mdi-magnify"
-              label="بحث..."
-              variant="outlined"
-              density="compact"
+              placeholder="بحث..."
               hide-details
               @update:model-value="onSearch"
             />
@@ -30,56 +29,58 @@
               v-model="statusFilter"
               :items="statuses"
               label="الحالة"
-              variant="outlined"
-              density="compact"
               hide-details
               clearable
               @update:model-value="onSearch"
             />
           </v-col>
         </v-row>
+      </v-card>
 
-        <v-data-table
-          :headers="headers"
-          :items="purchasesStore.items"
-          :loading="purchasesStore.loading"
-          :items-per-page="20"
-          density="compact"
-          @click:row="
-            (_: Event, { item }: { item: any }) =>
-              router.push({ name: 'PurchaseDetails', params: { id: item.id } })
-          "
-        >
-          <template #item.total="{ item }">
-            <MoneyDisplay :amount="item.total" size="sm" />
-          </template>
-          <template #item.paidAmount="{ item }">
-            <MoneyDisplay :amount="item.paidAmount ?? 0" size="sm" colored />
-          </template>
-          <template #item.status="{ item }">
-            <v-chip
-              :color="
-                item.status === 'completed'
-                  ? 'success'
-                  : item.status === 'pending'
-                    ? 'warning'
-                    : 'error'
-              "
-              size="small"
-              variant="tonal"
-            >
-              {{ statusLabel(item.status) }}
-            </v-chip>
-          </template>
-          <template #item.createdAt="{ item }">
-            {{ formatDate(item.createdAt) }}
-          </template>
-          <template #no-data>
-            <div class="text-center py-8 text-medium-emphasis">لا توجد مشتريات</div>
-          </template>
-        </v-data-table>
-      </v-card-text>
-    </v-card>
+      <v-card>
+        <v-card-text class="pa-0">
+          <v-data-table
+            :headers="headers"
+            :items="purchasesStore.items"
+            :loading="purchasesStore.loading"
+            :items-per-page="20"
+            class="ds-table-enhanced ds-table-striped"
+            @click:row="
+              (_: Event, { item }: { item: any }) =>
+                router.push({ name: 'PurchaseDetails', params: { id: item.id } })
+            "
+          >
+            <template #item.total="{ item }">
+              <MoneyDisplay :amount="item.total" size="sm" />
+            </template>
+            <template #item.paidAmount="{ item }">
+              <MoneyDisplay :amount="item.paidAmount ?? 0" size="sm" colored />
+            </template>
+            <template #item.status="{ item }">
+              <v-chip
+                :color="
+                  item.status === 'completed'
+                    ? 'success'
+                    : item.status === 'pending'
+                      ? 'warning'
+                      : 'error'
+                "
+                size="small"
+                variant="tonal"
+              >
+                {{ statusLabel(item.status) }}
+              </v-chip>
+            </template>
+            <template #item.createdAt="{ item }">
+              {{ formatDate(item.createdAt) }}
+            </template>
+            <template #no-data>
+              <div class="text-center py-8 text-medium-emphasis">لا توجد مشتريات</div>
+            </template>
+          </v-data-table>
+        </v-card-text>
+      </v-card>
+    </div>
   </v-container>
 </template>
 
@@ -122,6 +123,8 @@ function onSearch() {
 
 function statusLabel(s: string | undefined): string {
   if (!s) return '—';
-  return ({ completed: 'مكتمل', pending: 'معلق', cancelled: 'ملغي' } as Record<string, string>)[s] ?? s;
+  return (
+    ({ completed: 'مكتمل', pending: 'معلق', cancelled: 'ملغي' } as Record<string, string>)[s] ?? s
+  );
 }
 </script>

@@ -3,7 +3,6 @@
 // Layouts — kept eager (needed immediately on navigation)
 const PosLayout = () => import('../../layouts/PosLayout.vue');
 const AuthLayout = () => import('../../layouts/AuthLayout.vue');
-const MainLayout = () => import('../../layouts/MainLayout.vue');
 
 // Lazy-loaded views — each generates a separate chunk
 const PosView = () => import('../../views/pos/PosView.vue');

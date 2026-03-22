@@ -188,7 +188,7 @@ const router = useRouter();
 const route = useRoute();
 
 const username = ref<string | null>(import.meta.env.DEV ? 'admin' : null);
-const password = ref<string | null>(import.meta.env.DEV ? 'admin123' : null);
+const password = ref<string | null>(import.meta.env.DEV ? 'Admin@123' : null);
 const showPassword = ref<boolean>(false);
 const loginFormRef = ref<LoginFormController>();
 const { rules, validate } = useFormValidation(loginFormRef);
