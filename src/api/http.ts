@@ -83,15 +83,27 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 // ---------------------------------------------------------------------------
 
 let isRefreshing = false;
-let refreshSubscribers: Array<(token: string) => void> = [];
+let refreshSubscribers: Array<{
+  resolve: (token: string) => void;
+  reject: (err: unknown) => void;
+}> = [];
 
 function onTokenRefreshed(newToken: string): void {
-  refreshSubscribers.forEach((cb) => cb(newToken));
+  refreshSubscribers.forEach(({ resolve }) => resolve(newToken));
   refreshSubscribers = [];
 }
 
-function addRefreshSubscriber(cb: (token: string) => void): void {
-  refreshSubscribers.push(cb);
+/** Drain all queued subscribers with an error so their Promises reject immediately. */
+function drainRefreshSubscribers(err: unknown): void {
+  refreshSubscribers.forEach(({ reject }) => reject(err));
+  refreshSubscribers = [];
+}
+
+function addRefreshSubscriber(
+  resolve: (token: string) => void,
+  reject: (err: unknown) => void,
+): void {
+  refreshSubscribers.push({ resolve, reject });
 }
 
 /**
@@ -116,12 +128,12 @@ http.interceptors.response.use(
       !originalRequest.url?.includes('/auth/login')
     ) {
       if (isRefreshing) {
-        // Queue this request until refresh completes
-        return new Promise((resolve) => {
+        // Queue this request until refresh completes or fails
+        return new Promise((resolve, reject) => {
           addRefreshSubscriber((newToken: string) => {
             originalRequest.headers.Authorization = `Bearer ${newToken}`;
             resolve(http(originalRequest));
-          });
+          }, reject);
         });
       }
 
@@ -168,7 +180,11 @@ http.interceptors.response.use(
           return http(originalRequest);
         }
       } catch (refreshErr) {
-        // FIX #5: Only logout if refresh was truly an auth failure, not a server hiccup
+        // Unblock all queued requests so their Promises reject immediately
+        // instead of hanging forever when the refresh server is unavailable.
+        drainRefreshSubscribers(refreshErr);
+
+        // Only logout on auth-specific failures (401/403), not transient server errors (5xx)
         const status = (refreshErr as AxiosError)?.response?.status;
         if (!status || status === 401 || status === 403) {
           setAccessToken(null);

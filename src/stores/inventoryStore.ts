@@ -144,10 +144,12 @@ export const useInventoryStore = defineStore('inventory', () => {
     loadingReconciliation.value = true;
     error.value = null;
     try {
-      const result = await inventoryClient.repairDrift();
+      // POST /inventory/reconcile with repair=true — backend fixes all drift and
+      // returns { items: [], total: 0, totalDrift: 0, corrected: N }.
+      const result = await inventoryClient.reconcileStock(true);
       if (result.ok) {
-        repairedCount.value = result.data;
-        // Re-check after repair so the table refreshes
+        repairedCount.value = result.data.corrected ?? 0;
+        // Re-fetch drift list so the table shows the post-repair state.
         await reconcileStock(false);
       } else {
         error.value = result.error.message;

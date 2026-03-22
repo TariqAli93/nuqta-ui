@@ -59,6 +59,12 @@ export interface SettlePayload {
   idempotencyKey?: string;
 }
 
+export interface SettleResult {
+  saleId: number;
+  settledAmount: number;
+  newStatus: string;
+}
+
 export interface SaleReceiptStore {
   companyName: string;
   companyNameAr: string;
@@ -117,19 +123,24 @@ export const salesClient = {
   /** Backend returns { ok: true, data: null } on success */
   cancel: (id: number): Promise<ApiResult<null>> => apiPost<null>(`/sales/${id}/cancel`),
 
-  /** Backend returns { saleId, refundedAmount, newPaidAmount, newRemainingAmount } */
+  /**
+   * Backend returns { saleId, refundedAmount, newPaidAmount, newRemainingAmount, totalRefunded, status }.
+   * NOTE: top-level returnToStock is NOT a valid field (backend has additionalProperties: false).
+   * Use the returnItems array for per-item stock restoration control.
+   * When returnItems is provided with returnToStock=true, inventory is physically restored.
+   */
   refund: (
     id: number,
     amount: number,
     reason?: string,
-    returnToStock = true
+    returnItems?: { saleItemId: number; quantity: number; returnToStock: boolean }[]
   ): Promise<ApiResult<RefundResult>> =>
-    apiPost<RefundResult>(`/sales/${id}/refund`, { amount, reason, returnToStock }),
+    apiPost<RefundResult>(`/sales/${id}/refund`, { amount, reason, returnItems }),
 
   generateReceipt: (id: number): Promise<ApiResult<SaleReceiptData>> =>
     apiGet<SaleReceiptData>(`/sales/${id}/receipt`),
 
-  /** Backend returns { ok: true, data: null } on success */
-  settle: (id: number, payload?: SettlePayload): Promise<ApiResult<null>> =>
-    apiPost<null>(`/sales/${id}/settle`, payload),
+  /** Backend returns { saleId, settledAmount, newStatus } */
+  settle: (id: number, payload?: SettlePayload): Promise<ApiResult<SettleResult>> =>
+    apiPost<SettleResult>(`/sales/${id}/settle`, payload),
 };

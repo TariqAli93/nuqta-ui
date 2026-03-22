@@ -140,10 +140,11 @@ export const accountingClient = {
   /**
    * List reconciliation records.
    * GET /accounting/reconciliations
+   * Backend filters: type ('customer' | 'supplier' | 'account'), status ('open' | 'partially_paid' | 'paid')
    */
   getReconciliations: (params?: {
-    accountId?: number;
-    partnerId?: number;
+    type?: 'customer' | 'supplier' | 'account';
+    status?: 'open' | 'partially_paid' | 'paid';
     limit?: number;
     offset?: number;
   }): Promise<ApiResult<PagedResult<any>>> =>

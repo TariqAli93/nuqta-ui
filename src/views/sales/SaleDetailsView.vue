@@ -13,7 +13,7 @@
         <template #append>
           <div class="d-flex ga-2">
             <v-btn
-              v-if="sale?.status === 'completed'"
+              v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"
               color="warning"
               prepend-icon="mdi-cash-refund"
               :loading="refunding"
@@ -22,7 +22,7 @@
               استرجاع مالي
             </v-btn>
             <v-btn
-              v-if="sale?.status === 'completed'"
+              v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"
               color="deep-orange"
               prepend-icon="mdi-package-variant-closed-remove"
               :loading="refunding"
@@ -42,6 +42,9 @@
             >
               تسوية
             </v-btn>
+            <!-- Cancel is only allowed when no refund payments exist.
+                 Backend blocks cancellation if a refund payment is present
+                 (partial_refund status) to prevent double inventory reversal. -->
             <v-btn
               v-if="sale?.status === 'completed' || sale?.status === 'pending'"
               color="error"
@@ -224,16 +227,33 @@
     </div>
 
     <!-- Refund confirmation dialog -->
-    <v-dialog v-model="refundDialog" max-width="420">
+    <v-dialog v-model="refundDialog" max-width="480">
       <v-card>
         <v-card-title>تأكيد الاسترجاع</v-card-title>
         <v-card-text>
-          <template v-if="refundReturnToStock">
-            هل أنت متأكد من استرجاع هذه الفاتورة؟ سيتم إعادة البضاعة للمخزون وعكس القيود المحاسبية.
-          </template>
-          <template v-else>
-            هل أنت متأكد من الاسترجاع المالي؟ سيتم استرجاع المبلغ فقط بدون إعادة البضاعة للمخزون.
-          </template>
+          <p class="mb-4">
+            <template v-if="refundReturnToStock">
+              سيتم استرجاع المبلغ المحدد وإعادة جميع البضاعة للمخزون وعكس القيود المحاسبية.
+            </template>
+            <template v-else>
+              سيتم استرجاع المبلغ المحدد فقط بدون إعادة البضاعة للمخزون.
+            </template>
+          </p>
+          <v-text-field
+            v-model.number="refundAmount"
+            type="number"
+            label="مبلغ الاسترجاع"
+            variant="outlined"
+            density="comfortable"
+            :min="1"
+            :max="refundableBalance"
+            :hint="`الحد الأقصى: ${formatAmount(refundableBalance)}`"
+            hide-details="auto"
+            :rules="[
+              (v) => v > 0 || 'يجب أن يكون المبلغ أكبر من الصفر',
+              (v) => v <= refundableBalance || 'المبلغ يتجاوز الرصيد القابل للاسترداد',
+            ]"
+          />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -241,6 +261,7 @@
           <v-btn
             :color="refundReturnToStock ? 'deep-orange' : 'warning'"
             :loading="refunding"
+            :disabled="!refundAmount || refundAmount <= 0 || refundAmount > refundableBalance"
             @click="executeRefund"
           >
             {{ refundReturnToStock ? 'استرجاع مع إرجاع البضاعة' : 'استرجاع مالي فقط' }}
@@ -271,9 +292,7 @@
         <v-card-text>
           <p class="mb-4">
             سيتم تسوية المبلغ المتبقي
-            <strong>{{
-              formatAmount((sale?.remainingAmount ?? sale?.total ?? 0) - (sale?.paidAmount ?? 0))
-            }}</strong>
+            <strong>{{ formatAmount(sale?.remainingAmount ?? 0) }}</strong>
             وتحديث حالة الفاتورة.
           </p>
 
@@ -352,6 +371,7 @@ const cancelDialog = ref(false);
 const settleDialog = ref(false);
 const settling = ref(false);
 const refundReturnToStock = ref(true);
+const refundAmount = ref(0);
 
 const settleForm = ref({
   paymentMethod: 'cash' as PaymentMethod,
@@ -379,6 +399,16 @@ const paymentsOnInvoicesEnabled = computed(() => settingsStore.data?.paymentsOnI
 watch(localizedError, (value) => {
   if (!value) return;
   notifyError(value, { dedupeKey: 'sale-details-error' });
+});
+
+/**
+ * Maximum amount that can still be refunded for this sale.
+ * = paidAmount - totalRefundedSoFar
+ * Backend enforces the same rule; this computed is used only for UI hints.
+ */
+const refundableBalance = computed(() => {
+  if (!sale.value) return 0;
+  return Math.max(0, (sale.value.paidAmount ?? 0) - (sale.value.refundedAmount ?? 0));
 });
 
 const profitMarginPct = computed(() => {
@@ -413,6 +443,12 @@ function statusColor(status: string | undefined): string {
       return 'success';
     case 'cancelled':
       return 'error';
+    case 'refunded':
+      return 'error';
+    case 'partial_refund':
+      return 'orange';
+    case 'pending':
+      return 'warning';
     default:
       return 'warning';
   }
@@ -424,6 +460,10 @@ function statusIcon(status: string | undefined): string {
       return 'mdi-check-circle-outline';
     case 'cancelled':
       return 'mdi-close-circle-outline';
+    case 'refunded':
+      return 'mdi-cash-refund';
+    case 'partial_refund':
+      return 'mdi-cash-minus';
     default:
       return 'mdi-clock-outline';
   }
@@ -461,6 +501,8 @@ function expiryLabel(dateStr: string): string {
 
 function openRefundDialog(returnToStock: boolean) {
   refundReturnToStock.value = returnToStock;
+  // Default to the full remaining refundable balance (paidAmount - alreadyRefunded).
+  refundAmount.value = refundableBalance.value;
   refundDialog.value = true;
 }
 
@@ -471,15 +513,27 @@ async function executeRefund() {
   store.error = null;
 
   try {
+    // Build per-item return list when the cashier requested goods return.
+    // Each item with a valid id is included; backend restores inventory per-item (LIFO on batches).
+    const returnItems = refundReturnToStock.value
+      ? (sale.value.items ?? [])
+          .filter((item) => item.id != null)
+          .map((item) => ({
+            saleItemId: item.id!,
+            quantity: item.quantity,
+            returnToStock: true as const,
+          }))
+      : undefined;
+
     const result = await store.refundSale(
       sale.value.id,
-      sale.value.paidAmount ?? 0,
+      refundAmount.value,
       'Refund from sale details view',
-      refundReturnToStock.value
+      returnItems,
     );
     if (result.ok) {
-      sale.value = result.data as unknown as Sale;
       notifySuccess('تم استرجاع الفاتورة');
+      await loadSale();
     } else {
       notifyError(mapErrorToArabic(result.error, 'errors.refundFailed'));
     }

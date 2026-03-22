@@ -72,7 +72,7 @@ export interface Product {
   supplierId?: number | null;
   expireDate?: string | null;
   isExpire?: boolean;
-  status?: 'available' | 'out_of_stock' | 'discontinued';
+  status?: 'available' | 'discontinued' | 'inactive';
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -103,6 +103,8 @@ export interface SaleItem {
   subtotal: number;
   cogs?: number;
   weightedAverageCost?: number;
+  /** Cumulative base-units already returned to stock across partial refunds. */
+  returnedQuantityBase?: number;
   createdAt?: string;
   depletions?: SaleItemDepletion[];
 }
@@ -121,9 +123,9 @@ export interface Sale {
   interestAmount?: number;
   paymentType?: 'cash' | 'credit' | 'mixed';
   paidAmount?: number;
+  refundedAmount?: number;
   remainingAmount?: number;
-  status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial' | 'partial_refund';
-  // ^ 'partial_refund' is the canonical backend enum value; 'partial' kept for compat
+  status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial_refund';
   notes?: string | null;
   idempotencyKey?: string | null;
   createdAt?: string;
@@ -243,16 +245,18 @@ export interface InventoryMovement {
   id?: number;
   productId: number;
   batchId?: number;
+  /** Physical direction of stock change: "in" = increase, "out" = decrease, "adjust" = correction */
   movementType: 'in' | 'out' | 'adjust';
+  /** Semantic reason for the movement */
   reason:
     | 'sale'
     | 'purchase'
     | 'return'
+    | 'refund'
     | 'damage'
     | 'manual'
     | 'opening'
-    | 'adjustment'
-    | 'sale_cancellation'
+    | 'cancellation'
     | string;
   quantityBase: number;
   unitName?: string;

@@ -13,6 +13,10 @@ export interface AccountingCodeSelections {
   apAccountCode: string;
   salesRevenueAccountCode: string;
   cogsAccountCode: string;
+  salaryExpenseAccountCode: string;
+  deductionsLiabilityAccountCode: string;
+  vatInputAccountCode: string;
+  vatOutputAccountCode: string;
 }
 
 export interface AccountingSetupStatus {
