@@ -328,6 +328,23 @@
   'sales.noItems': 'لا توجد عناصر',
   'sales.noItemsHint': 'لم تُضَف عناصر لهذه الفاتورة',
 
+  'suppliers.title': 'الموردين',
+  'suppliers.subtitle': 'إدارة بيانات الموردين والأرصدة',
+  'suppliers.new': 'إضافة مورد',
+  'suppliers.noSuppliers': 'لا يوجد موردين',
+  'suppliers.currentBalance': 'الرصيد الحالي',
+
+  'purchases.title': 'المشتريات',
+  'purchases.subtitle': 'متابعة فواتير الشراء والمدفوعات',
+  'purchases.new': 'عملية شراء جديدة',
+  'purchases.noPurchases': 'لا يوجد مشتريات',
+  'purchases.statusCompleted': 'مكتملة',
+  'purchases.statusPending': 'قيد الانتظار',
+  'purchases.statusCancelled': 'ملغية',
+  'purchases.invoiceNumber': 'رقم الفاتورة',
+  'purchases.total': 'الإجمالي',
+  'purchases.paidAmount': 'المبلغ المدفوع',
+
   'settings.title': 'الإعدادات',
   'settings.subtitle': 'تفضيلات النظام وضبط العملة',
   'settings.keyValue': 'إعدادات القيم',
