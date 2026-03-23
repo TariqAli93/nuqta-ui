@@ -40,7 +40,9 @@
           :placeholder="t('pos.searchPlaceholder')"
           prepend-inner-icon="mdi-barcode-scan"
           @update:model-value="handleSearch"
-          @keydown.enter.prevent="handleSearchSubmit"
+          @keydown.enter.prevent="handleSearchOrSelectSubmit"
+          @keydown.down.prevent="highlightNext"
+          @keydown.up.prevent="highlightPrev"
           @click:clear="clearSearch"
           :autofocus="false"
         />
@@ -84,7 +86,7 @@
 
       <template v-else-if="filteredProducts.length > 0">
         <v-col
-          v-for="product in filteredProducts"
+          v-for="(product, pIdx) in filteredProducts"
           :key="product.id"
           cols="6"
           sm="4"
@@ -92,7 +94,11 @@
           lg="2"
           xl="2"
         >
-          <ProductTile :product="product" @select="handleAddToCart" />
+          <ProductTile
+            :product="product"
+            :class="{ 'pos-highlight': pIdx === highlightedProductIndex }"
+            @select="handleAddToCart"
+          />
         </v-col>
       </template>
     </v-row>
@@ -110,10 +116,10 @@
 
       <template v-else-if="filteredProducts.length > 0">
         <ProductListItem
-          v-for="product in filteredProducts"
+          v-for="(product, pIdx) in filteredProducts"
           :key="product.id"
           :product="product"
-          class="mb-2"
+          :class="['mb-2', { 'pos-highlight': pIdx === highlightedProductIndex }]"
           @select="handleAddToCart"
         />
       </template>
@@ -433,6 +439,8 @@ import { usePosCart } from '@/composables/usePosCart';
 import { usePosHeldSales, type HeldSale } from '@/composables/usePosHeldSales';
 import { usePosSettingsStore, useSystemSettingsStore } from '@/stores/settings';
 import { createReceiptPrintData, printReceiptModern } from '@/modules/pos/receiptPrint';
+import { usePosFocus } from '@/composables/usePosFocus';
+import { usePosPaymentFlow } from '@/composables/usePosPaymentFlow';
 
 const productsStore = useProductsStore();
 const salesStore = useSalesStore();
@@ -450,7 +458,6 @@ type TextFieldRef = {
 };
 
 const searchField = ref<TextFieldRef | null>(null);
-const searchInput = ref<HTMLInputElement | null>(null);
 const searchQuery = ref('');
 const selectedCategory = ref<number | null>(null);
 const dbCategories = ref<Category[]>([]);
@@ -476,8 +483,16 @@ const {
   trackProductPrice,
 } = usePosCart();
 
-const isProcessingPayment = ref(false);
-const payOpen = ref(false);
+// Payment flow composable — handles overlay state, processing lock, double-submit guard
+const {
+  payOpen,
+  isProcessing: isProcessingPayment,
+  openPayment,
+  closePayment,
+  beginProcessing,
+  endProcessing,
+  dispose: disposePaymentFlow,
+} = usePosPaymentFlow();
 
 const showClearConfirm = ref(false);
 const showRemoveConfirm = ref(false);
@@ -498,6 +513,9 @@ const stockAlertProducts = ref<string[]>([]);
 const pendingRemoveIndex = ref<number | null>(null);
 const pendingZeroPriceProduct = ref<Product | null>(null);
 const pendingDeleteHeldIndex = ref<number | null>(null);
+
+// Keyboard navigation: highlighted product index in filtered results
+const highlightedProductIndex = ref(-1);
 const customerSearch = ref('');
 const discountInput = ref(0);
 const noteInput = ref('');
@@ -529,8 +547,38 @@ const scanner = useGlobalBarcodeScanner({
   idleTimeoutMs: 180,
 });
 
+/**
+ * Unified add-to-cart handler. All entry points (barcode, tile click, search submit)
+ * go through this single function to prevent behavioral drift.
+ *
+ * Returns true if the product was added (or zero-price dialog was triggered).
+ */
+async function safeAddToCart(product: Product, options?: { notify?: boolean }): Promise<boolean> {
+  const result = await addToCart(product);
+
+  if (result === 'zero-price') {
+    pendingZeroPriceProduct.value = product;
+    showZeroPriceConfirm.value = true;
+    return true; // flow continues via dialog
+  }
+
+  if (result) {
+    if (options?.notify !== false) {
+      showScanSuccess(product.name);
+    }
+    focusSearchInput();
+    return true;
+  }
+
+  return false;
+}
+
+// Template-bound handler for ProductTile/ProductListItem @select
+async function handleAddToCart(product: Product) {
+  await safeAddToCart(product, { notify: false });
+}
+
 async function handleBarcodeScan(barcode: string) {
-  // Find product by barcode
   const product = await productsStore.findProductByBarcode(barcode);
 
   if (!product) {
@@ -543,24 +591,7 @@ async function handleBarcodeScan(barcode: string) {
     return;
   }
 
-  // Add to cart
-  const result = await addToCart(product);
-  if (result === 'zero-price') {
-    pendingZeroPriceProduct.value = product;
-    showZeroPriceConfirm.value = true;
-    return;
-  }
-  if (result) {
-    showScanSuccess(product.name);
-  }
-}
-
-async function handleAddToCart(product: Product) {
-  const result = await addToCart(product);
-  if (result === 'zero-price') {
-    pendingZeroPriceProduct.value = product;
-    showZeroPriceConfirm.value = true;
-  }
+  await safeAddToCart(product);
 }
 
 async function confirmZeroPriceAdd() {
@@ -569,12 +600,14 @@ async function confirmZeroPriceAdd() {
   pendingZeroPriceProduct.value = null;
   if (product) {
     await addToCart(product, true);
+    focusSearchInput();
   }
 }
 
 function cancelZeroPriceAdd() {
   showZeroPriceConfirm.value = false;
   pendingZeroPriceProduct.value = null;
+  focusSearchInput();
 }
 
 const categories = computed(() => {
@@ -681,28 +714,24 @@ function extractUnavailableProducts(details: unknown): string[] {
 // Cart operations simply track what the user wants to buy.
 // Product stock numbers are refreshed from the DB after each sale.
 
-const resolveSearchInput = () => {
-  searchInput.value =
-    (searchField.value?.$el?.querySelector('input') as HTMLInputElement | null) ?? null;
-};
+// Focus management composable — centralizes search input focus restoration
+const { resolveSearchInput, requestFocus, forceFocus } = usePosFocus(searchField, anyDialogOpen);
 
-const focusSearchInput = () => {
-  if (!searchInput.value) {
-    resolveSearchInput();
-  }
-  searchInput.value?.focus();
-};
+// Backward-compatible alias used throughout the component
+const focusSearchInput = requestFocus;
 
 function selectCategory(id: number | null) {
   selectedCategory.value = id;
+  highlightedProductIndex.value = -1;
 }
 
 function handleSearch() {
-  return;
+  highlightedProductIndex.value = -1;
 }
 
 function clearSearch() {
   searchQuery.value = '';
+  highlightedProductIndex.value = -1;
 }
 
 function normalizeSearchToken(value: string): string {
@@ -754,17 +783,39 @@ async function handleSearchSubmit() {
     return;
   }
 
-  const result = await addToCart(product);
-
-  if (result === 'zero-price') {
-    pendingZeroPriceProduct.value = product;
-    showZeroPriceConfirm.value = true;
-  } else if (result) {
-    showScanSuccess(product.name);
-  }
-
+  await safeAddToCart(product);
   clearSearch();
   focusSearchInput();
+}
+
+// Keyboard navigation: arrow keys move highlight, Enter selects highlighted or falls back to search submit
+function highlightNext() {
+  const max = filteredProducts.value.length - 1;
+  if (max < 0) return;
+  highlightedProductIndex.value = Math.min(highlightedProductIndex.value + 1, max);
+}
+
+function highlightPrev() {
+  if (highlightedProductIndex.value <= 0) {
+    highlightedProductIndex.value = -1;
+    return;
+  }
+  highlightedProductIndex.value -= 1;
+}
+
+async function handleSearchOrSelectSubmit() {
+  // If a product is highlighted via arrow keys, select it
+  if (highlightedProductIndex.value >= 0) {
+    const product = filteredProducts.value[highlightedProductIndex.value];
+    if (product) {
+      await safeAddToCart(product);
+      highlightedProductIndex.value = -1;
+      clearSearch();
+      return;
+    }
+  }
+  // Otherwise fall back to barcode/SKU exact-match search
+  await handleSearchSubmit();
 }
 
 function handleDecreaseQuantity(index: number) {
@@ -806,7 +857,7 @@ function openClearConfirmDialog() {
 function confirmClear() {
   showClearConfirm.value = false;
   resetSaleData();
-  setTimeout(() => focusSearchInput(), 100);
+  focusSearchInput();
 }
 
 function resetSaleData() {
@@ -880,7 +931,7 @@ function confirmHold() {
   resetSaleData();
 
   showHoldDialog.value = false;
-  setTimeout(() => focusSearchInput(), 100);
+  focusSearchInput();
 }
 
 function openResumeDialog() {
@@ -892,8 +943,13 @@ function resumeHeldSale(index: number) {
   const sale = resumeHeldSaleFromStore(index);
   if (!sale) return;
 
+  // Deep clone all mutable data to prevent shared reference mutations.
+  // resumeHeldSaleFromStore already returns a JSON clone, but we clone items
+  // again defensively since they become the live cart array.
+  const clonedItems: SaleItem[] = JSON.parse(JSON.stringify(sale.items));
+
   // Restore cart state from the held sale
-  cartItems.value = sale.items;
+  cartItems.value = clonedItems;
   discount.value = sale.discount;
   tax.value = sale.tax;
   selectedCustomerId.value = sale.customerId;
@@ -901,14 +957,12 @@ function resumeHeldSale(index: number) {
 
   // Populate unit caches for resumed items
   for (const item of cartItems.value) {
-    const product = productsStore.items.find((p) => p.id === item.productId);
-    if (product) {
-      trackProductPrice(item.productId);
-    }
+    trackProductPrice(item.productId);
   }
   void ensureUnitsCached();
 
   showResumeDialog.value = false;
+  focusSearchInput();
 }
 
 function onDeleteHeldSale(index: number) {
@@ -939,7 +993,7 @@ function resetSale() {
   } else {
     resetSaleData();
     showMoreDialog.value = false;
-    setTimeout(() => focusSearchInput(), 100);
+    focusSearchInput();
   }
 }
 
@@ -947,12 +1001,12 @@ function confirmReset() {
   showResetConfirm.value = false;
   resetSaleData();
   showMoreDialog.value = false;
-  setTimeout(() => focusSearchInput(), 100);
+  focusSearchInput();
 }
 
 function handlePay() {
-  if (cartItems.value.length === 0 || isProcessingPayment.value) return;
-  payOpen.value = true;
+  if (cartItems.value.length === 0) return;
+  openPayment();
 }
 
 async function triggerAfterPay(saleId: number): Promise<string | undefined> {
@@ -1034,7 +1088,7 @@ async function printSaleReceipt(
 }
 
 async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
-  if (cartItems.value.length === 0 || isProcessingPayment.value) return;
+  if (cartItems.value.length === 0) return;
 
   const appliedDiscount = Math.min(
     Math.max(overlayPayload.discount ?? discount.value, 0),
@@ -1054,7 +1108,10 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
     return;
   }
 
-  isProcessingPayment.value = true;
+  // Double-submit guard: beginProcessing returns false if already processing
+  if (!beginProcessing()) return;
+
+  let success = false;
 
   try {
     const invoiceNumber = `فاتورة-${Date.now()}`;
@@ -1112,9 +1169,9 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
       };
 
       resetSaleData();
-      payOpen.value = false;
+      success = true;
 
-      setTimeout(() => focusSearchInput(), 100);
+      focusSearchInput();
 
       // Refresh product stock from backend
       void productsStore.fetchProducts();
@@ -1136,13 +1193,13 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
   } catch {
     notifyError(t('errors.unexpected'));
   } finally {
-    isProcessingPayment.value = false;
+    endProcessing(success);
   }
 }
 
 function handleEscapeShortcut(): void {
   if (payOpen.value) {
-    payOpen.value = false;
+    closePayment();
   } else if (showClearConfirm.value) {
     showClearConfirm.value = false;
   } else if (showRemoveConfirm.value) {
@@ -1184,6 +1241,7 @@ const shortcutHelpItems = [
   { key: 'F9', label: t('pos.shortcutClear') },
   { key: 'Esc', label: t('pos.shortcutCancel') },
   { key: 'Enter', label: t('pos.shortcutAddItem') },
+  { key: '↑↓', label: t('pos.shortcutNavigate') },
 ];
 
 useKeyboardShortcuts([
@@ -1254,8 +1312,10 @@ useKeyboardShortcuts([
     label: t('pos.shortcutAddItem'),
     preventDefault: false,
     handler: () => {
-      if (anyDialogOpen.value || !searchQuery.value.trim()) return;
-      void handleSearchSubmit();
+      if (anyDialogOpen.value) return;
+      if (highlightedProductIndex.value >= 0 || searchQuery.value.trim()) {
+        void handleSearchOrSelectSubmit();
+      }
     },
   },
 ]);
@@ -1274,7 +1334,7 @@ onMounted(async () => {
   // Wait for DOM to fully render, then resolve and focus search input for immediate barcode scanning
   await nextTick();
   resolveSearchInput();
-  focusSearchInput();
+  forceFocus();
 
   // Load products and categories in parallel for faster startup
   await Promise.all([
@@ -1290,7 +1350,15 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  // Stop scanner when leaving POS page
   scanner.stop();
+  disposePaymentFlow();
 });
 </script>
+
+<style scoped>
+.pos-highlight {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+</style>

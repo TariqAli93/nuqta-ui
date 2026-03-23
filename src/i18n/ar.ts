@@ -88,6 +88,7 @@
   'pos.shortcutClear': 'مسح السلة',
   'pos.shortcutCancel': 'إلغاء',
   'pos.shortcutAddItem': 'إضافة منتج',
+  'pos.shortcutNavigate': 'التنقل بين المنتجات',
 
   'layout.sseConnected': 'متصل بالخادم',
   'layout.sseDisconnected': 'غير متصل بالخادم',
