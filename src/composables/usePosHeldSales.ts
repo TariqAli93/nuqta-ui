@@ -59,12 +59,10 @@ export function usePosHeldSales() {
   }
 
   function deleteHeldSale(index: number): boolean {
-    if (confirm(t('pos.confirmDeleteHeldSale'))) {
-      heldSales.value.splice(index, 1);
-      saveHeldSales();
-      return true;
-    }
-    return false;
+    if (index < 0 || index >= heldSales.value.length) return false;
+    heldSales.value.splice(index, 1);
+    saveHeldSales();
+    return true;
   }
 
   function heldSaleName(sale: HeldSale, index: number): string {

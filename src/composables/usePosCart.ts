@@ -61,7 +61,7 @@ export function usePosCart() {
     }
   }
 
-  async function addToCart(product: Product): Promise<boolean> {
+  async function addToCart(product: Product, skipZeroPriceCheck = false): Promise<boolean | 'zero-price'> {
     const productId = product.id ?? 0;
 
     const units = await fetchProductUnits(productId);
@@ -74,9 +74,8 @@ export function usePosCart() {
 
     productBasePrices.value.set(productId, product.sellingPrice);
 
-    if (unitPrice <= 0) {
-      const proceed = confirm(t('pos.zeroPriceWarning'));
-      if (!proceed) return false;
+    if (unitPrice <= 0 && !skipZeroPriceCheck) {
+      return 'zero-price';
     }
 
     const existingIndex = cartItems.value.findIndex(

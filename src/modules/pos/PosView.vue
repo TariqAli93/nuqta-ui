@@ -86,15 +86,13 @@
         <v-col
           v-for="product in filteredProducts"
           :key="product.id"
-          cols="12"
-          xs="12"
-          sm="12"
-          md="6"
+          cols="6"
+          sm="4"
+          md="3"
           lg="2"
           xl="2"
-          xxl="2"
         >
-          <ProductTile :product="product" @select="addToCart" />
+          <ProductTile :product="product" @select="handleAddToCart" />
         </v-col>
       </template>
     </v-row>
@@ -116,7 +114,7 @@
           :key="product.id"
           :product="product"
           class="mb-2"
-          @select="addToCart"
+          @select="handleAddToCart"
         />
       </template>
     </div>
@@ -168,6 +166,39 @@
       <v-card-actions class="pa-0 mt-6 justify-end ga-2">
         <v-btn variant="text" @click="cancelRemove">{{ t('common.cancel') }}</v-btn>
         <v-btn color="error" variant="flat" @click="confirmRemove">{{ t('common.delete') }}</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="showZeroPriceConfirm" max-width="420" :fullscreen="$vuetify.display.xs">
+    <v-card rounded="lg" class="pa-6">
+      <v-card-title class="text-h6 pa-0">{{ t('pos.zeroPriceTitle') }}</v-card-title>
+      <v-card-text class="pa-0 mt-4">{{ t('pos.zeroPriceWarning') }}</v-card-text>
+      <v-card-actions class="pa-0 mt-6 justify-end ga-2">
+        <v-btn variant="text" @click="cancelZeroPriceAdd">{{ t('common.cancel') }}</v-btn>
+        <v-btn color="warning" variant="flat" @click="confirmZeroPriceAdd">{{ t('common.confirm') }}</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="showDeleteHeldConfirm" max-width="420" :fullscreen="$vuetify.display.xs">
+    <v-card rounded="lg" class="pa-6">
+      <v-card-title class="text-h6 pa-0">{{ t('pos.deleteHeldTitle') }}</v-card-title>
+      <v-card-text class="pa-0 mt-4">{{ t('pos.confirmDeleteHeldSale') }}</v-card-text>
+      <v-card-actions class="pa-0 mt-6 justify-end ga-2">
+        <v-btn variant="text" @click="cancelDeleteHeld">{{ t('common.cancel') }}</v-btn>
+        <v-btn color="error" variant="flat" @click="confirmDeleteHeld">{{ t('common.delete') }}</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="showResetConfirm" max-width="420" :fullscreen="$vuetify.display.xs">
+    <v-card rounded="lg" class="pa-6">
+      <v-card-title class="text-h6 pa-0">{{ t('pos.resetSaleTitle') }}</v-card-title>
+      <v-card-text class="pa-0 mt-4">{{ t('pos.confirmResetSale') }}</v-card-text>
+      <v-card-actions class="pa-0 mt-6 justify-end ga-2">
+        <v-btn variant="text" @click="showResetConfirm = false">{{ t('common.cancel') }}</v-btn>
+        <v-btn color="error" variant="flat" @click="confirmReset">{{ t('common.confirm') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -308,7 +339,7 @@
                 size="small"
                 variant="text"
                 color="error"
-                @click.stop="deleteHeldSale(index)"
+                @click.stop="onDeleteHeldSale(index)"
               >
                 <v-icon size="20">mdi-delete</v-icon>
               </v-btn>
@@ -399,6 +430,7 @@ import { useLayoutStore } from '@/stores/layout';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import PosShortcutsHelp from '@/components/pos/PosShortcutsHelp.vue';
 import { usePosCart } from '@/composables/usePosCart';
+import { usePosHeldSales, type HeldSale } from '@/composables/usePosHeldSales';
 import { usePosSettingsStore, useSystemSettingsStore } from '@/stores/settings';
 import { createReceiptPrintData, printReceiptModern } from '@/modules/pos/receiptPrint';
 
@@ -457,25 +489,19 @@ const showResumeDialog = ref(false);
 const showMoreDialog = ref(false);
 const showStockAlert = ref(false);
 const showShortcutsHelp = ref(false);
+const showZeroPriceConfirm = ref(false);
+const showDeleteHeldConfirm = ref(false);
+const showResetConfirm = ref(false);
 const stockAlertMessage = ref('');
 const stockAlertProducts = ref<string[]>([]);
 
 const pendingRemoveIndex = ref<number | null>(null);
+const pendingZeroPriceProduct = ref<Product | null>(null);
+const pendingDeleteHeldIndex = ref<number | null>(null);
 const customerSearch = ref('');
 const discountInput = ref(0);
 const noteInput = ref('');
 const holdName = ref('');
-
-interface HeldSale {
-  name: string;
-  items: SaleItem[];
-  discount: number;
-  tax: number;
-  customerId: number | null;
-  note: string | null;
-  total: number;
-  timestamp: number;
-}
 
 type PaymentOverlayPayload = {
   paid: number;
@@ -485,7 +511,14 @@ type PaymentOverlayPayload = {
   referenceNumber?: string;
 };
 
-const heldSales = ref<HeldSale[]>([]);
+const {
+  heldSales,
+  loadHeldSales,
+  holdSale,
+  resumeSale: resumeHeldSaleFromStore,
+  deleteHeldSale: deleteHeldSaleFromStore,
+  heldSaleName,
+} = usePosHeldSales();
 
 // Global barcode scanner integration
 const scanner = useGlobalBarcodeScanner({
@@ -511,10 +544,37 @@ async function handleBarcodeScan(barcode: string) {
   }
 
   // Add to cart
-  const success = await addToCart(product);
-  if (success) {
+  const result = await addToCart(product);
+  if (result === 'zero-price') {
+    pendingZeroPriceProduct.value = product;
+    showZeroPriceConfirm.value = true;
+    return;
+  }
+  if (result) {
     showScanSuccess(product.name);
   }
+}
+
+async function handleAddToCart(product: Product) {
+  const result = await addToCart(product);
+  if (result === 'zero-price') {
+    pendingZeroPriceProduct.value = product;
+    showZeroPriceConfirm.value = true;
+  }
+}
+
+async function confirmZeroPriceAdd() {
+  const product = pendingZeroPriceProduct.value;
+  showZeroPriceConfirm.value = false;
+  pendingZeroPriceProduct.value = null;
+  if (product) {
+    await addToCart(product, true);
+  }
+}
+
+function cancelZeroPriceAdd() {
+  showZeroPriceConfirm.value = false;
+  pendingZeroPriceProduct.value = null;
 }
 
 const categories = computed(() => {
@@ -572,7 +632,10 @@ const anyDialogOpen = computed(() => {
     showHoldDialog.value ||
     showResumeDialog.value ||
     showMoreDialog.value ||
-    showShortcutsHelp.value
+    showShortcutsHelp.value ||
+    showZeroPriceConfirm.value ||
+    showDeleteHeldConfirm.value ||
+    showResetConfirm.value
   );
 });
 
@@ -614,10 +677,6 @@ function extractUnavailableProducts(details: unknown): string[] {
   return cartItems.value.map((item) => item.productName).filter((n): n is string => !!n);
 }
 
-function heldSaleName(sale: HeldSale, index: number): string {
-  return sale.name || `عملية ${index + 1}`;
-}
-
 // Stock is managed by the backend via inventory movements.
 // Cart operations simply track what the user wants to buy.
 // Product stock numbers are refreshed from the DB after each sale.
@@ -631,26 +690,7 @@ const focusSearchInput = () => {
   if (!searchInput.value) {
     resolveSearchInput();
   }
-};
-
-const loadHeldSales = () => {
-  try {
-    const stored = localStorage.getItem('nuqta_held_sales');
-    if (stored) {
-      heldSales.value = JSON.parse(stored);
-    }
-  } catch {
-    heldSales.value = [];
-    notifyError(t('errors.unexpected'));
-  }
-};
-
-const saveHeldSales = () => {
-  try {
-    localStorage.setItem('nuqta_held_sales', JSON.stringify(heldSales.value));
-  } catch {
-    notifyError(t('errors.unexpected'));
-  }
+  searchInput.value?.focus();
 };
 
 function selectCategory(id: number | null) {
@@ -714,9 +754,12 @@ async function handleSearchSubmit() {
     return;
   }
 
-  const success = await addToCart(product);
+  const result = await addToCart(product);
 
-  if (success) {
+  if (result === 'zero-price') {
+    pendingZeroPriceProduct.value = product;
+    showZeroPriceConfirm.value = true;
+  } else if (result) {
     showScanSuccess(product.name);
   }
 
@@ -823,7 +866,7 @@ function handleHold() {
 }
 
 function confirmHold() {
-  const heldSale: HeldSale = {
+  holdSale({
     name: holdName.value.trim() || `عملية ${heldSales.value.length + 1}`,
     items: JSON.parse(JSON.stringify(cartItems.value)),
     discount: discount.value,
@@ -832,10 +875,7 @@ function confirmHold() {
     note: saleNote.value,
     total: total.value,
     timestamp: Date.now(),
-  };
-
-  heldSales.value.push(heldSale);
-  saveHeldSales();
+  });
 
   resetSaleData();
 
@@ -849,11 +889,11 @@ function openResumeDialog() {
 }
 
 function resumeHeldSale(index: number) {
-  const sale = heldSales.value[index];
+  const sale = resumeHeldSaleFromStore(index);
   if (!sale) return;
 
-  // Note: Stock was already decreased when sale was held, so we don't adjust again
-  cartItems.value = JSON.parse(JSON.stringify(sale.items));
+  // Restore cart state from the held sale
+  cartItems.value = sale.items;
   discount.value = sale.discount;
   tax.value = sale.tax;
   selectedCustomerId.value = sale.customerId;
@@ -868,16 +908,25 @@ function resumeHeldSale(index: number) {
   }
   void ensureUnitsCached();
 
-  heldSales.value.splice(index, 1);
-  saveHeldSales();
   showResumeDialog.value = false;
 }
 
-function deleteHeldSale(index: number) {
-  if (confirm(t('pos.confirmDeleteHeldSale'))) {
-    heldSales.value.splice(index, 1);
-    saveHeldSales();
+function onDeleteHeldSale(index: number) {
+  pendingDeleteHeldIndex.value = index;
+  showDeleteHeldConfirm.value = true;
+}
+
+function confirmDeleteHeld() {
+  if (pendingDeleteHeldIndex.value !== null) {
+    deleteHeldSaleFromStore(pendingDeleteHeldIndex.value);
   }
+  showDeleteHeldConfirm.value = false;
+  pendingDeleteHeldIndex.value = null;
+}
+
+function cancelDeleteHeld() {
+  showDeleteHeldConfirm.value = false;
+  pendingDeleteHeldIndex.value = null;
 }
 
 function openMoreDialog() {
@@ -886,16 +935,19 @@ function openMoreDialog() {
 
 function resetSale() {
   if (cartItems.value.length > 0) {
-    if (confirm(t('pos.confirmResetSale'))) {
-      resetSaleData();
-      showMoreDialog.value = false;
-      setTimeout(() => focusSearchInput(), 100);
-    }
+    showResetConfirm.value = true;
   } else {
     resetSaleData();
     showMoreDialog.value = false;
     setTimeout(() => focusSearchInput(), 100);
   }
+}
+
+function confirmReset() {
+  showResetConfirm.value = false;
+  resetSaleData();
+  showMoreDialog.value = false;
+  setTimeout(() => focusSearchInput(), 100);
 }
 
 function handlePay() {
@@ -1077,10 +1129,12 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
         const unavailableNames = extractUnavailableProducts(details);
         stockAlertProducts.value = unavailableNames;
         showStockAlert.value = true;
+      } else {
+        notifyError(mapErrorToArabic(result.error, 'errors.unexpected'));
       }
     }
   } catch {
-    // Error is handled in the store action, so we just ensure the UI state is reset here
+    notifyError(t('errors.unexpected'));
   } finally {
     isProcessingPayment.value = false;
   }
@@ -1107,6 +1161,12 @@ function handleEscapeShortcut(): void {
     showMoreDialog.value = false;
   } else if (showShortcutsHelp.value) {
     showShortcutsHelp.value = false;
+  } else if (showZeroPriceConfirm.value) {
+    cancelZeroPriceAdd();
+  } else if (showDeleteHeldConfirm.value) {
+    cancelDeleteHeld();
+  } else if (showResetConfirm.value) {
+    showResetConfirm.value = false;
   } else if (searchQuery.value) {
     clearSearch();
   } else {
@@ -1117,8 +1177,11 @@ function handleEscapeShortcut(): void {
 const shortcutHelpItems = [
   { key: 'F1', label: t('pos.shortcutHelp') },
   { key: 'F2', label: t('pos.shortcutHoldSale') },
+  { key: 'F3', label: t('pos.resumeSale') },
+  { key: 'F4', label: t('pos.customer') },
   { key: 'F5', label: t('pos.shortcutPayment') },
-  { key: 'F8', label: t('pos.shortcutClear') },
+  { key: 'F8', label: t('pos.discount') },
+  { key: 'F9', label: t('pos.shortcutClear') },
   { key: 'Esc', label: t('pos.shortcutCancel') },
   { key: 'Enter', label: t('pos.shortcutAddItem') },
 ];
@@ -1140,6 +1203,22 @@ useKeyboardShortcuts([
     },
   },
   {
+    key: 'F3',
+    label: t('pos.resumeSale'),
+    handler: () => {
+      if (anyDialogOpen.value) return;
+      openResumeDialog();
+    },
+  },
+  {
+    key: 'F4',
+    label: t('pos.customer'),
+    handler: () => {
+      if (anyDialogOpen.value) return;
+      openCustomerDialog();
+    },
+  },
+  {
     key: 'F5',
     label: t('pos.shortcutPayment'),
     handler: () => {
@@ -1149,6 +1228,14 @@ useKeyboardShortcuts([
   },
   {
     key: 'F8',
+    label: t('pos.discount'),
+    handler: () => {
+      if (anyDialogOpen.value) return;
+      openDiscountDialog();
+    },
+  },
+  {
+    key: 'F9',
     label: t('pos.shortcutClear'),
     handler: () => {
       if (anyDialogOpen.value || cartItems.value.length === 0) return;
