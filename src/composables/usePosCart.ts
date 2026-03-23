@@ -9,6 +9,12 @@ import type { ProductUnit } from '@/types/domain';
 import { productsClient } from '@/api';
 import { t } from '@/i18n/t';
 
+/** Result of an addToCart operation */
+export type AddToCartResult =
+  | { status: 'success' }
+  | { status: 'zero-price' }
+  | { status: 'failed' };
+
 export function usePosCart() {
   const cartItems = ref<SaleItem[]>([]);
 
@@ -61,7 +67,7 @@ export function usePosCart() {
     }
   }
 
-  async function addToCart(product: Product, skipZeroPriceCheck = false): Promise<boolean | 'zero-price'> {
+  async function addToCart(product: Product, skipZeroPriceCheck = false): Promise<AddToCartResult> {
     const productId = product.id ?? 0;
 
     const units = await fetchProductUnits(productId);
@@ -75,7 +81,7 @@ export function usePosCart() {
     productBasePrices.value.set(productId, product.sellingPrice);
 
     if (unitPrice <= 0 && !skipZeroPriceCheck) {
-      return 'zero-price';
+      return { status: 'zero-price' };
     }
 
     const existingIndex = cartItems.value.findIndex(
@@ -101,7 +107,7 @@ export function usePosCart() {
       });
     }
 
-    return true;
+    return { status: 'success' };
   }
 
   function handleUnitChange(payload: { index: number; unit: ProductUnit }) {

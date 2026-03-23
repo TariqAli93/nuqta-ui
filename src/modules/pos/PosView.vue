@@ -431,7 +431,7 @@ import { categoriesClient, posClient } from '@/api';
 import { useGlobalBarcodeScanner } from '@/composables/useGlobalBarcodeScanner';
 import MoneyInput from '@/components/shared/MoneyInput.vue';
 import { generateIdempotencyKey } from '@/utils/idempotency';
-import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/notify';
+import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 import { useLayoutStore } from '@/stores/layout';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import PosShortcutsHelp from '@/components/pos/PosShortcutsHelp.vue';
@@ -554,15 +554,15 @@ const scanner = useGlobalBarcodeScanner({
  * Returns true if the product was added (or zero-price dialog was triggered).
  */
 async function safeAddToCart(product: Product, options?: { notify?: boolean }): Promise<boolean> {
-  const result = await addToCart(product);
+  const { status } = await addToCart(product);
 
-  if (result === 'zero-price') {
+  if (status === 'zero-price') {
     pendingZeroPriceProduct.value = product;
     showZeroPriceConfirm.value = true;
     return true; // flow continues via dialog
   }
 
-  if (result) {
+  if (status === 'success') {
     if (options?.notify !== false) {
       showScanSuccess(product.name);
     }
@@ -579,7 +579,13 @@ async function handleAddToCart(product: Product) {
 }
 
 async function handleBarcodeScan(barcode: string) {
-  const product = await productsStore.findProductByBarcode(barcode);
+  let product: Product | null | undefined;
+  try {
+    product = await productsStore.findProductByBarcode(barcode);
+  } catch {
+    showScanError();
+    return;
+  }
 
   if (!product) {
     showScanError();
@@ -715,7 +721,7 @@ function extractUnavailableProducts(details: unknown): string[] {
 // Product stock numbers are refreshed from the DB after each sale.
 
 // Focus management composable — centralizes search input focus restoration
-const { resolveSearchInput, requestFocus, forceFocus } = usePosFocus(searchField, anyDialogOpen);
+const { resolveSearchInput, requestFocus, forceFocus, blurSearch } = usePosFocus(searchField, anyDialogOpen);
 
 // Backward-compatible alias used throughout the component
 const focusSearchInput = requestFocus;
@@ -726,6 +732,7 @@ function selectCategory(id: number | null) {
 }
 
 function handleSearch() {
+  // Reset highlight on every keystroke to avoid stale index pointing past new results
   highlightedProductIndex.value = -1;
 }
 
@@ -789,10 +796,19 @@ async function handleSearchSubmit() {
 }
 
 // Keyboard navigation: arrow keys move highlight, Enter selects highlighted or falls back to search submit
+function scrollHighlightedIntoView() {
+  if (highlightedProductIndex.value < 0) return;
+  void nextTick(() => {
+    const el = document.querySelector('.pos-highlight');
+    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
+}
+
 function highlightNext() {
   const max = filteredProducts.value.length - 1;
   if (max < 0) return;
   highlightedProductIndex.value = Math.min(highlightedProductIndex.value + 1, max);
+  scrollHighlightedIntoView();
 }
 
 function highlightPrev() {
@@ -801,18 +817,24 @@ function highlightPrev() {
     return;
   }
   highlightedProductIndex.value -= 1;
+  scrollHighlightedIntoView();
 }
 
 async function handleSearchOrSelectSubmit() {
   // If a product is highlighted via arrow keys, select it
-  if (highlightedProductIndex.value >= 0) {
-    const product = filteredProducts.value[highlightedProductIndex.value];
+  const idx = highlightedProductIndex.value;
+  if (idx >= 0 && idx < filteredProducts.value.length) {
+    const product = filteredProducts.value[idx];
     if (product) {
       await safeAddToCart(product);
       highlightedProductIndex.value = -1;
       clearSearch();
       return;
     }
+  }
+  // Reset stale highlight if somehow out of bounds
+  if (idx >= filteredProducts.value.length) {
+    highlightedProductIndex.value = -1;
   }
   // Otherwise fall back to barcode/SKU exact-match search
   await handleSearchSubmit();
@@ -1227,7 +1249,7 @@ function handleEscapeShortcut(): void {
   } else if (searchQuery.value) {
     clearSearch();
   } else {
-    searchInput.value?.blur();
+    blurSearch();
   }
 }
 
@@ -1321,9 +1343,13 @@ useKeyboardShortcuts([
 ]);
 
 async function loadCategories() {
-  const result = await categoriesClient.getAll({});
-  if (result.ok && result.data) {
-    dbCategories.value = Array.isArray(result.data) ? result.data : [];
+  try {
+    const result = await categoriesClient.getAll({});
+    if (result.ok && result.data) {
+      dbCategories.value = Array.isArray(result.data) ? result.data : [];
+    }
+  } catch {
+    // Categories are non-critical — POS works without them
   }
 }
 
@@ -1337,7 +1363,8 @@ onMounted(async () => {
   forceFocus();
 
   // Load products and categories in parallel for faster startup
-  await Promise.all([
+  // Use allSettled so a single failure doesn't block the rest
+  await Promise.allSettled([
     productsStore.fetchProducts(),
     loadCategories(),
     settingsStore.fetchCompanySettings(),

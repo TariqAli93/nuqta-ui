@@ -43,9 +43,17 @@ export function usePosFocus(
     searchInput?.focus();
   }
 
+  /**
+   * Blur the search input (e.g. on Escape when no dialog is open).
+   */
+  function blurSearch(): void {
+    searchInput?.blur();
+  }
+
   return {
     resolveSearchInput,
     requestFocus,
     forceFocus,
+    blurSearch,
   };
 }
