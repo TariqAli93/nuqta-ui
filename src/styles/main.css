@@ -148,6 +148,7 @@ body,
   gap: var(--ds-space-4);
   flex-wrap: wrap;
   min-height: 48px;
+  background: rgb(var(--v-theme-surface)) !important;
 }
 
 .ds-page-header-block .ds-page-header__actions {

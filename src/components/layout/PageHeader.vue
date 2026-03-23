@@ -1,23 +1,21 @@
 <template>
-  <div class="ds-page-header-block">
-    <div class="d-flex align-center ga-3">
-      <v-btn
-        v-if="showBack"
-        icon="mdi-arrow-right"
-        variant="text"
-        size="small"
-        @click="onBack"
-      />
-      <div>
-        <div class="win-title">{{ title }}</div>
-        <div v-if="subtitle" class="win-subtitle">{{ subtitle }}</div>
+  <v-app-bar border="0" density="comfortable" flat class="flex align-center justify-between">
+    <v-container class="flex align-center justify-between ga-3">
+      <div class="flex align-center justify-between ga-3">
+        <v-btn v-if="showBack" icon="mdi-arrow-right" variant="text" size="small" @click="onBack" />
+        <div>
+          <div class="win-title">{{ title }}</div>
+          <div v-if="subtitle" class="win-subtitle">{{ subtitle }}</div>
+        </div>
       </div>
-    </div>
 
-    <div v-if="$slots.actions" class="ds-page-header__actions">
-      <slot name="actions" />
-    </div>
-  </div>
+      <v-spacer />
+
+      <div v-if="$slots.actions" class="ds-page-header__actions">
+        <slot name="actions" />
+      </div>
+    </v-container>
+  </v-app-bar>
 </template>
 
 <script setup lang="ts">

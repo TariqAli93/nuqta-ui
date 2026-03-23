@@ -1,25 +1,27 @@
 <template>
   <PageShell>
-    <PageHeader :title="t('settings.title')" :subtitle="t('settings.subtitle')" />
-
-    <v-tabs v-model="activeTab" color="primary" show-arrows class="mb-2">
-      <v-tab value="system" @click="navigateTo('system')">
-        <v-icon start size="18">mdi-cog</v-icon>
-        النظام
-      </v-tab>
-      <v-tab value="pos" @click="navigateTo('pos')">
-        <v-icon start size="18">mdi-point-of-sale</v-icon>
-        نقاط البيع
-      </v-tab>
-      <v-tab value="accounting" @click="navigateTo('accounting')">
-        <v-icon start size="18">mdi-calculator</v-icon>
-        المحاسبة
-      </v-tab>
-      <v-tab v-if="canManageUsers" value="users" @click="navigateTo('users')">
-        <v-icon start size="18">mdi-account-group</v-icon>
-        المستخدمين
-      </v-tab>
-    </v-tabs>
+    <PageHeader :title="t('settings.title')" :subtitle="t('settings.subtitle')">
+      <template #actions>
+        <v-tabs v-model="activeTab" center-active density="comfortable">
+          <v-tab value="system" @click="navigateTo('system')">
+            <v-icon start size="18">mdi-cog</v-icon>
+            النظام
+          </v-tab>
+          <v-tab value="pos" @click="navigateTo('pos')">
+            <v-icon start size="18">mdi-point-of-sale</v-icon>
+            نقاط البيع
+          </v-tab>
+          <v-tab value="accounting" @click="navigateTo('accounting')">
+            <v-icon start size="18">mdi-calculator</v-icon>
+            المحاسبة
+          </v-tab>
+          <v-tab v-if="canManageUsers" value="users" @click="navigateTo('users')">
+            <v-icon start size="18">mdi-account-group</v-icon>
+            المستخدمين
+          </v-tab>
+        </v-tabs>
+      </template>
+    </PageHeader>
 
     <v-card flat>
       <v-divider />
