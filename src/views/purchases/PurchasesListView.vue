@@ -1,18 +1,14 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('purchases.title') }}</div>
-        <div class="win-subtitle">{{ t('purchases.subtitle') }}</div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader :title="t('purchases.title')" :subtitle="t('purchases.subtitle')">
+      <template #actions>
         <v-btn color="primary" prepend-icon="mdi-plus" :to="{ name: 'PurchaseCreate' }">
           {{ t('purchases.new') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <v-card flat class="ds-filter-bar">
+    <FilterBar>
       <v-row dense>
         <v-col cols="12" sm="8">
           <v-text-field
@@ -38,7 +34,7 @@
           />
         </v-col>
       </v-row>
-    </v-card>
+    </FilterBar>
 
     <v-card flat>
       <v-card-text class="pa-0">
@@ -83,11 +79,12 @@
         </v-data-table>
       </v-card-text>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { PageShell, PageHeader, FilterBar } from '@/components/layout';
 import { formatDate } from '@/utils/formatters';
 import { useRouter } from 'vue-router';
 import { usePurchasesStore } from '@/stores/purchasesStore';

@@ -1,11 +1,6 @@
 ﻿<template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('sales.new') }}</div>
-        <div class="text-sm text-medium-emphasis">{{ t('sales.formHint') }}</div>
-      </div>
-    </div>
+  <PageShell>
+    <PageHeader :title="t('sales.new')" :subtitle="t('sales.formHint')" />
     <v-card flat>
       <v-form class="win-form" @submit.prevent="submit">
         <div class="d-flex flex-wrap ga-2">
@@ -100,12 +95,13 @@
         </div>
       </v-form>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, onMounted, onUnmounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useSalesStore } from '@/stores/salesStore';
 import { useProductsStore } from '@/stores/productsStore';

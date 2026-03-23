@@ -1,13 +1,6 @@
 ﻿<template>
-  <div>
-    <div class="d-flex align-center justify-space-between mb-6">
-      <div>
-        <h1 class="text-h5 font-weight-bold">ترحيل القيود المحاسبية</h1>
-        <p class="text-body-2 text-medium-emphasis mt-1">
-          ترحيل القيود المسودة إلى دفعات مرحّلة حسب الفترة الزمنية
-        </p>
-      </div>
-    </div>
+  <SubPageShell>
+    <PageHeader title="ترحيل القيود المحاسبية" subtitle="ترحيل القيود المسودة إلى دفعات مرحّلة حسب الفترة الزمنية" />
 
     <!-- Post New Batch Card -->
     <v-card class="mb-6" variant="outlined">
@@ -250,11 +243,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
+import { SubPageShell, PageHeader } from '@/components/layout';
 import { postingClient, type PostingBatch } from '@/api/endpoints/posting';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 import {

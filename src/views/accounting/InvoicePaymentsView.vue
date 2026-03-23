@@ -1,5 +1,6 @@
 ﻿<template>
-  <v-tabs v-model="activeTab" color="primary" bg-color="surface" class="mb-4">
+  <SubPageShell>
+    <v-tabs v-model="activeTab" color="primary" bg-color="surface" class="mb-4">
     <v-tab value="all">الكل</v-tab>
     <v-tab value="posted">مرحل</v-tab>
     <v-tab value="unposted">غير مرحل</v-tab>
@@ -74,10 +75,12 @@
       </v-data-table-server>
     </v-card-text>
   </v-card>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
+import { SubPageShell } from '@/components/layout';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { postingClient } from '@/api/endpoints/posting';
 import { notifyError, notifySuccess } from '@/utils/notify';

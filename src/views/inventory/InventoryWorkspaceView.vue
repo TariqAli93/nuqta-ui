@@ -1,16 +1,12 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('nav.inventoryManagement') }}</div>
-        <div class="win-subtitle">إدارة المخزون والحركات والمطابقة</div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader :title="t('nav.inventoryManagement')" subtitle="إدارة المخزون والحركات والمطابقة">
+      <template #actions>
         <v-btn variant="tonal" prepend-icon="mdi-refresh" @click="refreshAll">
           {{ t('common.refresh') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-tabs v-model="activeTab" bg-color="surface" class="mb-4">
       <v-tab
@@ -24,7 +20,7 @@
     </v-tabs>
 
     <router-view />
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -32,6 +28,7 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useInventoryStore } from '@/stores/inventoryStore';
 import { t } from '@/i18n/t';
+import { PageShell, PageHeader } from '@/components/layout';
 
 const route = useRoute();
 const router = useRouter();

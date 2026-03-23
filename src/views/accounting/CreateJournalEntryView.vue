@@ -1,16 +1,6 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="d-flex align-center ga-2">
-        <v-btn icon="mdi-arrow-right" variant="text" @click="goBack" />
-        <div>
-          <div class="win-title">إنشاء قيد يومي جديد</div>
-          <div class="win-subtitle">
-            قم بإنشاء قيد يومي يدوي لتسجيل المعاملات غير التلقائية أو لتعديل قيود سابقة
-          </div>
-        </div>
-      </div>
-    </div>
+  <PageShell>
+    <PageHeader title="إنشاء قيد يومي جديد" subtitle="قم بإنشاء قيد يومي يدوي لتسجيل المعاملات غير التلقائية أو لتعديل قيود سابقة" show-back :back-to="{ name: 'AccountingJournal' }" />
 
     <v-card>
       <v-toolbar density="compact" color="transparent" class="px-2">
@@ -187,12 +177,13 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { useCurrency } from '@/composables/useCurrency';
 import { notifyError, notifySuccess } from '@/utils/notify';
@@ -300,10 +291,6 @@ async function save() {
   } finally {
     saving.value = false;
   }
-}
-
-function goBack() {
-  void router.push({ name: 'AccountingJournal' });
 }
 
 onMounted(() => {

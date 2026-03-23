@@ -1,12 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <h1 class="win-title">{{ t('dashboard.title') }}</h1>
-        <p class="text-sm text-medium-emphasis">{{ t('dashboard.subtitle') }}</p>
-      </div>
-
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader :title="t('dashboard.title')" :subtitle="t('dashboard.subtitle')">
+      <template #actions>
         <v-btn variant="outlined" size="small" :loading="isDownloadingSales" @click="exportSales">
           تصدير المبيعات CSV
         </v-btn>
@@ -21,8 +16,8 @@
         <v-btn variant="text" icon size="small" :loading="loading" @click="loadStats">
           <v-icon>mdi-refresh</v-icon>
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <CardSkeleton :loading="loading" :count="4" :cols="3">
       <v-row dense>
@@ -112,11 +107,12 @@
         />
       </TableSkeleton>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { PageShell, PageHeader } from '@/components/layout';
 import { dashboardClient, type DashboardStats } from '@/api/endpoints/dashboard';
 import { downloadInventoryReport, downloadSalesReport } from '@/api/endpoints/reports';
 import CardSkeleton from '@/components/shared/CardSkeleton.vue';

@@ -1,31 +1,25 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('hr.payroll.title') }}</div>
-        <div class="text-sm text-medium-emphasis">{{ t('hr.payroll.subtitle') }}</div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader :title="t('hr.payroll.title')" :subtitle="t('hr.payroll.subtitle')">
+      <template #actions>
         <v-btn color="primary" size="small" :to="'/hr/payroll/new'" prepend-icon="mdi-plus">
           {{ t('hr.payroll.new') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <v-card class="ds-filter-bar" flat>
-      <v-card-text class="pa-4">
-        <v-select
-          v-model="statusFilter"
-          :items="statusOptions"
-          :label="t('common.status')"
-          variant="outlined"
-          density="comfortable"
-          clearable
-          hide-details
-          style="max-width: 250px"
-        />
-      </v-card-text>
-    </v-card>
+    <FilterBar>
+      <v-select
+        v-model="statusFilter"
+        :items="statusOptions"
+        :label="t('common.status')"
+        variant="outlined"
+        density="comfortable"
+        clearable
+        hide-details
+        style="max-width: 250px"
+      />
+    </FilterBar>
 
     <v-card class="win-card" flat>
       <v-card-text class="pa-0">
@@ -78,11 +72,12 @@
         />
       </v-card-text>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { PageShell, PageHeader, FilterBar } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { usePayrollStore } from '@/stores/payrollStore';
 import EmptyState from '@/components/common/EmptyState.vue';

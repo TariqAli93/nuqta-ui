@@ -1,16 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="d-flex align-center ga-3">
-        <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
-        <div>
-          <div class="win-title">
-            {{ isEdit ? t('hr.employees.edit') : t('hr.employees.new') }}
-          </div>
-          <div class="text-sm text-medium-emphasis">{{ t('hr.employees.formHint') }}</div>
-        </div>
-      </div>
-    </div>
+  <PageShell>
+    <PageHeader :title="isEdit ? t('hr.employees.edit') : t('hr.employees.new')" :subtitle="t('hr.employees.formHint')" show-back back-to="/hr/employees" />
+
 
     <v-card flat>
       <v-form class="win-form" @submit.prevent="submit">
@@ -77,12 +68,13 @@
         </div>
       </v-form>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useEmployeesStore } from '@/stores/employeesStore';
 import { useDepartmentsStore } from '@/stores/departmentsStore';

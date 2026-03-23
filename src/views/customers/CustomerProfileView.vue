@@ -1,15 +1,11 @@
 <template>
-  <div class="win-page">
+  <PageShell>
     <v-skeleton-loader v-if="loading" type="card" />
 
     <template v-else-if="customer">
       <!-- Header -->
-      <div class="ds-page-header-block">
-        <div class="d-flex align-center ga-3">
-          <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
-          <div class="win-title">{{ customer.name }}</div>
-        </div>
-        <div class="ds-page-header__actions">
+      <PageHeader :title="customer.name" show-back :back-to="{ name: 'Customers' }">
+        <template #actions>
           <v-btn
             variant="tonal"
             size="small"
@@ -17,8 +13,8 @@
             :to="{ name: 'CustomerEdit', params: { id: customer.id } }"
             >تعديل</v-btn
           >
-        </div>
-      </div>
+        </template>
+      </PageHeader>
 
       <!-- Info Cards -->
       <v-row dense>
@@ -182,11 +178,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
+import { PageShell, PageHeader } from '@/components/layout';
 import { useRoute, useRouter } from 'vue-router';
 import { customersClient, customerLedgerClient } from '@/api';
 import type { Customer } from '@/types/domain';

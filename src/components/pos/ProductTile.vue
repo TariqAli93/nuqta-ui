@@ -8,9 +8,9 @@
     :disabled="product.stock != null && product.stock <= 0"
   >
     <v-badge
-      v-if="!product.stock || product.stock <= 0"
+      v-if="product.stock != null && product.stock <= 0"
       color="red"
-      content="Out of Stock"
+      :content="t('pos.outOfStock')"
     ></v-badge>
 
     <v-sheet
@@ -53,7 +53,8 @@ const emit = defineEmits<{
 }>();
 
 const handleSelect = (product: Product) => {
-  if (product.stock && product.stock > 0) {
+  // Allow selection when stock is untracked (null/undefined) or positive
+  if (product.stock == null || product.stock > 0) {
     emit('select', product);
   }
 };

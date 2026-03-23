@@ -1,14 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="d-flex align-center ga-3">
-        <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
-        <div>
-          <div class="win-title">{{ t('hr.employees.details') }}</div>
-          <div class="text-sm text-medium-emphasis">{{ employee?.fullName ?? '' }}</div>
-        </div>
-      </div>
-      <div class="ds-page-header__actions ds-stack-xs">
+  <PageShell>
+    <PageHeader :title="t('hr.employees.details')" :subtitle="employee?.fullName ?? ''" show-back back-to="/hr/employees">
+      <template #actions>
         <v-btn
           variant="tonal"
           size="small"
@@ -26,8 +19,8 @@
         >
           {{ t('common.delete') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-progress-linear v-if="store.loading" indeterminate color="primary" />
 
@@ -115,12 +108,13 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useEmployeesStore } from '@/stores/employeesStore';
 import { useDepartmentsStore } from '@/stores/departmentsStore';

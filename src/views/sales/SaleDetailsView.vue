@@ -1,14 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="d-flex align-center ga-2">
-        <v-btn icon="mdi-arrow-right" variant="text" to="/sales" />
-        <div>
-          <div class="win-title">{{ t('sales.details') }}</div>
-          <div class="win-subtitle">{{ sale?.invoiceNumber ?? '' }}</div>
-        </div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader :title="t('sales.details')" :subtitle="sale?.invoiceNumber ?? ''" show-back :back-to="{ name: 'Sales' }">
+      <template #actions>
         <v-btn
           v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"
           color="warning"
@@ -51,8 +44,8 @@
         >
           إلغاء الفاتورة
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-skeleton-loader v-if="loading" type="card, table" />
 
@@ -342,12 +335,13 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useSalesStore } from '@/stores/salesStore';
 import EmptyState from '@/components/common/EmptyState.vue';

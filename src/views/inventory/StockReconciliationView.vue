@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <SubPageShell>
     <v-card class="mb-3">
       <v-card-text class="d-flex ga-2">
         <v-btn
@@ -69,11 +69,12 @@
         <div class="text-center py-8 text-medium-emphasis">لا توجد فروقات حالياً</div>
       </template>
     </v-data-table>
-  </div>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue';
+import { SubPageShell } from '@/components/layout';
 import { useInventoryStore } from '@/stores/inventoryStore';
 
 const inventoryStore = useInventoryStore();

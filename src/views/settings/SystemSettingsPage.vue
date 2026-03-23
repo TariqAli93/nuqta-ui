@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <SubPageShell>
     <div class="d-flex justify-end mb-4">
       <v-btn color="primary" variant="tonal" prepend-icon="mdi-refresh" @click="load">
         {{ t('common.refresh') }}
@@ -180,11 +180,12 @@
         </v-btn>
       </v-form>
     </v-card>
-  </div>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
 import { t } from '@/i18n/t';
+import { SubPageShell } from '@/components/layout';
 import { useSystemSettingsStore } from '@/stores/settings/useSystemSettingsStore';
 import { useSettingsForm } from '@/composables/useSettingsForm';
 import type { SystemSettings } from '@/types/settings/SystemSettings';

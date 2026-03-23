@@ -1,11 +1,6 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('profile.title') }}</div>
-        <div class="win-subtitle">{{ t('profile.subtitle') }}</div>
-      </div>
-    </div>
+  <PageShell>
+    <PageHeader :title="t('profile.title')" :subtitle="t('profile.subtitle')" />
 
     <v-card flat class="win-card--padded">
       <v-list>
@@ -69,12 +64,13 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { useAuthStore } from '@/stores/authStore';
 import { authClient } from '@/api';
 import { mapErrorToArabic, mapRoleToArabic, t } from '@/i18n/t';

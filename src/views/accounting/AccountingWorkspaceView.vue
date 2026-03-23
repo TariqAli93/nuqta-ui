@@ -1,16 +1,12 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('nav.accounting') }}</div>
-        <div class="win-subtitle">إدارة الحسابات والتقارير المالية</div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader :title="t('nav.accounting')" subtitle="إدارة الحسابات والتقارير المالية">
+      <template #actions>
         <v-btn variant="tonal" prepend-icon="mdi-refresh" @click="refreshAll">
           {{ t('common.refresh') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-tabs v-model="activeTab" bg-color="surface" show-arrows class="mb-4">
       <v-tab
@@ -24,7 +20,7 @@
     </v-tabs>
 
     <router-view />
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
@@ -32,6 +28,7 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { t } from '@/i18n/t';
+import { PageShell, PageHeader } from '@/components/layout';
 
 const route = useRoute();
 const router = useRouter();

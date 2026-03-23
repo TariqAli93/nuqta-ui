@@ -1,44 +1,38 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('hr.employees.title') }}</div>
-        <div class="text-sm text-medium-emphasis">{{ t('hr.employees.subtitle') }}</div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader :title="t('hr.employees.title')" :subtitle="t('hr.employees.subtitle')">
+      <template #actions>
         <v-btn color="primary" size="small" :to="'/hr/employees/new'" prepend-icon="mdi-plus">
           {{ t('hr.employees.new') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <v-card class="ds-filter-bar" flat>
-      <v-card-text class="pa-4">
-        <div class="d-flex ga-4">
-          <v-text-field
-            v-model="searchQuery"
-            :placeholder="t('hr.employees.search')"
-            variant="outlined"
-            density="comfortable"
-            prepend-inner-icon="mdi-magnify"
-            clearable
-            autofocus
-            hide-details
-            class="flex-grow-1"
-          />
-          <v-select
-            v-model="statusFilter"
-            :items="statusOptions"
-            :label="t('common.status')"
-            variant="outlined"
-            density="comfortable"
-            clearable
-            hide-details
-            style="max-width: 200px"
-          />
-        </div>
-      </v-card-text>
-    </v-card>
+    <FilterBar>
+      <div class="d-flex ga-4">
+        <v-text-field
+          v-model="searchQuery"
+          :placeholder="t('hr.employees.search')"
+          variant="outlined"
+          density="comfortable"
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          autofocus
+          hide-details
+          class="flex-grow-1"
+        />
+        <v-select
+          v-model="statusFilter"
+          :items="statusOptions"
+          :label="t('common.status')"
+          variant="outlined"
+          density="comfortable"
+          clearable
+          hide-details
+          style="max-width: 200px"
+        />
+      </div>
+    </FilterBar>
 
     <v-card class="win-card" flat>
       <v-card-text class="pa-0">
@@ -97,11 +91,12 @@
         />
       </v-card-text>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { PageShell, PageHeader, FilterBar } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useEmployeesStore } from '@/stores/employeesStore';
 import EmptyState from '@/components/common/EmptyState.vue';

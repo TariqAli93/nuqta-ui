@@ -1,11 +1,6 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('settings.title') }}</div>
-        <div class="win-subtitle">{{ t('settings.subtitle') }}</div>
-      </div>
-    </div>
+  <PageShell>
+    <PageHeader :title="t('settings.title')" :subtitle="t('settings.subtitle')" />
 
     <v-card flat>
       <v-tabs v-model="activeTab" color="primary" show-arrows>
@@ -43,12 +38,13 @@
         </v-window-item>
       </v-window>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { t } from '@/i18n/t';
 import { useRBAC } from '@/composables/useRBAC';
 import SystemSettingsTab from '@/components/settings/SystemSettingsTab.vue';

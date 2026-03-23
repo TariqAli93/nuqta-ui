@@ -1,16 +1,12 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('categories.title') }}</div>
-        <div class="win-subtitle">{{ t('categories.subtitle') }}</div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader :title="t('categories.title')" :subtitle="t('categories.subtitle')">
+      <template #actions>
         <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreateDialog">
           {{ t('categories.add') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-card flat>
       <v-card-text class="pa-0">
@@ -97,11 +93,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { PageShell, PageHeader } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { categoriesClient } from '@/api';
 import EmptyState from '@/components/common/EmptyState.vue';

@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <SubPageShell>
     <v-row dense class="mb-3">
       <v-col cols="12" md="6">
         <v-card variant="tonal" color="warning">
@@ -78,11 +78,12 @@
         </template>
       </v-data-table>
     </v-card>
-  </div>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { SubPageShell } from '@/components/layout';
 import { formatDate } from '@/utils/formatters';
 import { useInventoryStore } from '@/stores/inventoryStore';
 

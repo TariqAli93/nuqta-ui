@@ -1,13 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="d-flex align-center ga-2">
-        <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" />
-        <div>
-          <div class="win-title">{{ isEdit ? 'تعديل مورد' : 'إضافة مورد' }}</div>
-        </div>
-      </div>
-    </div>
+  <PageShell>
+    <PageHeader :title="isEdit ? 'تعديل مورد' : 'إضافة مورد'" show-back :back-to="{ name: 'Suppliers' }" />
+
 
     <v-card max-width="600">
       <v-card-text>
@@ -63,17 +57,18 @@
             <v-btn type="submit" color="primary" :loading="suppliersStore.loading">
               {{ isEdit ? 'تحديث' : 'حفظ' }}
             </v-btn>
-            <v-btn variant="text" @click="router.back()">إلغاء</v-btn>
+            <v-btn variant="text" :to="{ name: 'Suppliers' }">إلغاء</v-btn>
           </div>
         </v-form>
       </v-card-text>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { useSuppliersStore } from '@/stores/suppliersStore';
 
 const route = useRoute();

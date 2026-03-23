@@ -40,7 +40,9 @@
           :placeholder="t('pos.searchPlaceholder')"
           prepend-inner-icon="mdi-barcode-scan"
           @update:model-value="handleSearch"
-          @keydown.enter.prevent="handleSearchSubmit"
+          @keydown.enter.prevent="handleSearchOrSelectSubmit"
+          @keydown.down.prevent="highlightNext"
+          @keydown.up.prevent="highlightPrev"
           @click:clear="clearSearch"
           :autofocus="false"
         />
@@ -84,17 +86,19 @@
 
       <template v-else-if="filteredProducts.length > 0">
         <v-col
-          v-for="product in filteredProducts"
+          v-for="(product, pIdx) in filteredProducts"
           :key="product.id"
-          cols="12"
-          xs="12"
-          sm="12"
-          md="6"
+          cols="6"
+          sm="4"
+          md="3"
           lg="2"
           xl="2"
-          xxl="2"
         >
-          <ProductTile :product="product" @select="addToCart" />
+          <ProductTile
+            :product="product"
+            :class="{ 'pos-highlight': pIdx === highlightedProductIndex }"
+            @select="handleAddToCart"
+          />
         </v-col>
       </template>
     </v-row>
@@ -112,11 +116,11 @@
 
       <template v-else-if="filteredProducts.length > 0">
         <ProductListItem
-          v-for="product in filteredProducts"
+          v-for="(product, pIdx) in filteredProducts"
           :key="product.id"
           :product="product"
-          class="mb-2"
-          @select="addToCart"
+          :class="['mb-2', { 'pos-highlight': pIdx === highlightedProductIndex }]"
+          @select="handleAddToCart"
         />
       </template>
     </div>
@@ -168,6 +172,39 @@
       <v-card-actions class="pa-0 mt-6 justify-end ga-2">
         <v-btn variant="text" @click="cancelRemove">{{ t('common.cancel') }}</v-btn>
         <v-btn color="error" variant="flat" @click="confirmRemove">{{ t('common.delete') }}</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="showZeroPriceConfirm" max-width="420" :fullscreen="$vuetify.display.xs">
+    <v-card rounded="lg" class="pa-6">
+      <v-card-title class="text-h6 pa-0">{{ t('pos.zeroPriceTitle') }}</v-card-title>
+      <v-card-text class="pa-0 mt-4">{{ t('pos.zeroPriceWarning') }}</v-card-text>
+      <v-card-actions class="pa-0 mt-6 justify-end ga-2">
+        <v-btn variant="text" @click="cancelZeroPriceAdd">{{ t('common.cancel') }}</v-btn>
+        <v-btn color="warning" variant="flat" @click="confirmZeroPriceAdd">{{ t('common.confirm') }}</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="showDeleteHeldConfirm" max-width="420" :fullscreen="$vuetify.display.xs">
+    <v-card rounded="lg" class="pa-6">
+      <v-card-title class="text-h6 pa-0">{{ t('pos.deleteHeldTitle') }}</v-card-title>
+      <v-card-text class="pa-0 mt-4">{{ t('pos.confirmDeleteHeldSale') }}</v-card-text>
+      <v-card-actions class="pa-0 mt-6 justify-end ga-2">
+        <v-btn variant="text" @click="cancelDeleteHeld">{{ t('common.cancel') }}</v-btn>
+        <v-btn color="error" variant="flat" @click="confirmDeleteHeld">{{ t('common.delete') }}</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-dialog v-model="showResetConfirm" max-width="420" :fullscreen="$vuetify.display.xs">
+    <v-card rounded="lg" class="pa-6">
+      <v-card-title class="text-h6 pa-0">{{ t('pos.resetSaleTitle') }}</v-card-title>
+      <v-card-text class="pa-0 mt-4">{{ t('pos.confirmResetSale') }}</v-card-text>
+      <v-card-actions class="pa-0 mt-6 justify-end ga-2">
+        <v-btn variant="text" @click="showResetConfirm = false">{{ t('common.cancel') }}</v-btn>
+        <v-btn color="error" variant="flat" @click="confirmReset">{{ t('common.confirm') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -308,7 +345,7 @@
                 size="small"
                 variant="text"
                 color="error"
-                @click.stop="deleteHeldSale(index)"
+                @click.stop="onDeleteHeldSale(index)"
               >
                 <v-icon size="20">mdi-delete</v-icon>
               </v-btn>
@@ -394,13 +431,16 @@ import { categoriesClient, posClient } from '@/api';
 import { useGlobalBarcodeScanner } from '@/composables/useGlobalBarcodeScanner';
 import MoneyInput from '@/components/shared/MoneyInput.vue';
 import { generateIdempotencyKey } from '@/utils/idempotency';
-import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/notify';
+import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 import { useLayoutStore } from '@/stores/layout';
 import { useKeyboardShortcuts } from '@/composables/useKeyboardShortcuts';
 import PosShortcutsHelp from '@/components/pos/PosShortcutsHelp.vue';
 import { usePosCart } from '@/composables/usePosCart';
+import { usePosHeldSales, type HeldSale } from '@/composables/usePosHeldSales';
 import { usePosSettingsStore, useSystemSettingsStore } from '@/stores/settings';
 import { createReceiptPrintData, printReceiptModern } from '@/modules/pos/receiptPrint';
+import { usePosFocus } from '@/composables/usePosFocus';
+import { usePosPaymentFlow } from '@/composables/usePosPaymentFlow';
 
 const productsStore = useProductsStore();
 const salesStore = useSalesStore();
@@ -418,7 +458,6 @@ type TextFieldRef = {
 };
 
 const searchField = ref<TextFieldRef | null>(null);
-const searchInput = ref<HTMLInputElement | null>(null);
 const searchQuery = ref('');
 const selectedCategory = ref<number | null>(null);
 const dbCategories = ref<Category[]>([]);
@@ -444,8 +483,16 @@ const {
   trackProductPrice,
 } = usePosCart();
 
-const isProcessingPayment = ref(false);
-const payOpen = ref(false);
+// Payment flow composable — handles overlay state, processing lock, double-submit guard
+const {
+  payOpen,
+  isProcessing: isProcessingPayment,
+  openPayment,
+  closePayment,
+  beginProcessing,
+  endProcessing,
+  dispose: disposePaymentFlow,
+} = usePosPaymentFlow();
 
 const showClearConfirm = ref(false);
 const showRemoveConfirm = ref(false);
@@ -457,25 +504,22 @@ const showResumeDialog = ref(false);
 const showMoreDialog = ref(false);
 const showStockAlert = ref(false);
 const showShortcutsHelp = ref(false);
+const showZeroPriceConfirm = ref(false);
+const showDeleteHeldConfirm = ref(false);
+const showResetConfirm = ref(false);
 const stockAlertMessage = ref('');
 const stockAlertProducts = ref<string[]>([]);
 
 const pendingRemoveIndex = ref<number | null>(null);
+const pendingZeroPriceProduct = ref<Product | null>(null);
+const pendingDeleteHeldIndex = ref<number | null>(null);
+
+// Keyboard navigation: highlighted product index in filtered results
+const highlightedProductIndex = ref(-1);
 const customerSearch = ref('');
 const discountInput = ref(0);
 const noteInput = ref('');
 const holdName = ref('');
-
-interface HeldSale {
-  name: string;
-  items: SaleItem[];
-  discount: number;
-  tax: number;
-  customerId: number | null;
-  note: string | null;
-  total: number;
-  timestamp: number;
-}
 
 type PaymentOverlayPayload = {
   paid: number;
@@ -485,7 +529,14 @@ type PaymentOverlayPayload = {
   referenceNumber?: string;
 };
 
-const heldSales = ref<HeldSale[]>([]);
+const {
+  heldSales,
+  loadHeldSales,
+  holdSale,
+  resumeSale: resumeHeldSaleFromStore,
+  deleteHeldSale: deleteHeldSaleFromStore,
+  heldSaleName,
+} = usePosHeldSales();
 
 // Global barcode scanner integration
 const scanner = useGlobalBarcodeScanner({
@@ -496,9 +547,45 @@ const scanner = useGlobalBarcodeScanner({
   idleTimeoutMs: 180,
 });
 
+/**
+ * Unified add-to-cart handler. All entry points (barcode, tile click, search submit)
+ * go through this single function to prevent behavioral drift.
+ *
+ * Returns true if the product was added (or zero-price dialog was triggered).
+ */
+async function safeAddToCart(product: Product, options?: { notify?: boolean }): Promise<boolean> {
+  const { status } = await addToCart(product);
+
+  if (status === 'zero-price') {
+    pendingZeroPriceProduct.value = product;
+    showZeroPriceConfirm.value = true;
+    return true; // flow continues via dialog
+  }
+
+  if (status === 'success') {
+    if (options?.notify !== false) {
+      showScanSuccess(product.name);
+    }
+    focusSearchInput();
+    return true;
+  }
+
+  return false;
+}
+
+// Template-bound handler for ProductTile/ProductListItem @select
+async function handleAddToCart(product: Product) {
+  await safeAddToCart(product, { notify: false });
+}
+
 async function handleBarcodeScan(barcode: string) {
-  // Find product by barcode
-  const product = await productsStore.findProductByBarcode(barcode);
+  let product: Product | null | undefined;
+  try {
+    product = await productsStore.findProductByBarcode(barcode);
+  } catch {
+    showScanError();
+    return;
+  }
 
   if (!product) {
     showScanError();
@@ -510,11 +597,23 @@ async function handleBarcodeScan(barcode: string) {
     return;
   }
 
-  // Add to cart
-  const success = await addToCart(product);
-  if (success) {
-    showScanSuccess(product.name);
+  await safeAddToCart(product);
+}
+
+async function confirmZeroPriceAdd() {
+  const product = pendingZeroPriceProduct.value;
+  showZeroPriceConfirm.value = false;
+  pendingZeroPriceProduct.value = null;
+  if (product) {
+    await addToCart(product, true);
+    focusSearchInput();
   }
+}
+
+function cancelZeroPriceAdd() {
+  showZeroPriceConfirm.value = false;
+  pendingZeroPriceProduct.value = null;
+  focusSearchInput();
 }
 
 const categories = computed(() => {
@@ -572,7 +671,10 @@ const anyDialogOpen = computed(() => {
     showHoldDialog.value ||
     showResumeDialog.value ||
     showMoreDialog.value ||
-    showShortcutsHelp.value
+    showShortcutsHelp.value ||
+    showZeroPriceConfirm.value ||
+    showDeleteHeldConfirm.value ||
+    showResetConfirm.value
   );
 });
 
@@ -614,55 +716,29 @@ function extractUnavailableProducts(details: unknown): string[] {
   return cartItems.value.map((item) => item.productName).filter((n): n is string => !!n);
 }
 
-function heldSaleName(sale: HeldSale, index: number): string {
-  return sale.name || `عملية ${index + 1}`;
-}
-
 // Stock is managed by the backend via inventory movements.
 // Cart operations simply track what the user wants to buy.
 // Product stock numbers are refreshed from the DB after each sale.
 
-const resolveSearchInput = () => {
-  searchInput.value =
-    (searchField.value?.$el?.querySelector('input') as HTMLInputElement | null) ?? null;
-};
+// Focus management composable — centralizes search input focus restoration
+const { resolveSearchInput, requestFocus, forceFocus, blurSearch } = usePosFocus(searchField, anyDialogOpen);
 
-const focusSearchInput = () => {
-  if (!searchInput.value) {
-    resolveSearchInput();
-  }
-};
-
-const loadHeldSales = () => {
-  try {
-    const stored = localStorage.getItem('nuqta_held_sales');
-    if (stored) {
-      heldSales.value = JSON.parse(stored);
-    }
-  } catch {
-    heldSales.value = [];
-    notifyError(t('errors.unexpected'));
-  }
-};
-
-const saveHeldSales = () => {
-  try {
-    localStorage.setItem('nuqta_held_sales', JSON.stringify(heldSales.value));
-  } catch {
-    notifyError(t('errors.unexpected'));
-  }
-};
+// Backward-compatible alias used throughout the component
+const focusSearchInput = requestFocus;
 
 function selectCategory(id: number | null) {
   selectedCategory.value = id;
+  highlightedProductIndex.value = -1;
 }
 
 function handleSearch() {
-  return;
+  // Reset highlight on every keystroke to avoid stale index pointing past new results
+  highlightedProductIndex.value = -1;
 }
 
 function clearSearch() {
   searchQuery.value = '';
+  highlightedProductIndex.value = -1;
 }
 
 function normalizeSearchToken(value: string): string {
@@ -714,14 +790,54 @@ async function handleSearchSubmit() {
     return;
   }
 
-  const success = await addToCart(product);
-
-  if (success) {
-    showScanSuccess(product.name);
-  }
-
+  await safeAddToCart(product);
   clearSearch();
   focusSearchInput();
+}
+
+// Keyboard navigation: arrow keys move highlight, Enter selects highlighted or falls back to search submit
+function scrollHighlightedIntoView() {
+  if (highlightedProductIndex.value < 0) return;
+  void nextTick(() => {
+    const el = document.querySelector('.pos-highlight');
+    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  });
+}
+
+function highlightNext() {
+  const max = filteredProducts.value.length - 1;
+  if (max < 0) return;
+  highlightedProductIndex.value = Math.min(highlightedProductIndex.value + 1, max);
+  scrollHighlightedIntoView();
+}
+
+function highlightPrev() {
+  if (highlightedProductIndex.value <= 0) {
+    highlightedProductIndex.value = -1;
+    return;
+  }
+  highlightedProductIndex.value -= 1;
+  scrollHighlightedIntoView();
+}
+
+async function handleSearchOrSelectSubmit() {
+  // If a product is highlighted via arrow keys, select it
+  const idx = highlightedProductIndex.value;
+  if (idx >= 0 && idx < filteredProducts.value.length) {
+    const product = filteredProducts.value[idx];
+    if (product) {
+      await safeAddToCart(product);
+      highlightedProductIndex.value = -1;
+      clearSearch();
+      return;
+    }
+  }
+  // Reset stale highlight if somehow out of bounds
+  if (idx >= filteredProducts.value.length) {
+    highlightedProductIndex.value = -1;
+  }
+  // Otherwise fall back to barcode/SKU exact-match search
+  await handleSearchSubmit();
 }
 
 function handleDecreaseQuantity(index: number) {
@@ -763,7 +879,7 @@ function openClearConfirmDialog() {
 function confirmClear() {
   showClearConfirm.value = false;
   resetSaleData();
-  setTimeout(() => focusSearchInput(), 100);
+  focusSearchInput();
 }
 
 function resetSaleData() {
@@ -823,7 +939,7 @@ function handleHold() {
 }
 
 function confirmHold() {
-  const heldSale: HeldSale = {
+  holdSale({
     name: holdName.value.trim() || `عملية ${heldSales.value.length + 1}`,
     items: JSON.parse(JSON.stringify(cartItems.value)),
     discount: discount.value,
@@ -832,15 +948,12 @@ function confirmHold() {
     note: saleNote.value,
     total: total.value,
     timestamp: Date.now(),
-  };
-
-  heldSales.value.push(heldSale);
-  saveHeldSales();
+  });
 
   resetSaleData();
 
   showHoldDialog.value = false;
-  setTimeout(() => focusSearchInput(), 100);
+  focusSearchInput();
 }
 
 function openResumeDialog() {
@@ -849,11 +962,16 @@ function openResumeDialog() {
 }
 
 function resumeHeldSale(index: number) {
-  const sale = heldSales.value[index];
+  const sale = resumeHeldSaleFromStore(index);
   if (!sale) return;
 
-  // Note: Stock was already decreased when sale was held, so we don't adjust again
-  cartItems.value = JSON.parse(JSON.stringify(sale.items));
+  // Deep clone all mutable data to prevent shared reference mutations.
+  // resumeHeldSaleFromStore already returns a JSON clone, but we clone items
+  // again defensively since they become the live cart array.
+  const clonedItems: SaleItem[] = JSON.parse(JSON.stringify(sale.items));
+
+  // Restore cart state from the held sale
+  cartItems.value = clonedItems;
   discount.value = sale.discount;
   tax.value = sale.tax;
   selectedCustomerId.value = sale.customerId;
@@ -861,23 +979,30 @@ function resumeHeldSale(index: number) {
 
   // Populate unit caches for resumed items
   for (const item of cartItems.value) {
-    const product = productsStore.items.find((p) => p.id === item.productId);
-    if (product) {
-      trackProductPrice(item.productId);
-    }
+    trackProductPrice(item.productId);
   }
   void ensureUnitsCached();
 
-  heldSales.value.splice(index, 1);
-  saveHeldSales();
   showResumeDialog.value = false;
+  focusSearchInput();
 }
 
-function deleteHeldSale(index: number) {
-  if (confirm(t('pos.confirmDeleteHeldSale'))) {
-    heldSales.value.splice(index, 1);
-    saveHeldSales();
+function onDeleteHeldSale(index: number) {
+  pendingDeleteHeldIndex.value = index;
+  showDeleteHeldConfirm.value = true;
+}
+
+function confirmDeleteHeld() {
+  if (pendingDeleteHeldIndex.value !== null) {
+    deleteHeldSaleFromStore(pendingDeleteHeldIndex.value);
   }
+  showDeleteHeldConfirm.value = false;
+  pendingDeleteHeldIndex.value = null;
+}
+
+function cancelDeleteHeld() {
+  showDeleteHeldConfirm.value = false;
+  pendingDeleteHeldIndex.value = null;
 }
 
 function openMoreDialog() {
@@ -886,21 +1011,24 @@ function openMoreDialog() {
 
 function resetSale() {
   if (cartItems.value.length > 0) {
-    if (confirm(t('pos.confirmResetSale'))) {
-      resetSaleData();
-      showMoreDialog.value = false;
-      setTimeout(() => focusSearchInput(), 100);
-    }
+    showResetConfirm.value = true;
   } else {
     resetSaleData();
     showMoreDialog.value = false;
-    setTimeout(() => focusSearchInput(), 100);
+    focusSearchInput();
   }
 }
 
+function confirmReset() {
+  showResetConfirm.value = false;
+  resetSaleData();
+  showMoreDialog.value = false;
+  focusSearchInput();
+}
+
 function handlePay() {
-  if (cartItems.value.length === 0 || isProcessingPayment.value) return;
-  payOpen.value = true;
+  if (cartItems.value.length === 0) return;
+  openPayment();
 }
 
 async function triggerAfterPay(saleId: number): Promise<string | undefined> {
@@ -982,7 +1110,7 @@ async function printSaleReceipt(
 }
 
 async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
-  if (cartItems.value.length === 0 || isProcessingPayment.value) return;
+  if (cartItems.value.length === 0) return;
 
   const appliedDiscount = Math.min(
     Math.max(overlayPayload.discount ?? discount.value, 0),
@@ -1002,7 +1130,10 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
     return;
   }
 
-  isProcessingPayment.value = true;
+  // Double-submit guard: beginProcessing returns false if already processing
+  if (!beginProcessing()) return;
+
+  let success = false;
 
   try {
     const invoiceNumber = `فاتورة-${Date.now()}`;
@@ -1060,9 +1191,9 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
       };
 
       resetSaleData();
-      payOpen.value = false;
+      success = true;
 
-      setTimeout(() => focusSearchInput(), 100);
+      focusSearchInput();
 
       // Refresh product stock from backend
       void productsStore.fetchProducts();
@@ -1077,18 +1208,20 @@ async function handlePaymentConfirm(overlayPayload: PaymentOverlayPayload) {
         const unavailableNames = extractUnavailableProducts(details);
         stockAlertProducts.value = unavailableNames;
         showStockAlert.value = true;
+      } else {
+        notifyError(mapErrorToArabic(result.error, 'errors.unexpected'));
       }
     }
   } catch {
-    // Error is handled in the store action, so we just ensure the UI state is reset here
+    notifyError(t('errors.unexpected'));
   } finally {
-    isProcessingPayment.value = false;
+    endProcessing(success);
   }
 }
 
 function handleEscapeShortcut(): void {
   if (payOpen.value) {
-    payOpen.value = false;
+    closePayment();
   } else if (showClearConfirm.value) {
     showClearConfirm.value = false;
   } else if (showRemoveConfirm.value) {
@@ -1107,20 +1240,30 @@ function handleEscapeShortcut(): void {
     showMoreDialog.value = false;
   } else if (showShortcutsHelp.value) {
     showShortcutsHelp.value = false;
+  } else if (showZeroPriceConfirm.value) {
+    cancelZeroPriceAdd();
+  } else if (showDeleteHeldConfirm.value) {
+    cancelDeleteHeld();
+  } else if (showResetConfirm.value) {
+    showResetConfirm.value = false;
   } else if (searchQuery.value) {
     clearSearch();
   } else {
-    searchInput.value?.blur();
+    blurSearch();
   }
 }
 
 const shortcutHelpItems = [
   { key: 'F1', label: t('pos.shortcutHelp') },
   { key: 'F2', label: t('pos.shortcutHoldSale') },
+  { key: 'F3', label: t('pos.resumeSale') },
+  { key: 'F4', label: t('pos.customer') },
   { key: 'F5', label: t('pos.shortcutPayment') },
-  { key: 'F8', label: t('pos.shortcutClear') },
+  { key: 'F8', label: t('pos.discount') },
+  { key: 'F9', label: t('pos.shortcutClear') },
   { key: 'Esc', label: t('pos.shortcutCancel') },
   { key: 'Enter', label: t('pos.shortcutAddItem') },
+  { key: '↑↓', label: t('pos.shortcutNavigate') },
 ];
 
 useKeyboardShortcuts([
@@ -1140,6 +1283,22 @@ useKeyboardShortcuts([
     },
   },
   {
+    key: 'F3',
+    label: t('pos.resumeSale'),
+    handler: () => {
+      if (anyDialogOpen.value) return;
+      openResumeDialog();
+    },
+  },
+  {
+    key: 'F4',
+    label: t('pos.customer'),
+    handler: () => {
+      if (anyDialogOpen.value) return;
+      openCustomerDialog();
+    },
+  },
+  {
     key: 'F5',
     label: t('pos.shortcutPayment'),
     handler: () => {
@@ -1149,6 +1308,14 @@ useKeyboardShortcuts([
   },
   {
     key: 'F8',
+    label: t('pos.discount'),
+    handler: () => {
+      if (anyDialogOpen.value) return;
+      openDiscountDialog();
+    },
+  },
+  {
+    key: 'F9',
     label: t('pos.shortcutClear'),
     handler: () => {
       if (anyDialogOpen.value || cartItems.value.length === 0) return;
@@ -1167,16 +1334,22 @@ useKeyboardShortcuts([
     label: t('pos.shortcutAddItem'),
     preventDefault: false,
     handler: () => {
-      if (anyDialogOpen.value || !searchQuery.value.trim()) return;
-      void handleSearchSubmit();
+      if (anyDialogOpen.value) return;
+      if (highlightedProductIndex.value >= 0 || searchQuery.value.trim()) {
+        void handleSearchOrSelectSubmit();
+      }
     },
   },
 ]);
 
 async function loadCategories() {
-  const result = await categoriesClient.getAll({});
-  if (result.ok && result.data) {
-    dbCategories.value = Array.isArray(result.data) ? result.data : [];
+  try {
+    const result = await categoriesClient.getAll({});
+    if (result.ok && result.data) {
+      dbCategories.value = Array.isArray(result.data) ? result.data : [];
+    }
+  } catch {
+    // Categories are non-critical — POS works without them
   }
 }
 
@@ -1187,10 +1360,11 @@ onMounted(async () => {
   // Wait for DOM to fully render, then resolve and focus search input for immediate barcode scanning
   await nextTick();
   resolveSearchInput();
-  focusSearchInput();
+  forceFocus();
 
   // Load products and categories in parallel for faster startup
-  await Promise.all([
+  // Use allSettled so a single failure doesn't block the rest
+  await Promise.allSettled([
     productsStore.fetchProducts(),
     loadCategories(),
     settingsStore.fetchCompanySettings(),
@@ -1203,7 +1377,15 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  // Stop scanner when leaving POS page
   scanner.stop();
+  disposePaymentFlow();
 });
 </script>
+
+<style scoped>
+.pos-highlight {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+</style>

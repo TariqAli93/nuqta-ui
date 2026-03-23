@@ -1,11 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">دفتر الموردين (حسابات الدفع)</div>
-        <div class="win-subtitle">كشف حسابات الموردين والمطابقة المالية</div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader title="دفتر الموردين (حسابات الدفع)" subtitle="كشف حسابات الموردين والمطابقة المالية">
+      <template #actions>
         <v-btn
           variant="tonal"
           color="warning"
@@ -15,8 +11,8 @@
         >
           مطابقة AP
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-row dense>
       <!-- Supplier selector -->
@@ -115,12 +111,13 @@
         />
       </v-col>
     </v-row>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { formatMoney } from '@/utils/formatters';
+import { PageShell, PageHeader } from '@/components/layout';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import LedgerTable from '@/components/shared/LedgerTable.vue';
 import type { LedgerEntry } from '@/components/shared/LedgerTable.vue';
