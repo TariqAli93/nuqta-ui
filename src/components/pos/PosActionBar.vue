@@ -1,41 +1,45 @@
 <template>
   <div>
+    <!-- Pay button: primary action, dominant -->
     <v-btn
       :color="props.canPay ? 'primary' : undefined"
       :variant="props.canPay ? 'elevated' : 'outlined'"
       :disabled="!props.canPay"
       block
-      class="grow pay-button"
-      size="large"
+      class="pay-button"
+      size="x-large"
+      height="52"
       @click="emit('pay')"
     >
-      <template #prepend class="w-fit">
-        <v-icon size="18">mdi-cash-register</v-icon>
+      <template #prepend>
+        <v-icon size="22">mdi-cash-register</v-icon>
       </template>
       <template #default>
-        <span class="text-body-2"> {{ t('pos.pay') }}</span>
+        <span class="text-subtitle-1 font-weight-bold">{{ t('pos.pay') }}</span>
       </template>
       <template #append>
         <v-hotkey border="0" display-mode="icon" elevation="0" keys="f5" />
       </template>
     </v-btn>
 
+    <!-- Secondary actions: compact grid -->
     <div class="item-group-container">
-      <v-item-group class="actions-grid-auto mt-2">
+      <v-item-group class="actions-grid-auto mt-1">
         <v-item v-for="action in actions" :key="action.event">
           <v-btn
             :color="action.color"
             :variant="action.variant"
             :disabled="action.disabled"
             block
-            class="grow min-h-10 sm:min-h-12"
+            size="small"
+            class="grow"
             @click="emitAction(action.event)"
           >
             <template #prepend>
-              <v-icon size="18">{{ action.icon }}</v-icon>
+              <v-icon size="16">{{ action.icon }}</v-icon>
             </template>
             <template #default>
-              <span class="text-body-2">{{ action.label }}</span>
+              <span class="text-caption">{{ action.label }}</span>
             </template>
             <template #append>
               <v-hotkey border="0" display-mode="symbol" elevation="0" :keys="action.key" />

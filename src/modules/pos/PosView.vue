@@ -9,6 +9,45 @@
       @unit-change="handleUnitChange"
     >
       <template #totals>
+        <!-- Compact meta row: Note / Customer / Discount as inline chips -->
+        <div class="d-flex align-center ga-1 flex-wrap mb-1 px-1">
+          <v-chip
+            size="small"
+            variant="tonal"
+            :color="saleNote ? 'info' : undefined"
+            prepend-icon="mdi-note-text-outline"
+            @click="openNoteDialog"
+            class="pos-meta-chip"
+          >
+            {{ saleNote ? t('pos.note') : t('pos.note') }}
+            <v-icon v-if="saleNote" end size="14" @click.stop="clearNote">mdi-close-circle</v-icon>
+          </v-chip>
+
+          <v-chip
+            size="small"
+            variant="tonal"
+            :color="selectedCustomerId ? 'success' : undefined"
+            prepend-icon="mdi-account-outline"
+            @click="openCustomerDialog"
+            class="pos-meta-chip"
+          >
+            {{ selectedCustomerName || t('pos.customer') }}
+            <v-icon v-if="selectedCustomerId" end size="14" @click.stop="clearCustomer">mdi-close-circle</v-icon>
+          </v-chip>
+
+          <v-chip
+            size="small"
+            variant="tonal"
+            :color="discount > 0 ? 'warning' : undefined"
+            prepend-icon="mdi-tag-outline"
+            @click="openDiscountDialog"
+            class="pos-meta-chip"
+          >
+            {{ discount > 0 ? formatCurrency(discount) : t('pos.discount') }}
+            <v-icon v-if="discount > 0" end size="14" @click.stop="applyCartDiscount(0)">mdi-close-circle</v-icon>
+          </v-chip>
+        </div>
+
         <TotalsPanel :subtotal="subtotal" :discount="discount" :tax="tax" :total="total" />
       </template>
 
@@ -27,29 +66,27 @@
       </template>
     </CartPanel>
 
-    <v-app-bar class="mb-5 border-r-0! border-l-0!">
-      <v-card-text class="pa-4">
-        <v-text-field
-          ref="searchField"
-          v-model="searchQuery"
-          variant="outlined"
-          hide-details
-          single-line
-          density="comfortable"
-          clearable
-          :placeholder="t('pos.searchPlaceholder')"
-          prepend-inner-icon="mdi-barcode-scan"
-          @update:model-value="handleSearch"
-          @keydown.enter.prevent="handleSearchOrSelectSubmit"
-          @keydown.down.prevent="highlightNext"
-          @keydown.up.prevent="highlightPrev"
-          @click:clear="clearSearch"
-          :autofocus="false"
-        />
-      </v-card-text>
-    </v-app-bar>
+    <!-- Search: primary input, always visible, dominant -->
+    <v-text-field
+      ref="searchField"
+      v-model="searchQuery"
+      variant="solo-filled"
+      hide-details
+      single-line
+      density="default"
+      clearable
+      :placeholder="t('pos.searchPlaceholder')"
+      prepend-inner-icon="mdi-barcode-scan"
+      class="pos-search mb-3"
+      @update:model-value="handleSearch"
+      @keydown.enter.prevent="handleSearchOrSelectSubmit"
+      @keydown.down.prevent="highlightNext"
+      @keydown.up.prevent="highlightPrev"
+      @click:clear="clearSearch"
+      :autofocus="false"
+    />
 
-    <div class="d-flex align-center mb-5">
+    <div class="d-flex align-center mb-2 ga-1">
       <CategoryStrip
         :categories="categories"
         :selected-id="selectedCategory"
@@ -57,30 +94,30 @@
         class="grow"
       />
 
-      <v-btn icon size="small" variant="text" class="mr-2" @click="showShortcutsHelp = true">
-        <v-icon>mdi-keyboard-outline</v-icon>
+      <v-btn icon size="x-small" variant="text" @click="showShortcutsHelp = true">
+        <v-icon size="18">mdi-keyboard-outline</v-icon>
       </v-btn>
 
       <v-btn-toggle
         :model-value="layoutStore.posLayout"
         @update:model-value="(v: any) => v && layoutStore.setPosLayout(v)"
-        density="default"
-        class="mr-2 gap-2"
+        density="compact"
+        class="ga-0"
       >
-        <v-btn value="grid" icon size="small" variant="text">
-          <v-icon>mdi-view-grid</v-icon>
+        <v-btn value="grid" icon size="x-small" variant="text">
+          <v-icon size="18">mdi-view-grid</v-icon>
         </v-btn>
-        <v-btn value="list" icon size="small" variant="text">
-          <v-icon>mdi-view-list</v-icon>
+        <v-btn value="list" icon size="x-small" variant="text">
+          <v-icon size="18">mdi-view-list</v-icon>
         </v-btn>
       </v-btn-toggle>
     </div>
 
-    <!-- Grid layout -->
-    <v-row v-if="layoutStore.posLayout === 'grid'">
+    <!-- Grid layout: dense, scan-optimized -->
+    <v-row v-if="layoutStore.posLayout === 'grid'" dense>
       <template v-if="productsStore.loading">
-        <v-col v-for="n in 12" :key="`skeleton-${n}`" cols="6" sm="4" md="3" lg="2" xl="2">
-          <v-skeleton-loader type="card" />
+        <v-col v-for="n in 16" :key="`skeleton-${n}`" cols="4" sm="3" md="3" lg="2" xl="2">
+          <v-skeleton-loader type="card" height="100" />
         </v-col>
       </template>
 
@@ -88,8 +125,8 @@
         <v-col
           v-for="(product, pIdx) in filteredProducts"
           :key="product.id"
-          cols="6"
-          sm="4"
+          cols="4"
+          sm="3"
           md="3"
           lg="2"
           xl="2"
@@ -129,14 +166,11 @@
       v-if="filteredProducts.length === 0 && !productsStore.loading"
       color="transparent"
       rounded="0"
-      min-height="300"
+      min-height="200"
       class="d-flex flex-column align-center justify-center"
     >
-      <v-icon size="56" color="grey-lighten-2">mdi-package-variant-closed</v-icon>
-      <div class="text-subtitle-1 text-medium-emphasis mt-4">{{ t('pos.noProducts') }}</div>
-      <div class="text-body-2 text-medium-emphasis mt-2 text-center">
-        {{ t('pos.noProductsHint') }}
-      </div>
+      <v-icon size="48" color="grey-lighten-2">mdi-package-variant-closed</v-icon>
+      <div class="text-body-2 text-medium-emphasis mt-3">{{ t('pos.noProducts') }}</div>
     </v-sheet>
   </v-container>
 
@@ -659,6 +693,11 @@ const filteredCustomers = computed(() => {
 });
 
 const cashierName = computed(() => authStore.currentUser?.username || 'POS Client');
+
+const selectedCustomerName = computed(() => {
+  if (!selectedCustomerId.value) return '';
+  return customersStore.items.find((c) => c.id === selectedCustomerId.value)?.name || '';
+});
 
 const anyDialogOpen = computed(() => {
   return (
@@ -1387,5 +1426,27 @@ onUnmounted(() => {
   outline: 2px solid rgb(var(--v-theme-primary));
   outline-offset: 2px;
   border-radius: 8px;
+}
+
+/* Search: dominant input, always accessible */
+.pos-search {
+  font-size: 1.05rem;
+}
+
+.pos-search :deep(.v-field) {
+  min-height: 52px;
+  font-size: 1.05rem;
+}
+
+.pos-search :deep(.v-field__prepend-inner .v-icon) {
+  font-size: 24px;
+  opacity: 0.7;
+}
+
+/* Meta row chips: compact, clickable */
+.pos-meta-chip {
+  cursor: pointer;
+  font-size: 0.75rem;
+  height: 28px !important;
 }
 </style>

@@ -8,15 +8,15 @@
     :location="drawerLocation"
   >
     <v-card flat rounded="0" border="0">
-      <v-card-title class="d-flex align-center justify-space-between pa-4" style="min-height: 72px">
-        <span class="font-weight-medium">{{ t('pos.cart') }}</span>
-        <v-chip size="small" variant="tonal" color="primary">
-          {{ items.length }} {{ t('common.items') }}
+      <v-card-title class="d-flex align-center justify-space-between pa-2 pb-1" style="min-height: 40px">
+        <span class="text-body-2 font-weight-medium">{{ t('pos.cart') }}</span>
+        <v-chip size="x-small" variant="tonal" color="primary">
+          {{ items.length }}
         </v-chip>
       </v-card-title>
 
       <v-card-text class="overflow-y-auto pa-0">
-        <v-list v-if="items.length > 0" density="comfortable" bg-color="transparent" class="py-2">
+        <v-list v-if="items.length > 0" density="compact" bg-color="transparent" class="py-0">
           <CartItem
             v-for="(item, index) in items"
             :key="`${item.productId}-${item.unitName}`"
@@ -29,25 +29,17 @@
           />
         </v-list>
 
-        <div v-else class="d-flex flex-column align-center justify-center px-6 py-8">
-          <v-icon size="56" color="grey-lighten-2">mdi-cart-outline</v-icon>
-          <div class="text-subtitle-1 mt-4 text-medium-emphasis">{{ t('pos.cartEmpty') }}</div>
-          <div class="text-body-2 text-center text-medium-emphasis mt-2">
-            {{ t('pos.cartEmptyHint') }}
-          </div>
+        <div v-else class="d-flex flex-column align-center justify-center px-4 py-6">
+          <v-icon size="40" color="grey-lighten-2">mdi-cart-outline</v-icon>
+          <div class="text-body-2 text-medium-emphasis mt-2">{{ t('pos.cartEmpty') }}</div>
         </div>
       </v-card-text>
     </v-card>
 
     <template #append>
-      <v-card border="0" class="px-0">
-        <v-card-title>
-          <slot name="totals"></slot>
-        </v-card-title>
-
-        <v-card-text>
-          <slot name="actions"></slot>
-        </v-card-text>
+      <v-card border="0" class="px-2 py-1">
+        <slot name="totals"></slot>
+        <slot name="actions"></slot>
       </v-card>
     </template>
 

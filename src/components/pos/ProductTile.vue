@@ -2,8 +2,7 @@
   <v-card
     hover
     link
-    min-height="156"
-    class="d-flex flex-column pa-3"
+    class="d-flex flex-column pa-2 pos-product-tile"
     @click="handleSelect(product)"
     :disabled="product.stock != null && product.stock <= 0"
   >
@@ -11,25 +10,17 @@
       v-if="product.stock != null && product.stock <= 0"
       color="red"
       :content="t('pos.outOfStock')"
+      class="pos-oos-badge"
     ></v-badge>
-
-    <v-sheet
-      color="grey-lighten-4"
-      rounded="md"
-      height="72"
-      class="d-flex align-center justify-center mb-3"
-    >
-      <v-icon size="30" color="grey">mdi-package-variant-closed</v-icon>
-    </v-sheet>
 
     <div class="text-body-2 font-weight-medium text-truncate">{{ product.name }}</div>
 
-    <div class="text-h6 font-weight-bold text-primary mt-1 text-no-wrap">
+    <div class="text-subtitle-1 font-weight-bold text-primary mt-auto text-no-wrap">
       {{ formatPrice(product.sellingPrice) }}
     </div>
 
-    <div v-if="showStock" class="text-caption text-medium-emphasis mt-1">
-      {{ t('pos.stock') }}: {{ product.stock || 0 }}
+    <div v-if="showStock && product.stock != null" class="text-caption text-disabled">
+      {{ product.stock }}
     </div>
   </v-card>
 </template>
@@ -59,3 +50,10 @@ const handleSelect = (product: Product) => {
   }
 };
 </script>
+
+<style scoped>
+.pos-product-tile {
+  min-height: 72px;
+  justify-content: center;
+}
+</style>
