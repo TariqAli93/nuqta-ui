@@ -1,5 +1,5 @@
 <template>
-  <div class="about-view py-6">
+  <PageShell>
     <!-- ─── 1) Header Section ─── -->
     <v-sheet class="about-hero pa-6 rounded-xl mb-4">
       <div class="d-flex flex-column flex-md-row align-md-center justify-space-between ga-4">
@@ -379,11 +379,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { t } from '@/i18n/t';
+import { PageShell } from '@/components/layout';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { computed, onMounted, ref } from 'vue';
 import { notifyError, notifyInfo, notifySuccess } from '@/utils/notify';
@@ -610,10 +611,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.about-view {
-  max-width: 1080px;
-}
-
 /* ─ Hero ─ */
 .about-hero {
   border: 1px solid rgba(var(--v-theme-primary), 0.18);

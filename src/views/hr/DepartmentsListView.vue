@@ -1,16 +1,12 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('hr.departments.title') }}</div>
-        <div class="text-sm text-medium-emphasis">{{ t('hr.departments.subtitle') }}</div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader :title="t('hr.departments.title')" :subtitle="t('hr.departments.subtitle')">
+      <template #actions>
         <v-btn color="primary" size="small" :to="'/hr/departments/new'" prepend-icon="mdi-plus">
           {{ t('hr.departments.new') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-card class="ds-filter-bar" flat>
       <v-card-text class="pa-4">
@@ -70,11 +66,12 @@
         />
       </v-card-text>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { PageShell, PageHeader } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useDepartmentsStore } from '@/stores/departmentsStore';
 import EmptyState from '@/components/common/EmptyState.vue';

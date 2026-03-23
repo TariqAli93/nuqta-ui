@@ -1,11 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="d-flex align-center ga-3">
-        <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
-        <div class="win-title">تفاصيل فاتورة المشتريات</div>
-      </div>
-      <div class="ds-page-header__actions" v-if="purchase && (purchase.remainingAmount ?? 0) > 0">
+  <PageShell>
+    <PageHeader title="تفاصيل فاتورة المشتريات" show-back>
+      <template v-if="purchase && (purchase.remainingAmount ?? 0) > 0" #actions>
         <v-btn
           color="primary"
           size="small"
@@ -14,8 +10,8 @@
         >
           تسجيل دفعة
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-skeleton-loader v-if="purchasesStore.loading" type="card" />
 
@@ -162,11 +158,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { PageShell, PageHeader } from '@/components/layout';
 import { formatDate } from '@/utils/formatters';
 import { useRoute, useRouter } from 'vue-router';
 import { usePurchasesStore } from '@/stores/purchasesStore';

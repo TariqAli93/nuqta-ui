@@ -1,5 +1,6 @@
 <template>
-  <v-card flat>
+  <SubPageShell>
+    <v-card flat>
     <v-card-text class="d-flex align-center ga-3 flex-wrap">
       <v-text-field
         v-model="dateFrom"
@@ -77,10 +78,12 @@
       </template>
     </v-data-table>
   </v-card>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { SubPageShell } from '@/components/layout';
 import { formatDate } from '@/utils/formatters';
 import { useInventoryStore } from '@/stores/inventoryStore';
 import { useInventoryHelpers } from '@/composables/useInventoryHelpers';

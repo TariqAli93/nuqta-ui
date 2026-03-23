@@ -1,14 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="d-flex align-center ga-3">
-        <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
-        <div>
-          <div class="win-title">{{ t('hr.payroll.details') }}</div>
-          <div class="text-sm text-medium-emphasis">{{ payrollRun?.title ?? '' }}</div>
-        </div>
-      </div>
-      <div class="ds-page-header__actions ds-stack-xs">
+  <PageShell>
+    <PageHeader :title="t('hr.payroll.details')" :subtitle="payrollRun?.title ?? ''" show-back>
+      <template #actions>
         <v-btn
           v-if="payrollRun?.status === 'draft'"
           variant="tonal"
@@ -66,8 +59,8 @@
         >
           {{ t('payroll.cancelAction') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-progress-linear v-if="store.loading" indeterminate color="primary" />
 
@@ -160,12 +153,13 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { usePayrollStore } from '@/stores/payrollStore';
 import { useRBAC } from '@/composables/useRBAC';

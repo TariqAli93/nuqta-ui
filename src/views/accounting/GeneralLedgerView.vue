@@ -1,17 +1,6 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="d-flex align-center ga-2">
-        <v-btn icon="mdi-arrow-right" variant="text" @click="goBack" />
-        <div>
-          <div class="win-title">{{ account ? account.name : '' }}</div>
-          <div class="win-subtitle">
-            عرض دفتر الأستاذ العام
-            <span v-if="account">للحساب {{ account.code }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+  <PageShell>
+    <PageHeader :title="account ? account.name : ''" :subtitle="ledgerSubtitle" show-back />
 
     <!-- Account header with date filters -->
     <v-card class="mb-4">
@@ -111,12 +100,13 @@
         </template>
       </v-data-table>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { useAccountingHelpers } from '@/composables/useAccountingHelpers';
 import { useCurrency } from '@/composables/useCurrency';
@@ -137,6 +127,14 @@ const dateFrom = ref<string | null>(null);
 const dateTo = ref<string | null>(null);
 
 const accountId = computed(() => Number(route.params.accountId));
+
+const ledgerSubtitle = computed(() => {
+  const base = 'عرض دفتر الأستاذ العام';
+  if (account.value) {
+    return `${base} للحساب ${account.value.code}`;
+  }
+  return base;
+});
 
 const account = computed<Account | undefined>(() =>
   accountingStore.accounts.find((a) => a.id === accountId.value)

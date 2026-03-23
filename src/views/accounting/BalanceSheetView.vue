@@ -1,5 +1,6 @@
 <template>
-  <v-card flat>
+  <SubPageShell>
+    <v-card flat>
     <v-card-text class="d-flex align-center ga-3 flex-wrap">
       <v-text-field
         v-model="fromDate"
@@ -242,10 +243,12 @@
       </v-row>
     </v-card-text>
   </v-card>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { SubPageShell } from '@/components/layout';
 import { useCurrency } from '@/composables/useCurrency';
 import { useExportReport } from '@/composables/useExportReport';
 import { useAccountingStore } from '@/stores/accountingStore';

@@ -1,13 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">مساحة عمل النسخ الاحتياطي</div>
-        <div class="win-subtitle">
-          إدارة النسخ الاحتياطية لقاعدة البيانات: إنشاء، استعادة، وحذف النسخ الاحتياطية.
-        </div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader title="مساحة عمل النسخ الاحتياطي" subtitle="إدارة النسخ الاحتياطية لقاعدة البيانات: إنشاء، استعادة، وحذف النسخ الاحتياطية.">
+      <template #actions>
         <v-btn
           color="primary"
           prepend-icon="mdi-backup-restore"
@@ -16,8 +10,8 @@
         >
           إنشاء نسخة احتياطية
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Stats Cards -->
     <v-row v-if="stats" dense>
@@ -178,11 +172,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { PageShell, PageHeader } from '@/components/layout';
 import { backupClient, type BackupInfo, type BackupStats } from '@/api/endpoints/backup';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 

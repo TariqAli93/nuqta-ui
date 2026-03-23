@@ -1,16 +1,12 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('sales.title') }}</div>
-        <div class="win-subtitle">{{ t('sales.subtitle') }}</div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader :title="t('sales.title')" :subtitle="t('sales.subtitle')">
+      <template #actions>
         <v-btn color="primary" :to="'/sales/new'" prepend-icon="mdi-plus">
           {{ t('sales.new') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-card flat class="ds-filter-bar">
       <v-row dense>
@@ -89,11 +85,12 @@
         />
       </v-card-text>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch, onUnmounted } from 'vue';
+import { PageShell, PageHeader } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useSalesStore } from '@/stores/salesStore';
 import EmptyState from '@/components/common/EmptyState.vue';

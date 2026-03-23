@@ -90,6 +90,13 @@ body,
   padding: var(--ds-page-py) var(--ds-page-px);
 }
 
+/* ─── Sub-page (workspace child views) ───────────────────────── */
+.ds-sub-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ds-section-gap);
+}
+
 /* ─── Typography ─────────────────────────────────────────────── */
 .win-title {
   font-size: 1.0625rem;

@@ -1,17 +1,6 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="d-flex align-center ga-2">
-        <v-btn icon="mdi-arrow-right" variant="text" @click="goBack" />
-        <div>
-          <div class="win-title">{{ entryDisplay.entryNumber }}</div>
-          <div class="win-subtitle">
-            عرض تفاصيل القيد
-            <span v-if="entryDisplay.entryDate">لتاريخ {{ entryDisplay.entryDate }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+  <PageShell>
+    <PageHeader :title="entryDisplay.entryNumber" :subtitle="journalSubtitle" show-back />
 
     <v-skeleton-loader v-if="accountingStore.loading" type="card" />
 
@@ -20,12 +9,13 @@
     </v-alert>
 
     <JournalEntryViewer v-else :entry="entryDisplay" />
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { useAccountingStore } from '@/stores/accountingStore';
 import JournalEntryViewer from '@/components/shared/JournalEntryViewer.vue';
 import type { JournalEntryDisplay } from '@/components/shared/JournalEntryViewer.vue';
@@ -63,6 +53,14 @@ const entryDisplay = computed((): JournalEntryDisplay => {
       description: line.description ?? '',
     })),
   };
+});
+
+const journalSubtitle = computed(() => {
+  const base = 'عرض تفاصيل القيد';
+  if (entryDisplay.value.entryDate) {
+    return `${base} لتاريخ ${entryDisplay.value.entryDate}`;
+  }
+  return base;
 });
 
 function goBack(): void {

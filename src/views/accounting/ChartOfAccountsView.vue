@@ -1,5 +1,6 @@
 <template>
-  <v-card flat>
+  <SubPageShell>
+    <v-card flat>
     <!-- Toolbar -->
     <v-toolbar flat density="compact" color="transparent" class="px-2">
       <v-text-field
@@ -149,6 +150,7 @@
     </v-data-table>
     <AccountFormDialog ref="accountFormDialog" />
   </v-card>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
@@ -160,6 +162,7 @@ import { useCurrency } from '@/composables/useCurrency';
 import type { Account } from '@/types/domain';
 import EmptyState from '@/components/common/EmptyState.vue';
 import AccountFormDialog from '@/components/workspace/AccountFormDialog.vue';
+import { SubPageShell } from '@/components/layout';
 
 const router = useRouter();
 const accountingStore = useAccountingStore();

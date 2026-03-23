@@ -1,18 +1,12 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">مساحة عمل المنتجات</div>
-        <div class="win-subtitle">
-          إدارة المنتج في شاشة واحدة: معلومات، حركات، مبيعات، مشتريات، وحدات، دفعات، وتعديل مخزون.
-        </div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader title="مساحة عمل المنتجات" subtitle="إدارة المنتج في شاشة واحدة: معلومات، حركات، مبيعات، مشتريات، وحدات، دفعات، وتعديل مخزون.">
+      <template #actions>
         <v-btn color="primary" size="small" prepend-icon="mdi-plus" @click="openCreateDialog">
           إضافة منتج
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-row dense>
       <v-col cols="12" md="4">
@@ -247,12 +241,13 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { categoriesClient, suppliersClient } from '@/api';
 import { useProductWorkspaceStore } from '@/stores/productWorkspaceStore';
 import { useRBAC } from '@/composables/useRBAC';

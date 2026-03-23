@@ -1,14 +1,10 @@
 <template>
-  <div class="win-page">
+  <PageShell>
     <v-skeleton-loader v-if="loading" type="card" />
 
     <template v-else-if="supplier">
-      <div class="ds-page-header-block">
-        <div class="d-flex align-center ga-2">
-          <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" />
-          <div class="win-title">{{ supplier.name }}</div>
-        </div>
-        <div class="ds-page-header__actions">
+      <PageHeader :title="supplier.name" show-back>
+        <template #actions>
           <v-btn
             variant="tonal"
             prepend-icon="mdi-pencil"
@@ -19,8 +15,8 @@
           <v-btn color="primary" prepend-icon="mdi-cash-minus" @click="showPaymentDialog = true">
             تسجيل دفعة
           </v-btn>
-        </div>
-      </div>
+        </template>
+      </PageHeader>
 
       <v-row class="mb-4" dense>
         <v-col cols="6" sm="3">
@@ -129,13 +125,14 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { formatDate } from '@/utils/formatters';
 import { useRoute, useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { suppliersClient, supplierLedgerClient, purchasesClient } from '@/api';
 import type { Supplier } from '@/types/domain';
 import type { LedgerEntry } from '@/components/shared/LedgerTable.vue';

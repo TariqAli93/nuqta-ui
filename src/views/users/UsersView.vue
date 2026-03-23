@@ -1,12 +1,8 @@
 <template>
-  <div :class="props.embedded ? '' : 'win-page'">
+  <component :is="props.embedded ? 'div' : PageShell">
     <!-- Full-page header (non-embedded) -->
-    <div v-if="!props.embedded" class="ds-page-header-block">
-      <div>
-        <div class="win-title">{{ t('users.title') }}</div>
-        <div class="win-subtitle">{{ t('users.subtitle') }}</div>
-      </div>
-      <div class="ds-page-header__actions">
+    <PageHeader v-if="!props.embedded" :title="t('users.title')" :subtitle="t('users.subtitle')">
+      <template #actions>
         <v-btn
           color="primary"
           prepend-icon="mdi-plus"
@@ -15,8 +11,8 @@
         >
           {{ t('users.add') }}
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <!-- Embedded inline header -->
     <div v-else class="d-flex justify-space-between align-center mb-4">
@@ -114,11 +110,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </div>
+  </component>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue';
+import { PageShell, PageHeader } from '@/components/layout';
 import { mapErrorToArabic, mapRoleToArabic, t } from '@/i18n/t';
 import { usersClient } from '@/api';
 import { useAuthStore } from '@/stores/authStore';

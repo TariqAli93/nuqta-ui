@@ -1,11 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div>
-        <div class="win-title">دفتر العملاء (حسابات القبض)</div>
-        <div class="win-subtitle">كشف حسابات العملاء والمطابقة المالية</div>
-      </div>
-      <div class="ds-page-header__actions">
+  <PageShell>
+    <PageHeader title="دفتر العملاء (حسابات القبض)" subtitle="كشف حسابات العملاء والمطابقة المالية">
+      <template #actions>
         <v-btn
           variant="tonal"
           color="warning"
@@ -15,8 +11,8 @@
         >
           مطابقة AR
         </v-btn>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <v-row dense>
       <!-- Customer selector -->
@@ -115,11 +111,12 @@
         />
       </v-col>
     </v-row>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { PageShell, PageHeader } from '@/components/layout';
 import { formatMoney } from '@/utils/formatters';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import LedgerTable from '@/components/shared/LedgerTable.vue';

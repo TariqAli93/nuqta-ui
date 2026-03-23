@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <SubPageShell>
     <v-card class="pa-4 mb-4" flat>
       <v-card-title class="d-flex align-center ga-2 mb-4">
         <v-icon color="primary">mdi-point-of-sale</v-icon>
@@ -79,10 +79,11 @@
         </v-btn>
       </v-form>
     </v-card>
-  </div>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
+import { SubPageShell } from '@/components/layout';
 import { usePosSettingsStore } from '@/stores/settings/usePosSettingsStore';
 import { useSettingsForm } from '@/composables/useSettingsForm';
 import type { PosSettings } from '@/types/settings/PosSettings';

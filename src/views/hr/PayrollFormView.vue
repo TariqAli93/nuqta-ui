@@ -1,16 +1,7 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="d-flex align-center ga-3">
-        <v-btn icon="mdi-arrow-right" variant="text" size="small" @click="router.back()" />
-        <div>
-          <div class="win-title">
-            {{ isEdit ? t('hr.payroll.edit') : t('hr.payroll.new') }}
-          </div>
-          <div class="text-sm text-medium-emphasis">{{ t('hr.payroll.formHint') }}</div>
-        </div>
-      </div>
-    </div>
+  <PageShell>
+    <PageHeader :title="isEdit ? t('hr.payroll.edit') : t('hr.payroll.new')" :subtitle="t('hr.payroll.formHint')" show-back />
+
 
     <v-card flat>
       <v-form class="win-form" @submit.prevent="submit">
@@ -47,12 +38,13 @@
         </div>
       </v-form>
     </v-card>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { usePayrollStore } from '@/stores/payrollStore';
 import type { PayrollRunInput } from '@/types/domain';

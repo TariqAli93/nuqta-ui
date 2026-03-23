@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <SubPageShell>
     <v-card class="pa-4 mb-4" flat>
       <v-card-title class="d-flex align-center ga-2 mb-4">
         <v-icon color="primary">mdi-calculator-variant</v-icon>
@@ -131,10 +131,11 @@
         </v-btn>
       </v-form>
     </v-card>
-  </div>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
+import { SubPageShell } from '@/components/layout';
 import { useAccountingSettingsStore } from '@/stores/settings/useAccountingSettingsStore';
 import { useSettingsForm } from '@/composables/useSettingsForm';
 import type { AccountingSettings } from '@/types/settings/AccountingSettings';

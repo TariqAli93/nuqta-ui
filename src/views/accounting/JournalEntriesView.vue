@@ -1,5 +1,6 @@
 <template>
-  <v-toolbar flat density="compact" class="px-2 mb-2">
+  <SubPageShell>
+    <v-toolbar flat density="compact" class="px-2 mb-2">
     <v-tabs v-model="activeTab" color="primary" class="me-4">
       <v-tab value="all">الكل</v-tab>
       <v-tab value="posted">مرحل</v-tab>
@@ -100,12 +101,14 @@
       </v-data-table-server>
     </v-card-text>
   </v-card>
+  </SubPageShell>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useAccountingStore } from '@/stores/accountingStore';
+import { SubPageShell } from '@/components/layout';
 import { postingClient } from '@/api/endpoints/posting';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';

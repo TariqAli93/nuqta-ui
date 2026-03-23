@@ -1,8 +1,6 @@
 <template>
-  <div class="win-page">
-    <div class="ds-page-header-block">
-      <div class="win-title">فاتورة مشتريات جديدة</div>
-    </div>
+  <PageShell>
+    <PageHeader title="فاتورة مشتريات جديدة" />
 
     <v-form ref="formRef" @submit.prevent="onSubmit">
       <v-card class="mb-4">
@@ -187,12 +185,13 @@
         <v-btn variant="text" @click="router.back()">إلغاء</v-btn>
       </div>
     </v-form>
-  </div>
+  </PageShell>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { PageShell, PageHeader } from '@/components/layout';
 import { usePurchasesStore } from '@/stores/purchasesStore';
 import { useSuppliersStore } from '@/stores/suppliersStore';
 import { productsClient } from '@/api';
