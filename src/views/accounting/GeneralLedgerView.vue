@@ -1,6 +1,6 @@
 <template>
   <PageShell>
-    <PageHeader :title="account ? account.name : ''" :subtitle="ledgerSubtitle" show-back />
+    <PageHeader :title="account ? account.name : ''" :subtitle="ledgerSubtitle" show-back :back-to="{ name: 'AccountingAccounts' }" />
 
     <!-- Account header with date filters -->
     <v-card class="mb-4">
@@ -178,10 +178,6 @@ async function loadLedger() {
 
 function goToEntry(entryId: number) {
   void router.push({ name: 'JournalEntryDetail', params: { id: entryId } });
-}
-
-function goBack() {
-  void router.push({ name: 'AccountingAccounts' });
 }
 
 onMounted(async () => {

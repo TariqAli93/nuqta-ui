@@ -1,6 +1,6 @@
 <template>
   <PageShell>
-    <PageHeader :title="isEdit ? t('products.edit') : t('products.new')" :subtitle="t('products.formHint')" show-back />
+    <PageHeader :title="isEdit ? t('products.edit') : t('products.new')" :subtitle="t('products.formHint')" show-back :back-to="props.redirectTo" />
 
     <v-card class="win-card win-card--padded" flat>
       <v-form class="win-form" @submit.prevent="submit">

@@ -3,7 +3,7 @@
     <v-skeleton-loader v-if="loading" type="card" />
 
     <template v-else-if="supplier">
-      <PageHeader :title="supplier.name" show-back>
+      <PageHeader :title="supplier.name" show-back :back-to="{ name: 'Suppliers' }">
         <template #actions>
           <v-btn
             variant="tonal"

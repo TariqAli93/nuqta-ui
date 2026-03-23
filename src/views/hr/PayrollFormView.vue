@@ -1,6 +1,6 @@
 <template>
   <PageShell>
-    <PageHeader :title="isEdit ? t('hr.payroll.edit') : t('hr.payroll.new')" :subtitle="t('hr.payroll.formHint')" show-back />
+    <PageHeader :title="isEdit ? t('hr.payroll.edit') : t('hr.payroll.new')" :subtitle="t('hr.payroll.formHint')" show-back back-to="/hr/payroll" />
 
 
     <v-card flat>

@@ -1,6 +1,6 @@
 <template>
   <PageShell>
-    <PageHeader :title="isEdit ? 'تعديل مورد' : 'إضافة مورد'" show-back />
+    <PageHeader :title="isEdit ? 'تعديل مورد' : 'إضافة مورد'" show-back :back-to="{ name: 'Suppliers' }" />
 
 
     <v-card max-width="600">
@@ -57,7 +57,7 @@
             <v-btn type="submit" color="primary" :loading="suppliersStore.loading">
               {{ isEdit ? 'تحديث' : 'حفظ' }}
             </v-btn>
-            <v-btn variant="text" @click="router.back()">إلغاء</v-btn>
+            <v-btn variant="text" :to="{ name: 'Suppliers' }">إلغاء</v-btn>
           </div>
         </v-form>
       </v-card-text>

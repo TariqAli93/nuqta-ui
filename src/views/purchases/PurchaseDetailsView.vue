@@ -1,6 +1,6 @@
 <template>
   <PageShell>
-    <PageHeader title="تفاصيل فاتورة المشتريات" show-back>
+    <PageHeader title="تفاصيل فاتورة المشتريات" show-back :back-to="{ name: 'Purchases' }">
       <template v-if="purchase && (purchase.remainingAmount ?? 0) > 0" #actions>
         <v-btn
           color="primary"

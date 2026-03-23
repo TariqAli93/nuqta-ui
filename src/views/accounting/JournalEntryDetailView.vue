@@ -1,6 +1,6 @@
 <template>
   <PageShell>
-    <PageHeader :title="entryDisplay.entryNumber" :subtitle="journalSubtitle" show-back />
+    <PageHeader :title="entryDisplay.entryNumber" :subtitle="journalSubtitle" show-back :back-to="{ name: 'AccountingJournal' }" />
 
     <v-skeleton-loader v-if="accountingStore.loading" type="card" />
 
@@ -14,14 +14,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
 import { useAccountingStore } from '@/stores/accountingStore';
 import JournalEntryViewer from '@/components/shared/JournalEntryViewer.vue';
 import type { JournalEntryDisplay } from '@/components/shared/JournalEntryViewer.vue';
 
 const route = useRoute();
-const router = useRouter();
 const accountingStore = useAccountingStore();
 
 const entryDisplay = computed((): JournalEntryDisplay => {
@@ -62,10 +61,6 @@ const journalSubtitle = computed(() => {
   }
   return base;
 });
-
-function goBack(): void {
-  void router.push({ name: 'AccountingJournal' });
-}
 
 onMounted(async () => {
   const id = Number(route.params.id);

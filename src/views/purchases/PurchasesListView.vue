@@ -8,7 +8,7 @@
       </template>
     </PageHeader>
 
-    <v-card flat class="ds-filter-bar">
+    <FilterBar>
       <v-row dense>
         <v-col cols="12" sm="8">
           <v-text-field
@@ -34,7 +34,7 @@
           />
         </v-col>
       </v-row>
-    </v-card>
+    </FilterBar>
 
     <v-card flat>
       <v-card-text class="pa-0">
@@ -84,7 +84,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { PageShell, PageHeader } from '@/components/layout';
+import { PageShell, PageHeader, FilterBar } from '@/components/layout';
 import { formatDate } from '@/utils/formatters';
 import { useRouter } from 'vue-router';
 import { usePurchasesStore } from '@/stores/purchasesStore';

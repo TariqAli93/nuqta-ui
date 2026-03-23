@@ -182,7 +182,7 @@
 
       <div class="d-flex ga-3">
         <v-btn type="submit" color="primary" :loading="purchasesStore.loading">حفظ</v-btn>
-        <v-btn variant="text" @click="router.back()">إلغاء</v-btn>
+        <v-btn variant="text" :to="{ name: 'Purchases' }">إلغاء</v-btn>
       </div>
     </v-form>
   </PageShell>

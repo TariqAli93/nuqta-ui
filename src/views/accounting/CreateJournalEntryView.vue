@@ -1,6 +1,6 @@
 <template>
   <PageShell>
-    <PageHeader title="إنشاء قيد يومي جديد" subtitle="قم بإنشاء قيد يومي يدوي لتسجيل المعاملات غير التلقائية أو لتعديل قيود سابقة" show-back />
+    <PageHeader title="إنشاء قيد يومي جديد" subtitle="قم بإنشاء قيد يومي يدوي لتسجيل المعاملات غير التلقائية أو لتعديل قيود سابقة" show-back :back-to="{ name: 'AccountingJournal' }" />
 
     <v-card>
       <v-toolbar density="compact" color="transparent" class="px-2">
@@ -291,10 +291,6 @@ async function save() {
   } finally {
     saving.value = false;
   }
-}
-
-function goBack() {
-  void router.push({ name: 'AccountingJournal' });
 }
 
 onMounted(() => {

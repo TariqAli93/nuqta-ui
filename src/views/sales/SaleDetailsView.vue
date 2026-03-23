@@ -1,6 +1,6 @@
 <template>
   <PageShell>
-    <PageHeader :title="t('sales.details')" :subtitle="sale?.invoiceNumber ?? ''" show-back>
+    <PageHeader :title="t('sales.details')" :subtitle="sale?.invoiceNumber ?? ''" show-back :back-to="{ name: 'Sales' }">
       <template #actions>
         <v-btn
           v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"

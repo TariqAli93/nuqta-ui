@@ -8,7 +8,7 @@
       </template>
     </PageHeader>
 
-    <v-card flat class="ds-filter-bar">
+    <FilterBar>
       <v-text-field
         v-model="searchQuery"
         :placeholder="t('customers.search')"
@@ -19,7 +19,7 @@
         autofocus
         hide-details
       />
-    </v-card>
+    </FilterBar>
 
     <v-card flat>
       <v-card-text class="pa-0">
@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
-import { PageShell, PageHeader } from '@/components/layout';
+import { PageShell, PageHeader, FilterBar } from '@/components/layout';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useCustomersStore } from '@/stores/customersStore';
 import EmptyState from '@/components/common/EmptyState.vue';

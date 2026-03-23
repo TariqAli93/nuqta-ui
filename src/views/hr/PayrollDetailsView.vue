@@ -1,6 +1,6 @@
 <template>
   <PageShell>
-    <PageHeader :title="t('hr.payroll.details')" :subtitle="payrollRun?.title ?? ''" show-back>
+    <PageHeader :title="t('hr.payroll.details')" :subtitle="payrollRun?.title ?? ''" show-back back-to="/hr/payroll">
       <template #actions>
         <v-btn
           v-if="payrollRun?.status === 'draft'"

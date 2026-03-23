@@ -4,7 +4,7 @@
 
     <template v-else-if="customer">
       <!-- Header -->
-      <PageHeader :title="customer.name" show-back>
+      <PageHeader :title="customer.name" show-back :back-to="{ name: 'Customers' }">
         <template #actions>
           <v-btn
             variant="tonal"

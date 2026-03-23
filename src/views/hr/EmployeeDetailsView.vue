@@ -1,6 +1,6 @@
 <template>
   <PageShell>
-    <PageHeader :title="t('hr.employees.details')" :subtitle="employee?.fullName ?? ''" show-back>
+    <PageHeader :title="t('hr.employees.details')" :subtitle="employee?.fullName ?? ''" show-back back-to="/hr/employees">
       <template #actions>
         <v-btn
           variant="tonal"

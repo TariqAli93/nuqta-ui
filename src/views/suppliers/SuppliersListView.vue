@@ -8,7 +8,7 @@
       </template>
     </PageHeader>
 
-    <v-card flat class="ds-filter-bar">
+    <FilterBar>
       <v-text-field
         v-model="search"
         prepend-inner-icon="mdi-magnify"
@@ -18,7 +18,7 @@
         density="comfortable"
         @update:model-value="onSearch"
       />
-    </v-card>
+    </FilterBar>
 
     <v-card flat>
       <v-card-text class="pa-0">
@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { PageShell, PageHeader } from '@/components/layout';
+import { PageShell, PageHeader, FilterBar } from '@/components/layout';
 import { useSuppliersStore } from '@/stores/suppliersStore';
 import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
 import { t } from '@/i18n/t';
