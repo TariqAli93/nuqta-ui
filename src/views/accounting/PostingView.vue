@@ -255,7 +255,7 @@
 
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
-import { postingClient, type PostingBatch } from '../../api/endpoints/posting';
+import { postingClient, type PostingBatch } from '@/api/endpoints/posting';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 import {
   formatDate as sharedFormatDate,

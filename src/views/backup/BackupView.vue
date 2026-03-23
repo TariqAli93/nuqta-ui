@@ -1,14 +1,13 @@
 <template>
-  <v-container class="pa-6">
-    <v-app-bar class="mb-6" border="bottom">
-      <v-app-bar-title>
-        <div class="win-title mb-0">مساحة عمل النسخ الاحتياطي</div>
-        <div class="text-sm">
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div>
+        <div class="win-title">مساحة عمل النسخ الاحتياطي</div>
+        <div class="win-subtitle">
           إدارة النسخ الاحتياطية لقاعدة البيانات: إنشاء، استعادة، وحذف النسخ الاحتياطية.
         </div>
-      </v-app-bar-title>
-
-      <template #append>
+      </div>
+      <div class="ds-page-header__actions">
         <v-btn
           color="primary"
           prepend-icon="mdi-backup-restore"
@@ -17,44 +16,63 @@
         >
           إنشاء نسخة احتياطية
         </v-btn>
-      </template>
-    </v-app-bar>
+      </div>
+    </div>
 
     <!-- Stats Cards -->
-    <v-row dense class="mb-6" v-if="stats">
+    <v-row v-if="stats" dense>
       <v-col cols="6" sm="3">
-        <v-card class="pa-4 text-center">
-          <div class="text-caption text-medium-emphasis">عدد النسخ</div>
-          <div class="text-body-2 font-weight-bold">{{ stats.totalBackups }}</div>
-        </v-card>
-      </v-col>
-      <v-col cols="6" sm="3">
-        <v-card class="pa-4 text-center">
-          <div class="text-caption text-medium-emphasis">الحجم الإجمالي</div>
-          <div class="text-body-2 font-weight-bold">{{ formatSize(stats.totalSizeBytes) }}</div>
-        </v-card>
-      </v-col>
-      <v-col cols="6" sm="3">
-        <v-card class="pa-4 text-center">
-          <div class="text-caption text-medium-emphasis">أقدم نسخة</div>
-          <div class="text-body-2 font-weight-bold">
-            {{ stats.oldestBackup ? formatTimestamp(stats.oldestBackup.createdAt) : '—' }}
+        <v-card flat>
+          <div class="ds-stat-card">
+            <div class="ds-stat-card__info">
+              <div class="ds-stat-card__label">عدد النسخ</div>
+              <div class="ds-stat-card__value">{{ stats.totalBackups }}</div>
+            </div>
           </div>
         </v-card>
       </v-col>
       <v-col cols="6" sm="3">
-        <v-card class="pa-4 text-center">
-          <div class="text-caption text-medium-emphasis">أحدث نسخة</div>
-          <div class="text-body-2 font-weight-bold">
-            {{ stats.latestBackup ? formatTimestamp(stats.latestBackup.createdAt) : '—' }}
+        <v-card flat>
+          <div class="ds-stat-card">
+            <div class="ds-stat-card__info">
+              <div class="ds-stat-card__label">الحجم الإجمالي</div>
+              <div class="ds-stat-card__value">{{ formatSize(stats.totalSizeBytes) }}</div>
+            </div>
+          </div>
+        </v-card>
+      </v-col>
+      <v-col cols="6" sm="3">
+        <v-card flat>
+          <div class="ds-stat-card">
+            <div class="ds-stat-card__info">
+              <div class="ds-stat-card__label">أقدم نسخة</div>
+              <div class="ds-stat-card__value" style="font-size: 0.9rem">
+                {{ stats.oldestBackup ? formatTimestamp(stats.oldestBackup.createdAt) : '—' }}
+              </div>
+            </div>
+          </div>
+        </v-card>
+      </v-col>
+      <v-col cols="6" sm="3">
+        <v-card flat>
+          <div class="ds-stat-card">
+            <div class="ds-stat-card__info">
+              <div class="ds-stat-card__label">أحدث نسخة</div>
+              <div class="ds-stat-card__value" style="font-size: 0.9rem">
+                {{ stats.latestBackup ? formatTimestamp(stats.latestBackup.createdAt) : '—' }}
+              </div>
+            </div>
           </div>
         </v-card>
       </v-col>
     </v-row>
 
     <!-- Backup list -->
-    <v-card>
-      <v-card-title class="d-flex align-center ga-2">
+    <v-card flat>
+      <v-card-title
+        class="d-flex align-center ga-2"
+        style="padding: var(--ds-card-py) var(--ds-card-px) var(--ds-space-2)"
+      >
         <v-icon color="primary">mdi-database</v-icon>
         النسخ المتوفرة
         <v-spacer />
@@ -70,6 +88,7 @@
         density="comfortable"
         :items-per-page="20"
         no-data-text="لا توجد نسخ احتياطية بعد"
+        class="ds-table-enhanced"
       >
         <template #item.size="{ item }">
           {{ formatSize(item.sizeBytes) }}
@@ -117,8 +136,8 @@
     </v-card>
 
     <!-- Restore confirmation dialog -->
-    <v-dialog v-model="restoreDialog" max-width="480">
-      <v-card>
+    <v-dialog v-model="restoreDialog" max-width="480" class="ds-dialog">
+      <v-card rounded="lg">
         <v-card-title class="text-error">
           <v-icon class="me-2" color="error">mdi-alert</v-icon>
           تأكيد الاستعادة
@@ -146,12 +165,11 @@
     </v-dialog>
 
     <!-- Delete confirmation dialog -->
-    <v-dialog v-model="deleteDialog" max-width="420">
-      <v-card>
+    <v-dialog v-model="deleteDialog" max-width="420" class="ds-dialog">
+      <v-card rounded="lg">
         <v-card-title>تأكيد الحذف</v-card-title>
         <v-card-text>
-          هل أنت متأكد من حذف النسخة الاحتياطية <strong>{{ deleteTarget }}</strong
-          >؟
+          هل أنت متأكد من حذف النسخة الاحتياطية <strong>{{ deleteTarget }}</strong>؟
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -160,12 +178,12 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { backupClient, type BackupInfo, type BackupStats } from '../../api/endpoints/backup';
+import { backupClient, type BackupInfo, type BackupStats } from '@/api/endpoints/backup';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 
 const backups = ref<BackupInfo[]>([]);
@@ -199,35 +217,35 @@ function formatTimestamp(ts: string): string {
 
 async function loadBackups() {
   loadingList.value = true;
-
-  const [listRes, statsRes] = await Promise.all([backupClient.list(), backupClient.getStats()]);
-
-  loadingList.value = false;
-
-  if (listRes.ok) {
-    backups.value = listRes.data;
-  } else {
-    notifyError(listRes.error.message || 'فشل تحميل النسخ');
-  }
-
-  if (statsRes.ok) {
-    stats.value = statsRes.data.stats;
-  } else {
-    notifyError(statsRes.error.message || 'فشل تحميل إحصاءات النسخ الاحتياطية');
+  try {
+    const [listRes, statsRes] = await Promise.all([backupClient.list(), backupClient.getStats()]);
+    if (listRes.ok) {
+      backups.value = listRes.data;
+    } else {
+      notifyError(listRes.error.message || 'فشل تحميل النسخ');
+    }
+    if (statsRes.ok) {
+      stats.value = statsRes.data.stats;
+    } else {
+      notifyError(statsRes.error.message || 'فشل تحميل إحصاءات النسخ الاحتياطية');
+    }
+  } finally {
+    loadingList.value = false;
   }
 }
 
 async function createBackup() {
   creating.value = true;
-
-  const result = await backupClient.create();
-  creating.value = false;
-
-  if (result.ok) {
-    notifySuccess(`تم إنشاء النسخة الاحتياطية: ${result.data.backupName}`);
-    await loadBackups();
-  } else {
-    notifyError(result.error.message || 'فشل إنشاء النسخة الاحتياطية');
+  try {
+    const result = await backupClient.create();
+    if (result.ok) {
+      notifySuccess(`تم إنشاء النسخة الاحتياطية: ${result.data.backupName}`);
+      await loadBackups();
+    } else {
+      notifyError(result.error.message || 'فشل إنشاء النسخة الاحتياطية');
+    }
+  } finally {
+    creating.value = false;
   }
 }
 
@@ -248,19 +266,14 @@ function confirmDelete(name: string) {
 async function executeRestore() {
   restoringName.value = restoreTarget.value;
   restoreDialog.value = false;
-
-  // Step 1: Generate token
   const tokenResult = await backupClient.generateToken(restoreTarget.value);
   if (!tokenResult.ok) {
     restoringName.value = null;
     notifyError(tokenResult.error.message || 'فشل إنشاء رمز الاستعادة');
     return;
   }
-
-  // Step 2: Restore using token
   const restoreResult = await backupClient.restore(tokenResult.data.token);
   restoringName.value = null;
-
   if (restoreResult.ok) {
     notifySuccess(restoreResult.data.message || 'تمت الاستعادة بنجاح — يرجى إعادة تشغيل التطبيق');
   } else {
@@ -271,10 +284,8 @@ async function executeRestore() {
 async function executeDelete() {
   deletingName.value = deleteTarget.value;
   deleteDialog.value = false;
-
   const result = await backupClient.delete(deleteTarget.value);
   deletingName.value = null;
-
   if (result.ok) {
     notifySuccess('تم حذف النسخة بنجاح');
     await loadBackups();

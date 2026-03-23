@@ -83,10 +83,10 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { useEmployeesStore } from '../../stores/employeesStore';
-import { useDepartmentsStore } from '../../stores/departmentsStore';
-import type { EmployeeInput } from '../../types/domain';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { useEmployeesStore } from '@/stores/employeesStore';
+import { useDepartmentsStore } from '@/stores/departmentsStore';
+import type { EmployeeInput } from '@/types/domain';
 import { notifyError, notifySuccess } from '@/utils/notify';
 
 const store = useEmployeesStore();

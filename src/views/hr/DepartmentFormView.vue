@@ -44,9 +44,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { useDepartmentsStore } from '../../stores/departmentsStore';
-import type { DepartmentInput } from '../../types/domain';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { useDepartmentsStore } from '@/stores/departmentsStore';
+import type { DepartmentInput } from '@/types/domain';
 import { notifyError, notifySuccess } from '@/utils/notify';
 
 const store = useDepartmentsStore();

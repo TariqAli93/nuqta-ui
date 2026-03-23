@@ -1,18 +1,18 @@
 <template>
-  <v-container fluid>
-    <v-app-bar class="mb-6" border="bottom">
-      <v-app-bar-title>
-        <div class="win-title mb-0">مساحة عمل المنتجات</div>
-        <div class="text-sm">
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div>
+        <div class="win-title">مساحة عمل المنتجات</div>
+        <div class="win-subtitle">
           إدارة المنتج في شاشة واحدة: معلومات، حركات، مبيعات، مشتريات، وحدات، دفعات، وتعديل مخزون.
         </div>
-      </v-app-bar-title>
+      </div>
       <div class="ds-page-header__actions">
         <v-btn color="primary" size="small" prepend-icon="mdi-plus" @click="openCreateDialog">
           إضافة منتج
         </v-btn>
       </div>
-    </v-app-bar>
+    </div>
 
     <v-row dense>
       <v-col cols="12" md="4">
@@ -210,7 +210,7 @@
                 <v-col cols="12" md="4">
                   <v-switch v-model="productForm.isExpire" label="يتتبع الصلاحية" color="primary" />
                 </v-col>
-                <v-col cols="12" md="8" v-if="productForm.isExpire">
+                <v-col v-if="productForm.isExpire" cols="12" md="8">
                   <v-text-field
                     v-model="productForm.expireDate"
                     label="تاريخ الانتهاء الافتراضي"
@@ -247,11 +247,11 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { categoriesClient, suppliersClient } from '@/api';
 import { useProductWorkspaceStore } from '@/stores/productWorkspaceStore';
@@ -281,7 +281,6 @@ const router = useRouter();
 const workspaceStore = useProductWorkspaceStore();
 const { can } = useRBAC();
 
-// Load system settings to determine feature availability (e.g. stock adjustment)
 const settingsStore = useSystemSettingsStore();
 
 const categories = ref<Array<{ id: number; name: string }>>([]);
@@ -296,23 +295,6 @@ const deleteDialog = ref(false);
 const selectedProductId = computed(() => workspaceStore.selectedProductId);
 const showAdjustTab = computed(() => can('inventory:adjust'));
 const showUnitsTab = computed(() => settingsStore.data?.unitsEnabled);
-
-/* ── Barcode polling ───────────────────────────────────────────── */
-
-let barcodePollingTimer: ReturnType<typeof setInterval> | null = null;
-
-function stopBarcodePolling(): void {
-  if (barcodePollingTimer) {
-    clearInterval(barcodePollingTimer);
-    barcodePollingTimer = null;
-  }
-}
-
-function startBarcodePolling(productId: number): void {
-  stopBarcodePolling();
-}
-
-/* ── Tab → route sync ──────────────────────────────────────────── */
 
 const statusOptions = [
   { title: 'متوفر', value: 'available' },
@@ -339,10 +321,12 @@ const productForm = reactive<ProductInput>({
   expireDate: null,
 });
 
+// Sync active tab to URL query param
 watch(activeTab, (tab) => {
   router.replace({ query: { ...route.query, tab } });
 });
 
+// Sync active tab from URL query param
 watch(
   () => route.query.tab,
   (value) => {
@@ -352,6 +336,7 @@ watch(
   }
 );
 
+// Sync product selection from URL query param
 watch(
   () => route.query.productId,
   async (value) => {
@@ -361,25 +346,6 @@ watch(
     }
   }
 );
-
-/**
- * Lazy-load tab data only when the tab is activated AND the data is
- * for the current product. `loadProductWorkspace` already fetches
- * everything on product selection, so this watcher only matters when
- * the user switches tabs (to pick up data that wasn't loaded upfront
- * or to start/stop barcode polling).
- */
-watch(activeTab, (tab) => {
-  const productId = selectedProductId.value;
-  if (!productId) return;
-
-  // Start/stop barcode polling based on active tab
-  if (tab === 'units') {
-    startBarcodePolling(productId);
-  } else {
-    stopBarcodePolling();
-  }
-});
 
 watch(
   () => workspaceStore.error,
@@ -398,10 +364,6 @@ onMounted(async () => {
     settingsStore.fetch(),
   ]);
   await applyRouteSelection();
-});
-
-onUnmounted(() => {
-  stopBarcodePolling();
 });
 
 /* ── Lookups ───────────────────────────────────────────────────── */
@@ -451,9 +413,6 @@ async function applyRouteSelection(): Promise<void> {
 }
 
 async function selectProduct(productId: number): Promise<void> {
-  // Stop any existing polling for previous product
-  stopBarcodePolling();
-
   await workspaceStore.loadProductWorkspace(productId);
   await router.replace({
     query: {
@@ -462,11 +421,6 @@ async function selectProduct(productId: number): Promise<void> {
       action: undefined,
     },
   });
-
-  // Re-start polling if we're already on the units tab
-  if (activeTab.value === 'units') {
-    startBarcodePolling(productId);
-  }
 }
 
 /* ── Filters & pagination ──────────────────────────────────────── */

@@ -121,12 +121,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { useEmployeesStore } from '../../stores/employeesStore';
-import { useDepartmentsStore } from '../../stores/departmentsStore';
-import type { Employee } from '../../types/domain';
-import EmptyState from '../../components/emptyState.vue';
-import StatusBadge from '../../components/common/StatusBadge.vue';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { useEmployeesStore } from '@/stores/employeesStore';
+import { useDepartmentsStore } from '@/stores/departmentsStore';
+import type { Employee } from '@/types/domain';
+import EmptyState from '@/components/common/EmptyState.vue';
+import StatusBadge from '@/components/common/StatusBadge.vue';
 import { notifyError, notifySuccess } from '@/utils/notify';
 
 const store = useEmployeesStore();

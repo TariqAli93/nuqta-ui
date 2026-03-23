@@ -1,364 +1,359 @@
-﻿<template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="mb-6" border="bottom">
-        <template #prepend>
-          <v-btn icon="mdi-arrow-right" variant="text" to="/sales" />
-        </template>
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ t('sales.details') }}</div>
-          <div class="text-sm">{{ sale?.invoiceNumber ?? '' }}</div>
-        </v-app-bar-title>
-
-        <template #append>
-          <div class="d-flex ga-2">
-            <v-btn
-              v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"
-              color="warning"
-              prepend-icon="mdi-cash-refund"
-              :loading="refunding"
-              @click="openRefundDialog(false)"
-            >
-              استرجاع مالي
-            </v-btn>
-            <v-btn
-              v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"
-              color="deep-orange"
-              prepend-icon="mdi-package-variant-closed-remove"
-              :loading="refunding"
-              @click="openRefundDialog(true)"
-            >
-              استرجاع مع إرجاع البضاعة
-            </v-btn>
-            <!-- تسوية الفاتورة في حال المتبقي اكبر من 0 -->
-            <v-btn
-              v-if="
-                sale?.status === 'pending' &&
-                (sale.paidAmount < sale.remainingAmount || sale.remainingAmount > 0)
-              "
-              color="success"
-              prepend-icon="mdi-cash-check"
-              @click="settleDialog = true"
-            >
-              تسوية
-            </v-btn>
-            <!-- Cancel is only allowed when no refund payments exist.
-                 Backend blocks cancellation if a refund payment is present
-                 (partial_refund status) to prevent double inventory reversal. -->
-            <v-btn
-              v-if="sale?.status === 'completed' || sale?.status === 'pending'"
-              color="error"
-              prepend-icon="mdi-close-circle-outline"
-              :loading="cancelling"
-              @click="cancelDialog = true"
-            >
-              إلغاء الفاتورة
-            </v-btn>
-          </div>
-        </template>
-      </v-app-bar>
-
-      <v-skeleton-loader v-if="loading" type="card, table" />
-
-      <template v-else-if="sale">
-        <!-- Summary cards -->
-        <v-row dense>
-          <v-col cols="12" sm="4">
-            <v-card flat>
-              <div class="ds-stat-card">
-                <v-avatar color="primary" variant="tonal" size="40">
-                  <v-icon>mdi-receipt-text-outline</v-icon>
-                </v-avatar>
-                <div class="ds-stat-card__info">
-                  <div class="ds-stat-card__label">{{ t('sales.invoice') }}</div>
-                  <div class="ds-stat-card__value" style="font-size: 1rem">
-                    {{ sale.invoiceNumber }}
-                  </div>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="4">
-            <v-card flat>
-              <div class="ds-stat-card">
-                <v-avatar :color="statusColor(sale.status)" variant="tonal" size="40">
-                  <v-icon>{{ statusIcon(sale.status) }}</v-icon>
-                </v-avatar>
-                <div class="ds-stat-card__info">
-                  <div class="ds-stat-card__label">{{ t('sales.status') }}</div>
-                  <v-chip :color="statusColor(sale.status)" size="small" variant="tonal" label>
-                    {{ statusLabel(sale.status) }}
-                  </v-chip>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-
-          <v-col cols="12" sm="4">
-            <v-card flat>
-              <div class="ds-stat-card">
-                <v-avatar color="success" variant="tonal" size="40">
-                  <v-icon>mdi-cash-multiple</v-icon>
-                </v-avatar>
-                <div class="ds-stat-card__info">
-                  <div class="ds-stat-card__label">{{ t('sales.total') }}</div>
-                  <div class="ds-stat-card__value" style="font-size: 1rem">
-                    {{ formatAmount(sale.total) }}
-                  </div>
-                </div>
-              </div>
-            </v-card>
-          </v-col>
-        </v-row>
-
-        <!-- Payment details -->
-        <PaymentInfoCard :sale="sale" class="mb-4" />
-
-        <!-- Line items -->
-        <v-card class="ds-table-wrapper" flat>
-          <v-card-title class="text-body-1 font-weight-bold">
-            {{ t('sales.lineItems') }}
-          </v-card-title>
-          <v-card-text class="pa-0">
-            <v-data-table
-              v-if="sale.items?.length"
-              :headers="itemHeaders"
-              :items="sale.items"
-              density="comfortable"
-              class="ds-table-enhanced ds-table-striped"
-              :hide-default-footer="true"
-              :show-expand="paymentsOnInvoicesEnabled"
-            >
-              <template #item.productName="{ item }">
-                <span class="font-weight-medium">{{ item.productName }}</span>
-              </template>
-              <template #item.unitPrice="{ item }">
-                {{ formatAmount(item.unitPrice) }}
-              </template>
-              <template #item.discount="{ item }">
-                {{ formatAmount(item.discount ?? 0) }}
-              </template>
-              <template #item.subtotal="{ item }">
-                <span class="font-weight-bold">{{ formatAmount(item.subtotal) }}</span>
-              </template>
-              <!-- Expandable row: per-item batch depletion (FIFO) -->
-              <template v-if="paymentsOnInvoicesEnabled" #expanded-row="{ columns, item }">
-                <td :colspan="columns.length" class="pa-4">
-                  <div class="text-caption font-weight-bold mb-2">تفاصيل الدفعات</div>
-                  <v-table v-if="item.depletions?.length" density="compact">
-                    <thead>
-                      <tr>
-                        <th>رقم الدفعة</th>
-                        <th>تاريخ الانتهاء</th>
-                        <th class="text-center">الكمية</th>
-                        <th class="text-end">تكلفة الوحدة</th>
-                        <th class="text-end">إجمالي التكلفة</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(dep, di) in item.depletions" :key="di">
-                        <td>{{ dep.batchNumber ?? '—' }}</td>
-                        <td>
-                          <v-chip
-                            v-if="dep.expiryDate"
-                            size="x-small"
-                            variant="tonal"
-                            :color="expiryChipColor(dep.expiryDate)"
-                          >
-                            {{ dep.expiryDate }} · {{ expiryLabel(dep.expiryDate) }}
-                          </v-chip>
-                          <span v-else>—</span>
-                        </td>
-                        <td class="text-center">{{ dep.quantityBase }}</td>
-                        <td class="text-end">{{ formatAmount(dep.costPerUnit ?? 0) }}</td>
-                        <td class="text-end font-weight-medium">
-                          {{ formatAmount(dep.totalCost ?? 0) }}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </v-table>
-                  <div v-else class="text-caption text-medium-emphasis">
-                    لا توجد تفاصيل دفعات — قد لا يكون المنتج يتتبع الدفعات
-                  </div>
-                </td>
-              </template>
-              <template #bottom>
-                <div class="d-flex justify-space-between pa-4 font-weight-bold">
-                  <span>{{ t('sales.total') }}</span>
-                  <span>{{ formatAmount(sale.total) }}</span>
-                </div>
-              </template>
-            </v-data-table>
-
-            <EmptyState
-              v-else
-              icon="mdi-package-variant-closed"
-              :title="t('sales.noItems')"
-              :description="t('sales.noItemsHint')"
-            />
-          </v-card-text>
-        </v-card>
-
-        <!-- COGS Summary (server-computed) -->
-        <v-card v-if="sale.cogs != null" flat>
-          <v-card-title class="text-body-1 font-weight-bold"> ملخص التكلفة </v-card-title>
-          <v-card-text>
-            <v-row dense>
-              <v-col cols="6" sm="3">
-                <div class="text-caption text-medium-emphasis">تكلفة البضاعة المباعة</div>
-                <div class="text-body-1 font-weight-bold">{{ formatAmount(sale.cogs) }}</div>
-              </v-col>
-              <v-col cols="6" sm="3">
-                <div class="text-caption text-medium-emphasis">هامش الربح</div>
-                <div class="text-body-1 font-weight-bold text-success">
-                  {{ formatAmount(sale.total - (sale.cogs ?? 0)) }}
-                </div>
-              </v-col>
-              <v-col cols="6" sm="3">
-                <div class="text-caption text-medium-emphasis">نسبة الربح</div>
-                <div class="text-body-1 font-weight-bold text-success">{{ profitMarginPct }}%</div>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-
-        <!-- Audit Trail -->
-        <!-- <v-card class="win-card mt-4" flat>
-          <AuditLogTab entity-type="sale" :entity-id="sale?.id ?? 1" title="سجل تدقيق الفاتورة" />
-        </v-card> -->
-      </template>
-
-      <!-- Refund confirmation dialog -->
-      <v-dialog v-model="refundDialog" max-width="480" class="ds-dialog">
-        <v-card rounded="lg">
-          <v-card-title>تأكيد الاسترجاع</v-card-title>
-          <v-card-text>
-            <p class="mb-4">
-              <template v-if="refundReturnToStock">
-                سيتم استرجاع المبلغ المحدد وإعادة جميع البضاعة للمخزون وعكس القيود المحاسبية.
-              </template>
-              <template v-else>
-                سيتم استرجاع المبلغ المحدد فقط بدون إعادة البضاعة للمخزون.
-              </template>
-            </p>
-            <v-text-field
-              v-model.number="refundAmount"
-              type="number"
-              label="مبلغ الاسترجاع"
-              variant="outlined"
-              density="comfortable"
-              :min="1"
-              :max="refundableBalance"
-              :hint="`الحد الأقصى: ${formatAmount(refundableBalance)}`"
-              hide-details="auto"
-              :rules="[
-                (v) => v > 0 || 'يجب أن يكون المبلغ أكبر من الصفر',
-                (v) => v <= refundableBalance || 'المبلغ يتجاوز الرصيد القابل للاسترداد',
-              ]"
-            />
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn variant="text" @click="refundDialog = false">إلغاء</v-btn>
-            <v-btn
-              :color="refundReturnToStock ? 'deep-orange' : 'warning'"
-              :loading="refunding"
-              :disabled="!refundAmount || refundAmount <= 0 || refundAmount > refundableBalance"
-              @click="executeRefund"
-            >
-              {{ refundReturnToStock ? 'استرجاع مع إرجاع البضاعة' : 'استرجاع مالي فقط' }}
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <!-- Cancel confirmation dialog -->
-      <v-dialog v-model="cancelDialog" max-width="420" class="ds-dialog">
-        <v-card rounded="lg">
-          <v-card-title>تأكيد الإلغاء</v-card-title>
-          <v-card-text>
-            هل أنت متأكد من إلغاء هذه الفاتورة؟ لا يمكن التراجع عن هذا الإجراء.
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn variant="text" @click="cancelDialog = false">إلغاء</v-btn>
-            <v-btn color="error" :loading="cancelling" @click="executeCancel">تأكيد الإلغاء</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <!-- Settle confirmation dialog -->
-      <v-dialog v-model="settleDialog" max-width="480" class="ds-dialog">
-        <v-card rounded="lg">
-          <v-card-title>تأكيد التسوية</v-card-title>
-          <v-card-text>
-            <p class="mb-4">
-              سيتم تسوية المبلغ المتبقي
-              <strong>{{ formatAmount(sale?.remainingAmount ?? 0) }}</strong>
-              وتحديث حالة الفاتورة.
-            </p>
-
-            <v-select
-              v-model="settleForm.paymentMethod"
-              :items="paymentMethodOptions"
-              item-title="title"
-              item-value="value"
-              label="طريقة الدفع"
-              variant="outlined"
-              density="comfortable"
-              hide-details="auto"
-              class="mb-3"
-            />
-
-            <v-text-field
-              v-if="settleRefRequired"
-              v-model="settleForm.referenceNumber"
-              label="رقم المرجع"
-              variant="outlined"
-              density="comfortable"
-              hide-details="auto"
-              class="mb-3"
-              :rules="[(v) => !!v || 'رقم المرجع مطلوب عند الدفع بالبطاقة']"
-            />
-
-            <v-textarea
-              v-model="settleForm.notes"
-              label="ملاحظات"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              rows="2"
-              auto-grow
-            />
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer />
-            <v-btn variant="text" @click="settleDialog = false">إلغاء</v-btn>
-            <v-btn
-              color="success"
-              :loading="settling"
-              :disabled="settleRefRequired && !settleForm.referenceNumber.trim()"
-              @click="executeSettle"
-            >
-              تأكيد التسوية
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+<template>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-2">
+        <v-btn icon="mdi-arrow-right" variant="text" to="/sales" />
+        <div>
+          <div class="win-title">{{ t('sales.details') }}</div>
+          <div class="win-subtitle">{{ sale?.invoiceNumber ?? '' }}</div>
+        </div>
+      </div>
+      <div class="ds-page-header__actions">
+        <v-btn
+          v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"
+          color="warning"
+          prepend-icon="mdi-cash-refund"
+          :loading="refunding"
+          @click="openRefundDialog(false)"
+        >
+          استرجاع مالي
+        </v-btn>
+        <v-btn
+          v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"
+          color="deep-orange"
+          prepend-icon="mdi-package-variant-closed-remove"
+          :loading="refunding"
+          @click="openRefundDialog(true)"
+        >
+          استرجاع مع إرجاع البضاعة
+        </v-btn>
+        <!-- تسوية الفاتورة في حال المتبقي اكبر من 0 -->
+        <v-btn
+          v-if="
+            sale?.status === 'pending' &&
+            (sale.paidAmount < sale.remainingAmount || sale.remainingAmount > 0)
+          "
+          color="success"
+          prepend-icon="mdi-cash-check"
+          @click="settleDialog = true"
+        >
+          تسوية
+        </v-btn>
+        <!-- Cancel is only allowed when no refund payments exist.
+             Backend blocks cancellation if a refund payment is present
+             (partial_refund status) to prevent double inventory reversal. -->
+        <v-btn
+          v-if="sale?.status === 'completed' || sale?.status === 'pending'"
+          color="error"
+          prepend-icon="mdi-close-circle-outline"
+          :loading="cancelling"
+          @click="cancelDialog = true"
+        >
+          إلغاء الفاتورة
+        </v-btn>
+      </div>
     </div>
-  </v-container>
+
+    <v-skeleton-loader v-if="loading" type="card, table" />
+
+    <template v-else-if="sale">
+      <!-- Summary cards -->
+      <v-row dense>
+        <v-col cols="12" sm="4">
+          <v-card flat>
+            <div class="ds-stat-card">
+              <v-avatar color="primary" variant="tonal" size="40">
+                <v-icon>mdi-receipt-text-outline</v-icon>
+              </v-avatar>
+              <div class="ds-stat-card__info">
+                <div class="ds-stat-card__label">{{ t('sales.invoice') }}</div>
+                <div class="ds-stat-card__value" style="font-size: 1rem">
+                  {{ sale.invoiceNumber }}
+                </div>
+              </div>
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="4">
+          <v-card flat>
+            <div class="ds-stat-card">
+              <v-avatar :color="statusColor(sale.status)" variant="tonal" size="40">
+                <v-icon>{{ statusIcon(sale.status) }}</v-icon>
+              </v-avatar>
+              <div class="ds-stat-card__info">
+                <div class="ds-stat-card__label">{{ t('sales.status') }}</div>
+                <v-chip :color="statusColor(sale.status)" size="small" variant="tonal" label>
+                  {{ statusLabel(sale.status) }}
+                </v-chip>
+              </div>
+            </div>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" sm="4">
+          <v-card flat>
+            <div class="ds-stat-card">
+              <v-avatar color="success" variant="tonal" size="40">
+                <v-icon>mdi-cash-multiple</v-icon>
+              </v-avatar>
+              <div class="ds-stat-card__info">
+                <div class="ds-stat-card__label">{{ t('sales.total') }}</div>
+                <div class="ds-stat-card__value" style="font-size: 1rem">
+                  {{ formatAmount(sale.total) }}
+                </div>
+              </div>
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Payment details -->
+      <PaymentInfoCard :sale="sale" class="mb-4" />
+
+      <!-- Line items -->
+      <v-card class="ds-table-wrapper" flat>
+        <v-card-title class="text-body-1 font-weight-bold">
+          {{ t('sales.lineItems') }}
+        </v-card-title>
+        <v-card-text class="pa-0">
+          <v-data-table
+            v-if="sale.items?.length"
+            :headers="itemHeaders"
+            :items="sale.items"
+            density="comfortable"
+            class="ds-table-enhanced ds-table-striped"
+            :hide-default-footer="true"
+            :show-expand="paymentsOnInvoicesEnabled"
+          >
+            <template #item.productName="{ item }">
+              <span class="font-weight-medium">{{ item.productName }}</span>
+            </template>
+            <template #item.unitPrice="{ item }">
+              {{ formatAmount(item.unitPrice) }}
+            </template>
+            <template #item.discount="{ item }">
+              {{ formatAmount(item.discount ?? 0) }}
+            </template>
+            <template #item.subtotal="{ item }">
+              <span class="font-weight-bold">{{ formatAmount(item.subtotal) }}</span>
+            </template>
+            <!-- Expandable row: per-item batch depletion (FIFO) -->
+            <template v-if="paymentsOnInvoicesEnabled" #expanded-row="{ columns, item }">
+              <td :colspan="columns.length" class="pa-4">
+                <div class="text-caption font-weight-bold mb-2">تفاصيل الدفعات</div>
+                <v-table v-if="item.depletions?.length" density="compact">
+                  <thead>
+                    <tr>
+                      <th>رقم الدفعة</th>
+                      <th>تاريخ الانتهاء</th>
+                      <th class="text-center">الكمية</th>
+                      <th class="text-end">تكلفة الوحدة</th>
+                      <th class="text-end">إجمالي التكلفة</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(dep, di) in item.depletions" :key="di">
+                      <td>{{ dep.batchNumber ?? '—' }}</td>
+                      <td>
+                        <v-chip
+                          v-if="dep.expiryDate"
+                          size="x-small"
+                          variant="tonal"
+                          :color="expiryChipColor(dep.expiryDate)"
+                        >
+                          {{ dep.expiryDate }} · {{ expiryLabel(dep.expiryDate) }}
+                        </v-chip>
+                        <span v-else>—</span>
+                      </td>
+                      <td class="text-center">{{ dep.quantityBase }}</td>
+                      <td class="text-end">{{ formatAmount(dep.costPerUnit ?? 0) }}</td>
+                      <td class="text-end font-weight-medium">
+                        {{ formatAmount(dep.totalCost ?? 0) }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </v-table>
+                <div v-else class="text-caption text-medium-emphasis">
+                  لا توجد تفاصيل دفعات — قد لا يكون المنتج يتتبع الدفعات
+                </div>
+              </td>
+            </template>
+            <template #bottom>
+              <div class="d-flex justify-space-between pa-4 font-weight-bold">
+                <span>{{ t('sales.total') }}</span>
+                <span>{{ formatAmount(sale.total) }}</span>
+              </div>
+            </template>
+          </v-data-table>
+
+          <EmptyState
+            v-else
+            icon="mdi-package-variant-closed"
+            :title="t('sales.noItems')"
+            :description="t('sales.noItemsHint')"
+          />
+        </v-card-text>
+      </v-card>
+
+      <!-- COGS Summary (server-computed) -->
+      <v-card v-if="sale.cogs != null" flat>
+        <v-card-title class="text-body-1 font-weight-bold"> ملخص التكلفة </v-card-title>
+        <v-card-text>
+          <v-row dense>
+            <v-col cols="6" sm="3">
+              <div class="text-caption text-medium-emphasis">تكلفة البضاعة المباعة</div>
+              <div class="text-body-1 font-weight-bold">{{ formatAmount(sale.cogs) }}</div>
+            </v-col>
+            <v-col cols="6" sm="3">
+              <div class="text-caption text-medium-emphasis">هامش الربح</div>
+              <div class="text-body-1 font-weight-bold text-success">
+                {{ formatAmount(sale.total - (sale.cogs ?? 0)) }}
+              </div>
+            </v-col>
+            <v-col cols="6" sm="3">
+              <div class="text-caption text-medium-emphasis">نسبة الربح</div>
+              <div class="text-body-1 font-weight-bold text-success">{{ profitMarginPct }}%</div>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+
+      <!-- Audit Trail -->
+      <!-- <v-card class="win-card mt-4" flat>
+        <AuditLogTab entity-type="sale" :entity-id="sale?.id ?? 1" title="سجل تدقيق الفاتورة" />
+      </v-card> -->
+    </template>
+
+    <!-- Refund confirmation dialog -->
+    <v-dialog v-model="refundDialog" max-width="480" class="ds-dialog">
+      <v-card rounded="lg">
+        <v-card-title>تأكيد الاسترجاع</v-card-title>
+        <v-card-text>
+          <p class="mb-4">
+            <template v-if="refundReturnToStock">
+              سيتم استرجاع المبلغ المحدد وإعادة جميع البضاعة للمخزون وعكس القيود المحاسبية.
+            </template>
+            <template v-else>
+              سيتم استرجاع المبلغ المحدد فقط بدون إعادة البضاعة للمخزون.
+            </template>
+          </p>
+          <v-text-field
+            v-model.number="refundAmount"
+            type="number"
+            label="مبلغ الاسترجاع"
+            variant="outlined"
+            density="comfortable"
+            :min="1"
+            :max="refundableBalance"
+            :hint="`الحد الأقصى: ${formatAmount(refundableBalance)}`"
+            hide-details="auto"
+            :rules="[
+              (v) => v > 0 || 'يجب أن يكون المبلغ أكبر من الصفر',
+              (v) => v <= refundableBalance || 'المبلغ يتجاوز الرصيد القابل للاسترداد',
+            ]"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="refundDialog = false">إلغاء</v-btn>
+          <v-btn
+            :color="refundReturnToStock ? 'deep-orange' : 'warning'"
+            :loading="refunding"
+            :disabled="!refundAmount || refundAmount <= 0 || refundAmount > refundableBalance"
+            @click="executeRefund"
+          >
+            {{ refundReturnToStock ? 'استرجاع مع إرجاع البضاعة' : 'استرجاع مالي فقط' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Cancel confirmation dialog -->
+    <v-dialog v-model="cancelDialog" max-width="420" class="ds-dialog">
+      <v-card rounded="lg">
+        <v-card-title>تأكيد الإلغاء</v-card-title>
+        <v-card-text>
+          هل أنت متأكد من إلغاء هذه الفاتورة؟ لا يمكن التراجع عن هذا الإجراء.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="cancelDialog = false">إلغاء</v-btn>
+          <v-btn color="error" :loading="cancelling" @click="executeCancel">تأكيد الإلغاء</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Settle confirmation dialog -->
+    <v-dialog v-model="settleDialog" max-width="480" class="ds-dialog">
+      <v-card rounded="lg">
+        <v-card-title>تأكيد التسوية</v-card-title>
+        <v-card-text>
+          <p class="mb-4">
+            سيتم تسوية المبلغ المتبقي
+            <strong>{{ formatAmount(sale?.remainingAmount ?? 0) }}</strong>
+            وتحديث حالة الفاتورة.
+          </p>
+
+          <v-select
+            v-model="settleForm.paymentMethod"
+            :items="paymentMethodOptions"
+            item-title="title"
+            item-value="value"
+            label="طريقة الدفع"
+            variant="outlined"
+            density="comfortable"
+            hide-details="auto"
+            class="mb-3"
+          />
+
+          <v-text-field
+            v-if="settleRefRequired"
+            v-model="settleForm.referenceNumber"
+            label="رقم المرجع"
+            variant="outlined"
+            density="comfortable"
+            hide-details="auto"
+            class="mb-3"
+            :rules="[(v) => !!v || 'رقم المرجع مطلوب عند الدفع بالبطاقة']"
+          />
+
+          <v-textarea
+            v-model="settleForm.notes"
+            label="ملاحظات"
+            variant="outlined"
+            density="comfortable"
+            hide-details
+            rows="2"
+            auto-grow
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="settleDialog = false">إلغاء</v-btn>
+          <v-btn
+            color="success"
+            :loading="settling"
+            :disabled="settleRefRequired && !settleForm.referenceNumber.trim()"
+            @click="executeSettle"
+          >
+            تأكيد التسوية
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { useSalesStore } from '../../stores/salesStore';
-import EmptyState from '../../components/emptyState.vue';
-import PaymentInfoCard from '../../components/shared/PaymentInfoCard.vue';
-import AuditLogTab from '../../components/shared/AuditLogTab.vue';
-import type { Sale, SaleItem } from '../../types/domain';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { useSalesStore } from '@/stores/salesStore';
+import EmptyState from '@/components/common/EmptyState.vue';
+import PaymentInfoCard from '@/components/shared/PaymentInfoCard.vue';
+import AuditLogTab from '@/components/shared/AuditLogTab.vue';
+import type { Sale, SaleItem } from '@/types/domain';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { useSystemSettingsStore } from '@/stores/settings';
 import type { PaymentMethod } from '@/types/domain';
@@ -590,13 +585,16 @@ async function loadSale() {
   const id = Number(route.params.id);
   if (Number.isNaN(id)) return;
   loading.value = true;
-  const result = await store.getSale(id);
-  if (result.ok) {
-    sale.value = result.data;
-  } else {
-    notifyError(mapErrorToArabic(result.error, 'errors.loadFailed'));
+  try {
+    const result = await store.getSale(id);
+    if (result.ok) {
+      sale.value = result.data;
+    } else {
+      notifyError(mapErrorToArabic(result.error, 'errors.loadFailed'));
+    }
+  } finally {
+    loading.value = false;
   }
-  loading.value = false;
 }
 
 function getRemainingReturnQuantity(item: SaleItem): number {
@@ -617,8 +615,6 @@ const returnableItems = computed(() =>
     }))
     .filter((item) => item.quantity > 0)
 );
-
-const hasReturnableItems = computed(() => returnableItems.value.length > 0);
 
 onMounted(() => {
   void loadSale();

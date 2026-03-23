@@ -135,9 +135,9 @@
 </template>
 
 <script setup lang="ts">
-import { useAccountingSettingsStore } from '../../stores/settings/useAccountingSettingsStore';
-import { useSettingsForm } from '../../composables/useSettingsForm';
-import type { AccountingSettings } from '../../types/settings/AccountingSettings';
+import { useAccountingSettingsStore } from '@/stores/settings/useAccountingSettingsStore';
+import { useSettingsForm } from '@/composables/useSettingsForm';
+import type { AccountingSettings } from '@/types/settings/AccountingSettings';
 
 const store = useAccountingSettingsStore();
 

@@ -1,58 +1,56 @@
-﻿<template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="mb-6" border="bottom">
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ t('settings.title') }}</div>
-          <div class="text-sm">{{ t('settings.subtitle') }}</div>
-        </v-app-bar-title>
-      </v-app-bar>
-
-      <v-card flat>
-        <v-tabs v-model="activeTab" color="primary" show-arrows>
-          <v-tab value="system">إعدادات النظام</v-tab>
-          <v-tab value="pos">نقطة البيع</v-tab>
-          <v-tab value="accounting">المحاسبة</v-tab>
-          <v-tab v-if="canManageUsers" value="users">المستخدمين</v-tab>
-        </v-tabs>
-
-        <v-divider />
-
-        <v-window v-model="activeTab">
-          <v-window-item value="system">
-            <div style="padding: var(--ds-card-py) var(--ds-card-px)">
-              <SystemSettingsTab />
-            </div>
-          </v-window-item>
-
-          <v-window-item value="pos">
-            <div style="padding: var(--ds-card-py) var(--ds-card-px)">
-              <PosSettingsTab />
-            </div>
-          </v-window-item>
-
-          <v-window-item value="accounting">
-            <div style="padding: var(--ds-card-py) var(--ds-card-px)">
-              <AccountingSettingsTab />
-            </div>
-          </v-window-item>
-
-          <v-window-item v-if="canManageUsers" value="users">
-            <div style="padding: var(--ds-card-py) var(--ds-card-px)">
-              <UsersTab />
-            </div>
-          </v-window-item>
-        </v-window>
-      </v-card>
+<template>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div>
+        <div class="win-title">{{ t('settings.title') }}</div>
+        <div class="win-subtitle">{{ t('settings.subtitle') }}</div>
+      </div>
     </div>
-  </v-container>
+
+    <v-card flat>
+      <v-tabs v-model="activeTab" color="primary" show-arrows>
+        <v-tab value="system">إعدادات النظام</v-tab>
+        <v-tab value="pos">نقطة البيع</v-tab>
+        <v-tab value="accounting">المحاسبة</v-tab>
+        <v-tab v-if="canManageUsers" value="users">المستخدمين</v-tab>
+      </v-tabs>
+
+      <v-divider />
+
+      <v-window v-model="activeTab">
+        <v-window-item value="system">
+          <div style="padding: var(--ds-card-py) var(--ds-card-px)">
+            <SystemSettingsTab />
+          </div>
+        </v-window-item>
+
+        <v-window-item value="pos">
+          <div style="padding: var(--ds-card-py) var(--ds-card-px)">
+            <PosSettingsTab />
+          </div>
+        </v-window-item>
+
+        <v-window-item value="accounting">
+          <div style="padding: var(--ds-card-py) var(--ds-card-px)">
+            <AccountingSettingsTab />
+          </div>
+        </v-window-item>
+
+        <v-window-item v-if="canManageUsers" value="users">
+          <div style="padding: var(--ds-card-py) var(--ds-card-px)">
+            <UsersTab />
+          </div>
+        </v-window-item>
+      </v-window>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { t } from '../../i18n/t';
-import { useRBAC } from '../../composables/useRBAC';
+import { t } from '@/i18n/t';
+import { useRBAC } from '@/composables/useRBAC';
 import SystemSettingsTab from '@/components/settings/SystemSettingsTab.vue';
 import PosSettingsTab from '@/components/settings/PosSettingsTab.vue';
 import AccountingSettingsTab from '@/components/settings/AccountingSettingsTab.vue';

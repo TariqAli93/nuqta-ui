@@ -53,9 +53,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { usePayrollStore } from '../../stores/payrollStore';
-import type { PayrollRunInput } from '../../types/domain';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { usePayrollStore } from '@/stores/payrollStore';
+import type { PayrollRunInput } from '@/types/domain';
 import { notifyError, notifySuccess } from '@/utils/notify';
 
 const store = usePayrollStore();

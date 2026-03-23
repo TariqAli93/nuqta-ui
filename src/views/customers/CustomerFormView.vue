@@ -41,9 +41,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { useCustomersStore } from '../../stores/customersStore';
-import type { CustomerInput } from '../../types/domain';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { useCustomersStore } from '@/stores/customersStore';
+import type { CustomerInput } from '@/types/domain';
 import { notifyError, notifySuccess } from '@/utils/notify';
 
 const store = useCustomersStore();

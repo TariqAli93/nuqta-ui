@@ -1,105 +1,102 @@
-﻿<template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="mb-6" border="bottom">
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ t('sales.title') }}</div>
-          <div class="text-sm">{{ t('sales.subtitle') }}</div>
-        </v-app-bar-title>
-
-        <template #append>
-          <v-btn color="primary" :to="'/sales/new'" prepend-icon="mdi-plus">
-            {{ t('sales.new') }}
-          </v-btn>
-        </template>
-      </v-app-bar>
-
-      <v-card class="pa-4 mb-4">
-        <v-row dense>
-          <v-col cols="12" sm="8">
-            <v-text-field
-              v-model="searchQuery"
-              :placeholder="t('sales.search')"
-              variant="outlined"
-              density="comfortable"
-              prepend-inner-icon="mdi-magnify"
-              clearable
-              autofocus
-              hide-details
-            />
-          </v-col>
-          <v-col cols="12" sm="4">
-            <v-select
-              v-model="statusFilter"
-              :items="statusOptions"
-              item-title="title"
-              item-value="value"
-              :label="t('sales.filterByStatus')"
-              variant="outlined"
-              density="comfortable"
-              clearable
-              hide-details
-            />
-          </v-col>
-        </v-row>
-      </v-card>
-
-      <v-card class="win-card" flat>
-        <v-card-text class="pa-0">
-          <v-data-table
-            :headers="tableHeaders"
-            :items="filteredSales"
-            density="comfortable"
-            class="ds-table-enhanced ds-table-striped"
-          >
-            <template #item.invoiceNumber="{ item }">
-              <span class="font-weight-medium">{{ item.invoiceNumber }}</span>
-            </template>
-            <template #item.customerId="{ item }">
-              <span v-if="item.customerId" class="text-medium-emphasis">
-                {{ fetchCustomerName(item.customerId) }}
-              </span>
-              <span v-else class="text-disabled">{{ t('common.noCustomer') }}</span>
-            </template>
-            <template #item.total="{ item }">
-              <span class="font-weight-bold">{{ formatCurrency(item.total) }}</span>
-            </template>
-            <template #item.status="{ item }">
-              <v-chip size="small" variant="tonal" :color="statusBadgeClass(item.status)">
-                {{ statusLabel(item.status) }}
-              </v-chip>
-            </template>
-
-            <template #item.actions="{ item }">
-              <v-btn
-                size="small"
-                variant="text"
-                class="win-ghost-btn"
-                :to="`/sales/${item.id}`"
-                prepend-icon="mdi-eye"
-              >
-                {{ t('common.details') }}
-              </v-btn>
-            </template>
-          </v-data-table>
-
-          <EmptyState
-            v-if="filteredSales.length === 0 && !store.loading"
-            icon="mdi-receipt-text-outline"
-            :title="t('sales.noSales')"
-            :description="t('sales.noSalesHint')"
-          />
-        </v-card-text>
-      </v-card>
+<template>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div>
+        <div class="win-title">{{ t('sales.title') }}</div>
+        <div class="win-subtitle">{{ t('sales.subtitle') }}</div>
+      </div>
+      <div class="ds-page-header__actions">
+        <v-btn color="primary" :to="'/sales/new'" prepend-icon="mdi-plus">
+          {{ t('sales.new') }}
+        </v-btn>
+      </div>
     </div>
-  </v-container>
+
+    <v-card flat class="ds-filter-bar">
+      <v-row dense>
+        <v-col cols="12" sm="8">
+          <v-text-field
+            v-model="searchQuery"
+            :placeholder="t('sales.search')"
+            variant="outlined"
+            density="comfortable"
+            prepend-inner-icon="mdi-magnify"
+            clearable
+            autofocus
+            hide-details
+          />
+        </v-col>
+        <v-col cols="12" sm="4">
+          <v-select
+            v-model="statusFilter"
+            :items="statusOptions"
+            item-title="title"
+            item-value="value"
+            :label="t('sales.filterByStatus')"
+            variant="outlined"
+            density="comfortable"
+            clearable
+            hide-details
+          />
+        </v-col>
+      </v-row>
+    </v-card>
+
+    <v-card flat>
+      <v-card-text class="pa-0">
+        <v-data-table
+          :headers="tableHeaders"
+          :items="store.items"
+          density="comfortable"
+          class="ds-table-enhanced ds-table-striped"
+          :loading="store.loading"
+        >
+          <template #item.invoiceNumber="{ item }">
+            <span class="font-weight-medium">{{ item.invoiceNumber }}</span>
+          </template>
+          <template #item.customerId="{ item }">
+            <span v-if="item.customerId" class="text-medium-emphasis">
+              {{ fetchCustomerName(item.customerId) }}
+            </span>
+            <span v-else class="text-disabled">{{ t('common.noCustomer') }}</span>
+          </template>
+          <template #item.total="{ item }">
+            <span class="font-weight-bold">{{ formatCurrency(item.total) }}</span>
+          </template>
+          <template #item.status="{ item }">
+            <v-chip size="small" variant="tonal" :color="statusBadgeClass(item.status)">
+              {{ statusLabel(item.status) }}
+            </v-chip>
+          </template>
+          <template #item.actions="{ item }">
+            <v-btn
+              size="small"
+              variant="text"
+              class="win-ghost-btn"
+              :to="`/sales/${item.id}`"
+              prepend-icon="mdi-eye"
+            >
+              {{ t('common.details') }}
+            </v-btn>
+          </template>
+        </v-data-table>
+
+        <EmptyState
+          v-if="store.items.length === 0 && !store.loading"
+          icon="mdi-receipt-text-outline"
+          :title="t('sales.noSales')"
+          :description="t('sales.noSalesHint')"
+        />
+      </v-card-text>
+    </v-card>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch, onUnmounted } from 'vue';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useSalesStore } from '@/stores/salesStore';
-import EmptyState from '@/components/emptyState.vue';
+import EmptyState from '@/components/common/EmptyState.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { notifyError } from '@/utils/notify';
 import { useCustomersStore } from '@/stores/customersStore';
@@ -120,25 +117,6 @@ const statusOptions = computed(() => [
   { title: t('sales.refunded'), value: 'refunded' },
   { title: t('sales.partialRefund'), value: 'partial_refund' },
 ]);
-
-const filteredSales = computed(() => {
-  let result = store.items;
-  const query = (searchQuery.value || '').trim().toLowerCase();
-
-  if (query) {
-    result = result.filter(
-      (sale: any) =>
-        sale.invoiceNumber?.toLowerCase().includes(query) ||
-        String(sale.customerId ?? '').includes(query)
-    );
-  }
-
-  if (statusFilter.value) {
-    result = result.filter((sale: any) => sale.status === statusFilter.value);
-  }
-
-  return result;
-});
 
 const localizedError = computed(() =>
   store.error ? mapErrorToArabic(store.error, 'errors.loadFailed') : null
@@ -166,7 +144,7 @@ function statusBadgeClass(status: string | undefined): string {
     refunded: 'info',
     hold: 'warning',
   };
-  return (status && statusMap[status]) || 'ds-badge-neutral';
+  return (status && statusMap[status]) || 'default';
 }
 
 function fetchWithFilters() {
@@ -180,7 +158,7 @@ function fetchWithFilters() {
 
 const fetchCustomerName = computed(() => {
   const map: Record<number, string> = {};
-  customers.map((c) => {
+  customers.forEach((c) => {
     if (c.id && c.name) map[c.id] = c.name;
   });
   return (id: number) => map[id] || t('common.unknown');

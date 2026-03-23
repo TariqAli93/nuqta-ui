@@ -1,114 +1,111 @@
-﻿<template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="mb-6" border="bottom">
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ t('categories.title') }}</div>
-          <div class="text-sm">{{ t('categories.subtitle') }}</div>
-        </v-app-bar-title>
+<template>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div>
+        <div class="win-title">{{ t('categories.title') }}</div>
+        <div class="win-subtitle">{{ t('categories.subtitle') }}</div>
+      </div>
+      <div class="ds-page-header__actions">
+        <v-btn color="primary" prepend-icon="mdi-plus" @click="openCreateDialog">
+          {{ t('categories.add') }}
+        </v-btn>
+      </div>
+    </div>
 
-        <template #append>
-          <v-btn color="primary" @click="openCreateDialog" prepend-icon="mdi-plus">
-            {{ t('categories.add') }}
-          </v-btn>
-        </template>
-      </v-app-bar>
+    <v-card flat>
+      <v-card-text class="pa-0">
+        <v-skeleton-loader v-if="loading" type="table-row@3" class="ma-4" />
 
-      <v-card class="win-card" flat>
-        <v-card-text class="pa-0">
-          <v-skeleton-loader v-if="loading" type="table-row@3" class="ma-4" />
-
-          <v-data-table
-            v-else-if="categories.length > 0"
-            :headers="tableHeaders"
-            :items="categories"
-            density="comfortable"
-            class="ds-table-enhanced ds-table-striped"
-            :hide-default-footer="true"
-          >
-            <template #item.name="{ item }">
-              <div class="d-flex align-center ga-3">
-                <v-avatar size="32" color="primary" variant="tonal">
-                  <v-icon size="18">mdi-shape-outline</v-icon>
-                </v-avatar>
-                <span class="font-weight-medium">{{ item.name }}</span>
-              </div>
-            </template>
-            <template #item.actions="{ item }">
-              <v-btn
-                size="small"
-                variant="text"
-                class="win-ghost-btn"
-                prepend-icon="mdi-pencil"
-                @click="openEditDialog(item)"
-              >
-                {{ t('common.edit') }}
-              </v-btn>
-              <v-btn
-                size="small"
-                variant="text"
-                color="error"
-                prepend-icon="mdi-delete-outline"
-                @click="openDeleteDialog(item)"
-              >
-                {{ t('common.delete') }}
-              </v-btn>
-            </template>
-          </v-data-table>
-
-          <EmptyState
-            v-else
-            icon="mdi-shape-outline"
-            :title="t('categories.empty')"
-            :description="t('categories.emptyHint')"
-            :action-label="t('categories.add')"
-            action-icon="mdi-plus"
-            @action="openCreateDialog"
-          />
-        </v-card-text>
-      </v-card>
-
-      <v-dialog v-model="dialogOpen" max-width="500">
-        <v-card rounded="lg" class="pa-6">
-          <v-card-title class="text-h6 pa-0 mb-4">
-            {{ editingId === null ? t('categories.dialogAdd') : t('categories.dialogEdit') }}
-          </v-card-title>
-          <v-card-text class="pa-0 mb-6">
-            <v-text-field v-model="name" :label="t('categories.name')" required autofocus />
-          </v-card-text>
-          <v-card-actions class="pa-0">
-            <v-spacer />
-            <v-btn variant="text" @click="dialogOpen = false">{{ t('common.cancel') }}</v-btn>
-            <v-btn color="primary" variant="flat" :loading="saving" @click="saveCategory">
-              {{ t('common.save') }}
+        <v-data-table
+          v-else-if="categories.length > 0"
+          :headers="tableHeaders"
+          :items="categories"
+          density="comfortable"
+          class="ds-table-enhanced ds-table-striped"
+          :hide-default-footer="true"
+        >
+          <template #item.name="{ item }">
+            <div class="d-flex align-center ga-3">
+              <v-avatar size="32" color="primary" variant="tonal">
+                <v-icon size="18">mdi-shape-outline</v-icon>
+              </v-avatar>
+              <span class="font-weight-medium">{{ item.name }}</span>
+            </div>
+          </template>
+          <template #item.actions="{ item }">
+            <v-btn
+              size="small"
+              variant="text"
+              class="win-ghost-btn"
+              prepend-icon="mdi-pencil"
+              @click="openEditDialog(item)"
+            >
+              {{ t('common.edit') }}
             </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <v-dialog v-model="deleteDialog" max-width="420">
-        <v-card rounded="lg" class="pa-6">
-          <v-card-title class="text-h6 pa-0 mb-4">{{ t('common.delete') }}</v-card-title>
-          <v-card-text class="pa-0 mb-6">{{ t('categories.deleteConfirm') }}</v-card-text>
-          <v-card-actions class="pa-0">
-            <v-spacer />
-            <v-btn variant="text" @click="deleteDialog = false">{{ t('common.cancel') }}</v-btn>
-            <v-btn color="error" variant="flat" :loading="deleting" @click="confirmDelete">
+            <v-btn
+              size="small"
+              variant="text"
+              color="error"
+              prepend-icon="mdi-delete-outline"
+              @click="openDeleteDialog(item)"
+            >
               {{ t('common.delete') }}
             </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </div>
-  </v-container>
+          </template>
+        </v-data-table>
+
+        <EmptyState
+          v-else
+          icon="mdi-shape-outline"
+          :title="t('categories.empty')"
+          :description="t('categories.emptyHint')"
+          :action-label="t('categories.add')"
+          action-icon="mdi-plus"
+          @action="openCreateDialog"
+        />
+      </v-card-text>
+    </v-card>
+
+    <v-dialog v-model="dialogOpen" max-width="500" class="ds-dialog">
+      <v-card rounded="lg">
+        <v-card-title>
+          {{ editingId === null ? t('categories.dialogAdd') : t('categories.dialogEdit') }}
+        </v-card-title>
+        <v-card-text>
+          <v-text-field v-model="name" :label="t('categories.name')" required autofocus />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="dialogOpen = false">{{ t('common.cancel') }}</v-btn>
+          <v-btn color="primary" variant="flat" :loading="saving" @click="saveCategory">
+            {{ t('common.save') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="deleteDialog" max-width="420" class="ds-dialog">
+      <v-card rounded="lg">
+        <v-card-title>{{ t('common.delete') }}</v-card-title>
+        <v-card-text>{{ t('categories.deleteConfirm') }}</v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="deleteDialog = false">{{ t('common.cancel') }}</v-btn>
+          <v-btn color="error" variant="flat" :loading="deleting" @click="confirmDelete">
+            {{ t('common.delete') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { categoriesClient } from '../../api';
-import EmptyState from '../../components/emptyState.vue';
-import type { Category } from '../../types/domain';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { categoriesClient } from '@/api';
+import EmptyState from '@/components/common/EmptyState.vue';
+import type { Category } from '@/types/domain';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 
 const tableHeaders = computed(() => [
@@ -129,16 +126,16 @@ const name = ref('');
 
 async function loadCategories() {
   loading.value = true;
-
-  const result = await categoriesClient.getAll({});
-  if (result.ok) {
-    const data = result.data as unknown;
-    categories.value = Array.isArray(data) ? (data as Category[]) : [];
-  } else {
-    notifyError(mapErrorToArabic(result.error, 'errors.loadFailed'));
+  try {
+    const result = await categoriesClient.getAll({});
+    if (result.ok) {
+      categories.value = Array.isArray(result.data) ? (result.data as Category[]) : [];
+    } else {
+      notifyError(mapErrorToArabic(result.error, 'errors.loadFailed'));
+    }
+  } finally {
+    loading.value = false;
   }
-
-  loading.value = false;
 }
 
 function openCreateDialog() {
@@ -160,35 +157,32 @@ async function saveCategory() {
   }
 
   saving.value = true;
-
-  if (editingId.value === null) {
-    const result = await categoriesClient.create({
-      name: name.value.trim(),
-      description: null,
-      isActive: true,
-    });
-
-    if (!result.ok) {
-      notifyError(mapErrorToArabic(result.error, 'errors.saveFailed'));
-      saving.value = false;
-      return;
+  try {
+    if (editingId.value === null) {
+      const result = await categoriesClient.create({
+        name: name.value.trim(),
+        description: null,
+        isActive: true,
+      });
+      if (!result.ok) {
+        notifyError(mapErrorToArabic(result.error, 'errors.saveFailed'));
+        return;
+      }
+    } else {
+      const result = await categoriesClient.update(editingId.value, {
+        name: name.value.trim(),
+      });
+      if (!result.ok) {
+        notifyError(mapErrorToArabic(result.error, 'errors.saveFailed'));
+        return;
+      }
     }
-  } else {
-    const result = await categoriesClient.update(editingId.value, {
-      name: name.value.trim(),
-    });
-
-    if (!result.ok) {
-      notifyError(mapErrorToArabic(result.error, 'errors.saveFailed'));
-      saving.value = false;
-      return;
-    }
+    dialogOpen.value = false;
+    await loadCategories();
+    notifySuccess(t('common.saved'));
+  } finally {
+    saving.value = false;
   }
-
-  saving.value = false;
-  dialogOpen.value = false;
-  await loadCategories();
-  notifySuccess(t('common.saved'));
 }
 
 function openDeleteDialog(category: Category) {
@@ -203,18 +197,19 @@ async function confirmDelete() {
   }
 
   deleting.value = true;
-
-  const result = await categoriesClient.delete(deletingId.value);
-  if (!result.ok) {
-    notifyError(mapErrorToArabic(result.error, 'errors.deleteFailed'));
-  } else {
-    await loadCategories();
-    notifySuccess(t('common.deleted'));
+  try {
+    const result = await categoriesClient.delete(deletingId.value);
+    if (!result.ok) {
+      notifyError(mapErrorToArabic(result.error, 'errors.deleteFailed'));
+    } else {
+      await loadCategories();
+      notifySuccess(t('common.deleted'));
+    }
+  } finally {
+    deleting.value = false;
+    deleteDialog.value = false;
+    deletingId.value = null;
   }
-
-  deleting.value = false;
-  deleteDialog.value = false;
-  deletingId.value = null;
 }
 
 onMounted(() => {

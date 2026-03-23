@@ -188,13 +188,13 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { customersClient, customerLedgerClient } from '../../api';
-import type { Customer } from '../../types/domain';
-import type { LedgerEntry } from '../../components/shared/LedgerTable.vue';
-import MoneyDisplay from '../../components/shared/MoneyDisplay.vue';
-import MoneyInput from '../../components/shared/MoneyInput.vue';
-import LedgerTable from '../../components/shared/LedgerTable.vue';
-import { generateIdempotencyKey } from '../../utils/idempotency';
+import { customersClient, customerLedgerClient } from '@/api';
+import type { Customer } from '@/types/domain';
+import type { LedgerEntry } from '@/components/shared/LedgerTable.vue';
+import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
+import MoneyInput from '@/components/shared/MoneyInput.vue';
+import LedgerTable from '@/components/shared/LedgerTable.vue';
+import { generateIdempotencyKey } from '@/utils/idempotency';
 import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
 

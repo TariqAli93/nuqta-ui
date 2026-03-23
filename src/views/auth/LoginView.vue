@@ -173,8 +173,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { useAuthStore } from '../../stores/authStore';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { useAuthStore } from '@/stores/authStore';
 import { notifyError } from '@/utils/notify';
 import { useFormValidation } from '@/composables/useFormValidation';
 

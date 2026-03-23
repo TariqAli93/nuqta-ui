@@ -1,18 +1,17 @@
 <template>
-  <v-container>
-    <v-app-bar class="mb-6" border="bottom">
-      <v-app-bar-title>
-        <div class="win-title mb-0">{{ entryDisplay.entryNumber }}</div>
-        <div class="text-sm">
-          عرض تفاصيل القيد
-          <span v-if="entryDisplay.entryDate">لتاريخ {{ entryDisplay.entryDate }}</span>
-        </div>
-      </v-app-bar-title>
-
-      <template #prepend>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-2">
         <v-btn icon="mdi-arrow-right" variant="text" @click="goBack" />
-      </template>
-    </v-app-bar>
+        <div>
+          <div class="win-title">{{ entryDisplay.entryNumber }}</div>
+          <div class="win-subtitle">
+            عرض تفاصيل القيد
+            <span v-if="entryDisplay.entryDate">لتاريخ {{ entryDisplay.entryDate }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <v-skeleton-loader v-if="accountingStore.loading" type="card" />
 
@@ -21,7 +20,7 @@
     </v-alert>
 
     <JournalEntryViewer v-else :entry="entryDisplay" />
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

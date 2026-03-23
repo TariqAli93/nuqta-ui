@@ -1,154 +1,152 @@
-﻿<template>
-  <v-container>
-    <div class="win-page">
-      <v-app-bar class="ds-page-header d-flex align-center justify-space-between mb-6">
-        <template #prepend>
-          <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" />
-        </template>
-        <v-app-bar-title>
-          <div class="win-title mb-0">{{ isEdit ? t('products.edit') : t('products.new') }}</div>
-          <div class="text-sm">{{ t('products.formHint') }}</div>
-        </v-app-bar-title>
-      </v-app-bar>
-
-      <v-card class="win-card win-card--padded" flat>
-        <v-form class="win-form" @submit.prevent="submit">
-          <v-text-field v-model="form.name" :label="t('products.name')" required />
-          <div class="d-flex flex-wrap ga-2">
-            <v-text-field v-model="form.sku" :label="t('products.sku')" />
-            <v-text-field
-              v-model="form.barcode"
-              :label="t('products.barcode')"
-              data-barcode-field
-            />
-            <MoneyInput v-model="form.costPrice" :label="t('products.costPrice')" />
-            <MoneyInput v-model="form.sellingPrice" :label="t('products.sellingPrice')" required />
-
-            <v-text-field v-model.number="form.stock" :label="t('products.stock')" type="number" />
-            <v-text-field
-              v-model.number="form.minStock"
-              :label="t('products.minStock')"
-              type="number"
-            />
-            <v-text-field v-model="form.unit" :label="t('products.unit')" />
-            <v-text-field v-model="form.supplier" :label="t('products.supplier')" />
-          </div>
-          <v-select
-            v-model="form.status"
-            :items="statusOptions"
-            item-title="title"
-            item-value="value"
-            :label="t('products.status')"
-          />
-          <v-switch v-model="form.isActive" :label="t('common.active')" />
-          <v-textarea v-model="form.description" :label="t('products.description')" rows="3" />
-          <div class="d-flex ga-2">
-            <v-btn
-              type="submit"
-              color="primary"
-              variant="flat"
-              class="win-btn"
-              :loading="store.loading"
-            >
-              {{ t('common.save') }}
-            </v-btn>
-            <v-btn variant="text" class="win-ghost-btn" :to="props.redirectTo">{{
-              t('common.cancel')
-            }}</v-btn>
-          </div>
-        </v-form>
-      </v-card>
-
-      <!-- ── Units & Pricing (edit mode only) ── -->
-      <v-card v-if="isEdit" class="win-card win-card--padded mt-6" flat>
-        <v-card-title class="d-flex align-center justify-space-between px-0 pt-0">
-          <div class="d-flex align-center ga-2">
-            <v-icon size="20">mdi-package-variant</v-icon>
-            <span class="text-h6">{{ t('products.unitsAndPricing') }}</span>
-          </div>
-          <v-btn
-            size="small"
-            variant="tonal"
-            color="primary"
-            prepend-icon="mdi-plus"
-            @click="openAddUnitDialog"
-          >
-            {{ t('products.addUnit') }}
-          </v-btn>
-        </v-card-title>
-
-        <v-table v-if="units.length > 0" density="comfortable" class="mt-2">
-          <thead>
-            <tr>
-              <th>{{ t('products.unitName') }}</th>
-              <th>{{ t('products.factorToBase') }}</th>
-              <th>{{ t('products.sellingPrice') }}</th>
-              <th>{{ t('products.barcode') }}</th>
-              <th>{{ t('products.default') }}</th>
-              <th>{{ t('common.active') }}</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="unit in units" :key="unit.id">
-              <td class="font-weight-medium">{{ unit.unitName }}</td>
-              <td>
-                {{ unit.factorToBase }}
-                <span v-if="(unit.factorToBase ?? 1) > 1" class="text-caption text-medium-emphasis mr-1">
-                  (1 {{ unit.unitName }} = {{ unit.factorToBase }} {{ form.unit || 'قطعة' }})
-                </span>
-              </td>
-              <td>{{ unit.sellingPrice != null ? formatPrice(unit.sellingPrice) : '—' }}</td>
-              <td>{{ unit.barcode || '—' }}</td>
-              <td>
-                <v-chip
-                  size="x-small"
-                  :color="unit.isDefault ? 'primary' : 'default'"
-                  :variant="unit.isDefault ? 'flat' : 'outlined'"
-                  @click="!unit.isDefault && setDefault(unit)"
-                  class="cursor-pointer"
-                >
-                  {{ unit.isDefault ? t('products.defaultUnit') : t('products.setDefault') }}
-                </v-chip>
-              </td>
-              <td>
-                <v-icon :color="unit.isActive ? 'success' : 'grey'" size="18">
-                  {{ unit.isActive ? 'mdi-check-circle' : 'mdi-close-circle' }}
-                </v-icon>
-              </td>
-              <td>
-                <v-btn icon size="x-small" variant="text" @click="openEditUnitDialog(unit)">
-                  <v-icon size="16">mdi-pencil</v-icon>
-                </v-btn>
-                <v-btn
-                  icon
-                  size="x-small"
-                  variant="text"
-                  color="error"
-                  @click="confirmDeleteUnit(unit)"
-                >
-                  <v-icon size="16">mdi-delete</v-icon>
-                </v-btn>
-              </td>
-            </tr>
-          </tbody>
-        </v-table>
-
-        <v-sheet v-else class="text-center text-medium-emphasis py-8">
-          <v-icon size="40" color="grey-lighten-2">mdi-package-variant-closed</v-icon>
-          <div class="mt-2">{{ t('products.noUnitsConfigured') }}</div>
-          <div class="text-caption mt-1">{{ t('products.noUnitsHint') }}</div>
-        </v-sheet>
-      </v-card>
+<template>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div class="d-flex align-center ga-2">
+        <v-btn icon="mdi-arrow-right" variant="text" @click="router.back()" />
+        <div>
+          <div class="win-title">{{ isEdit ? t('products.edit') : t('products.new') }}</div>
+          <div class="win-subtitle">{{ t('products.formHint') }}</div>
+        </div>
+      </div>
     </div>
 
+    <v-card class="win-card win-card--padded" flat>
+      <v-form class="win-form" @submit.prevent="submit">
+        <v-text-field v-model="form.name" :label="t('products.name')" required />
+        <div class="d-flex flex-wrap ga-2">
+          <v-text-field v-model="form.sku" :label="t('products.sku')" />
+          <v-text-field
+            v-model="form.barcode"
+            :label="t('products.barcode')"
+            data-barcode-field
+          />
+          <MoneyInput v-model="form.costPrice" :label="t('products.costPrice')" />
+          <MoneyInput v-model="form.sellingPrice" :label="t('products.sellingPrice')" required />
+
+          <v-text-field v-model.number="form.stock" :label="t('products.stock')" type="number" />
+          <v-text-field
+            v-model.number="form.minStock"
+            :label="t('products.minStock')"
+            type="number"
+          />
+          <v-text-field v-model="form.unit" :label="t('products.unit')" />
+          <v-text-field v-model="form.supplier" :label="t('products.supplier')" />
+        </div>
+        <v-select
+          v-model="form.status"
+          :items="statusOptions"
+          item-title="title"
+          item-value="value"
+          :label="t('products.status')"
+        />
+        <v-switch v-model="form.isActive" :label="t('common.active')" />
+        <v-textarea v-model="form.description" :label="t('products.description')" rows="3" />
+        <div class="d-flex ga-2">
+          <v-btn
+            type="submit"
+            color="primary"
+            variant="flat"
+            class="win-btn"
+            :loading="store.loading"
+          >
+            {{ t('common.save') }}
+          </v-btn>
+          <v-btn variant="text" class="win-ghost-btn" :to="props.redirectTo">{{
+            t('common.cancel')
+          }}</v-btn>
+        </div>
+      </v-form>
+    </v-card>
+
+    <!-- ── Units & Pricing (edit mode only) ── -->
+    <v-card v-if="isEdit" class="win-card win-card--padded mt-6" flat>
+      <v-card-title class="d-flex align-center justify-space-between px-0 pt-0">
+        <div class="d-flex align-center ga-2">
+          <v-icon size="20">mdi-package-variant</v-icon>
+          <span class="text-h6">{{ t('products.unitsAndPricing') }}</span>
+        </div>
+        <v-btn
+          size="small"
+          variant="tonal"
+          color="primary"
+          prepend-icon="mdi-plus"
+          @click="openAddUnitDialog"
+        >
+          {{ t('products.addUnit') }}
+        </v-btn>
+      </v-card-title>
+
+      <v-table v-if="units.length > 0" density="comfortable" class="mt-2">
+        <thead>
+          <tr>
+            <th>{{ t('products.unitName') }}</th>
+            <th>{{ t('products.factorToBase') }}</th>
+            <th>{{ t('products.sellingPrice') }}</th>
+            <th>{{ t('products.barcode') }}</th>
+            <th>{{ t('products.default') }}</th>
+            <th>{{ t('common.active') }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="unit in units" :key="unit.id">
+            <td class="font-weight-medium">{{ unit.unitName }}</td>
+            <td>
+              {{ unit.factorToBase }}
+              <span v-if="(unit.factorToBase ?? 1) > 1" class="text-caption text-medium-emphasis mr-1">
+                (1 {{ unit.unitName }} = {{ unit.factorToBase }} {{ form.unit || 'قطعة' }})
+              </span>
+            </td>
+            <td>{{ unit.sellingPrice != null ? formatPrice(unit.sellingPrice) : '—' }}</td>
+            <td>{{ unit.barcode || '—' }}</td>
+            <td>
+              <v-chip
+                size="x-small"
+                :color="unit.isDefault ? 'primary' : 'default'"
+                :variant="unit.isDefault ? 'flat' : 'outlined'"
+                class="cursor-pointer"
+                @click="!unit.isDefault && setDefault(unit)"
+              >
+                {{ unit.isDefault ? t('products.defaultUnit') : t('products.setDefault') }}
+              </v-chip>
+            </td>
+            <td>
+              <v-icon :color="unit.isActive ? 'success' : 'grey'" size="18">
+                {{ unit.isActive ? 'mdi-check-circle' : 'mdi-close-circle' }}
+              </v-icon>
+            </td>
+            <td>
+              <v-btn icon size="x-small" variant="text" @click="openEditUnitDialog(unit)">
+                <v-icon size="16">mdi-pencil</v-icon>
+              </v-btn>
+              <v-btn
+                icon
+                size="x-small"
+                variant="text"
+                color="error"
+                @click="confirmDeleteUnit(unit)"
+              >
+                <v-icon size="16">mdi-delete</v-icon>
+              </v-btn>
+            </td>
+          </tr>
+        </tbody>
+      </v-table>
+
+      <v-sheet v-else class="text-center text-medium-emphasis py-8">
+        <v-icon size="40" color="grey-lighten-2">mdi-package-variant-closed</v-icon>
+        <div class="mt-2">{{ t('products.noUnitsConfigured') }}</div>
+        <div class="text-caption mt-1">{{ t('products.noUnitsHint') }}</div>
+      </v-sheet>
+    </v-card>
+
     <!-- ── Add / Edit Unit Dialog ── -->
-    <v-dialog v-model="showUnitDialog" max-width="480">
-      <v-card rounded="lg" class="pa-6">
-        <v-card-title class="pa-0 text-h6">
+    <v-dialog v-model="showUnitDialog" max-width="480" class="ds-dialog">
+      <v-card rounded="lg">
+        <v-card-title>
           {{ editingUnit ? t('products.editUnit') : t('products.addUnit') }}
         </v-card-title>
-        <v-card-text class="pa-0 mt-4">
+        <v-card-text>
           <v-text-field
             v-model="unitForm.unitName"
             :label="t('products.unitName')"
@@ -183,7 +181,8 @@
             <v-switch v-model="unitForm.isActive" :label="t('common.active')" density="compact" />
           </div>
         </v-card-text>
-        <v-card-actions class="pa-0 mt-4 justify-end ga-2">
+        <v-card-actions>
+          <v-spacer />
           <v-btn variant="text" @click="showUnitDialog = false">{{ t('common.cancel') }}</v-btn>
           <v-btn color="primary" variant="flat" :loading="unitSaving" @click="saveUnit">
             {{ t('common.save') }}
@@ -193,13 +192,14 @@
     </v-dialog>
 
     <!-- ── Delete Confirmation ── -->
-    <v-dialog v-model="showDeleteUnitConfirm" max-width="400">
-      <v-card rounded="lg" class="pa-6">
-        <v-card-title class="pa-0 text-h6">{{ t('products.deleteUnit') }}</v-card-title>
-        <v-card-text class="pa-0 mt-4">
+    <v-dialog v-model="showDeleteUnitConfirm" max-width="400" class="ds-dialog">
+      <v-card rounded="lg">
+        <v-card-title>{{ t('products.deleteUnit') }}</v-card-title>
+        <v-card-text>
           {{ t('products.deleteUnitConfirm') }} "{{ pendingDeleteUnit?.unitName }}"
         </v-card-text>
-        <v-card-actions class="pa-0 mt-6 justify-end ga-2">
+        <v-card-actions>
+          <v-spacer />
           <v-btn variant="text" @click="showDeleteUnitConfirm = false">{{
             t('common.cancel')
           }}</v-btn>
@@ -209,16 +209,16 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, onUnmounted, watch } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { mapErrorToArabic, t } from '../../i18n/t';
-import { useProductsStore } from '../../stores/productsStore';
-import type { ProductInput, ProductUnit } from '../../types/domain';
-import { useGlobalBarcodeScanner } from '../../composables/useGlobalBarcodeScanner';
+import { mapErrorToArabic, t } from '@/i18n/t';
+import { useProductsStore } from '@/stores/productsStore';
+import type { ProductInput, ProductUnit } from '@/types/domain';
+import { useGlobalBarcodeScanner } from '@/composables/useGlobalBarcodeScanner';
 import MoneyInput from '@/components/shared/MoneyInput.vue';
 import { productsClient } from '@/api';
 import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/notify';

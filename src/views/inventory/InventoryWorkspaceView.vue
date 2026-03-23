@@ -1,17 +1,18 @@
 <template>
-  <v-container>
-    <v-app-bar class="mb-6" border="bottom">
-      <v-app-bar-title>
-        <div class="win-title mb-0">{{ t('nav.inventoryManagement') }}</div>
-        <div class="text-sm">إدارة المخزون والحركات والمطابقة</div>
-      </v-app-bar-title>
+  <div class="win-page">
+    <div class="ds-page-header-block">
+      <div>
+        <div class="win-title">{{ t('nav.inventoryManagement') }}</div>
+        <div class="win-subtitle">إدارة المخزون والحركات والمطابقة</div>
+      </div>
+      <div class="ds-page-header__actions">
+        <v-btn variant="tonal" prepend-icon="mdi-refresh" @click="refreshAll">
+          {{ t('common.refresh') }}
+        </v-btn>
+      </div>
+    </div>
 
-      <template #append>
-        <v-btn color="primary" prepend-icon="mdi-refresh" @click="refreshAll"> تحديث الكل </v-btn>
-      </template>
-    </v-app-bar>
-
-    <v-tabs v-model="activeTab" bg-color="surface" class="w-full mb-4">
+    <v-tabs v-model="activeTab" bg-color="surface" class="mb-4">
       <v-tab
         v-for="tab in tabs"
         :key="tab.value"
@@ -23,7 +24,7 @@
     </v-tabs>
 
     <router-view />
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
