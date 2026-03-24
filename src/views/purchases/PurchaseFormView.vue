@@ -152,6 +152,17 @@
       <!-- Totals & Payment -->
       <v-card class="mb-4">
         <v-card-text>
+          <v-row dense class="mb-2">
+            <v-col cols="12" sm="4">
+              <v-select
+                v-model="form.paymentMode"
+                :items="paymentModeOptions"
+                label="طريقة الدفع"
+                variant="outlined"
+                density="compact"
+              />
+            </v-col>
+          </v-row>
           <v-row dense>
             <v-col cols="12" sm="4">
               <MoneyInput v-model="form.discount" label="الخصم" />
@@ -159,7 +170,7 @@
             <v-col cols="12" sm="4">
               <MoneyInput v-model="form.tax" label="الضريبة" />
             </v-col>
-            <v-col cols="12" sm="4">
+            <v-col v-if="form.paymentMode === 'partial'" cols="12" sm="4">
               <MoneyInput v-model="form.paidAmount" label="المبلغ المدفوع" />
             </v-col>
           </v-row>
@@ -208,9 +219,16 @@ const formRef = ref();
 const products = ref<{ id: number; name: string; isExpire?: boolean }[]>([]);
 const productsMap = ref<Map<number, { id: number; name: string; isExpire?: boolean }>>(new Map());
 
+const paymentModeOptions = [
+  { title: 'نقدي (كامل)', value: 'cash' },
+  { title: 'آجل', value: 'credit' },
+  { title: 'دفعة جزئية', value: 'partial' },
+];
+
 const form = reactive({
   supplierId: null as number | null,
   invoiceNumber: '',
+  paymentMode: 'cash' as 'cash' | 'credit' | 'partial',
   discount: 0,
   tax: 0,
   paidAmount: 0,
@@ -285,6 +303,16 @@ async function onSubmit() {
     return;
   }
 
+  if (form.paymentMode === 'partial' && form.paidAmount <= 0) {
+    notifyWarn('يجب إدخال مبلغ الدفعة الأولية', { dedupeKey: 'purchase-partial-amount' });
+    return;
+  }
+
+  if (form.paymentMode === 'partial' && form.paidAmount >= grandTotal.value) {
+    notifyWarn('مبلغ الدفعة يجب أن يكون أقل من الإجمالي', { dedupeKey: 'purchase-partial-max' });
+    return;
+  }
+
   const result = await purchasesStore.createPurchase({
     supplierId: form.supplierId!,
     invoiceNumber: form.invoiceNumber,
@@ -301,7 +329,8 @@ async function onSubmit() {
       })),
     discount: form.discount,
     tax: form.tax,
-    paidAmount: form.paidAmount,
+    paymentMode: form.paymentMode,
+    paidAmount: form.paymentMode === 'cash' ? grandTotal.value : form.paymentMode === 'credit' ? 0 : form.paidAmount,
     notes: form.notes || undefined,
     idempotencyKey: generateIdempotencyKey('purchase'),
   });
