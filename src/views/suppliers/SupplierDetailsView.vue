@@ -133,7 +133,7 @@
         <v-card-title>تسجيل دفعة مورد</v-card-title>
         <v-card-text>
           <p class="mb-3 text-body-2 text-medium-emphasis">
-            الرصيد المستحق: <strong class="text-error">{{ supplier?.currentBalance ?? 0 }}</strong>
+            الرصيد المستحق: <strong class="text-error"><MoneyDisplay :amount="supplier?.currentBalance ?? 0" size="sm" /></strong>
           </p>
           <MoneyInput v-model="paymentAmount" label="المبلغ" class="mb-3" />
           <div

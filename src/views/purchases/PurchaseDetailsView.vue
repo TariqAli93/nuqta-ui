@@ -192,7 +192,7 @@
         <v-card-title>تسجيل دفعة</v-card-title>
         <v-card-text>
           <p class="mb-3 text-body-2 text-medium-emphasis">
-            المتبقي: <strong class="text-error">{{ formatMoney(purchase?.remainingAmount ?? 0) }}</strong>
+            المتبقي: <strong class="text-error"><MoneyDisplay :amount="purchase?.remainingAmount ?? 0" size="sm" /></strong>
           </p>
           <MoneyInput v-model="paymentAmount" label="المبلغ" class="mb-3" />
           <div
@@ -302,14 +302,6 @@ function purchasePaymentStatusLabel(p: { remainingAmount?: number; paidAmount?: 
   if (remaining <= 0 && paid > 0) return 'مدفوع بالكامل';
   if (paid > 0 && remaining > 0) return 'مدفوع جزئياً';
   return 'غير مدفوع';
-}
-
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat('ar-IQ', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-    numberingSystem: 'latn',
-  }).format(value);
 }
 
 async function onRecordPayment() {

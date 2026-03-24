@@ -250,7 +250,7 @@ const form = reactive({
 const subtotal = computed(() => form.items.reduce((s, l) => s + l.quantity * l.unitCost, 0));
 const grandTotal = computed(() => subtotal.value - form.discount + form.tax);
 
-/** Derive the paid amount to send based on paymentMode. */
+// Derive the paid amount to send based on paymentMode
 const resolvedPaidAmount = computed(() => {
   if (form.paymentMode === 'cash') return grandTotal.value;
   if (form.paymentMode === 'credit') return 0;
