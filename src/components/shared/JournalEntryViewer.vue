@@ -194,15 +194,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { formatDate } from '@/utils/formatters';
-import { useAccountingStore } from '@/stores/accountingStore';
 
 export interface JournalLineDisplay {
   id?: number;
   accountId: number;
-  accountName?: string;
+  accountName: string;
   debit: number;
   credit: number;
-  description?: string | null;
+  description?: string;
 }
 
 export interface JournalEntryDisplay {
@@ -214,7 +213,6 @@ export interface JournalEntryDisplay {
   sourceId?: number;
   isPosted?: boolean;
   isReversed?: boolean;
-  totalAmount: number;
   currency?: string;
   notes?: string | null;
   lines?: JournalLineDisplay[];
@@ -223,8 +221,6 @@ export interface JournalEntryDisplay {
 const props = defineProps<{
   entry: JournalEntryDisplay;
 }>();
-
-const accountingStore = useAccountingStore();
 
 const isSystem = computed(() => !!props.entry.sourceType && props.entry.sourceType !== 'manual');
 
@@ -236,7 +232,10 @@ const totalCredit = computed(() =>
   (props.entry.lines ?? []).reduce((sum, l) => sum + (l.credit || 0), 0)
 );
 
-const isImbalanced = computed(() => Math.abs(totalDebit.value - totalCredit.value) > 0.001);
+const currencyPrecision = 3;
+const epsilon = 1 / Math.pow(10, currencyPrecision);
+
+const isImbalanced = computed(() => Math.abs(totalDebit.value - totalCredit.value) > epsilon);
 
 const SOURCE_LABELS: Record<string, string> = {
   sale: 'بيع',
@@ -263,11 +262,6 @@ const sourceLabel = computed(
 );
 const sourceColor = computed(() => SOURCE_COLORS[props.entry.sourceType ?? ''] ?? 'grey');
 
-function getAccountNameById(accountId: number): string {
-  const account = accountingStore.accounts.find((a) => a.id === accountId);
-  return account ? account.name : `حساب #${accountId}`;
-}
-
 const lineHeaders = [
   { title: 'الحساب', key: 'account', sortable: false },
   { title: 'مدين', key: 'debit', align: 'end' as const, width: '140px', sortable: false },
@@ -276,7 +270,7 @@ const lineHeaders = [
 
 const lineItems = computed(() =>
   (props.entry.lines ?? []).map((line) => ({
-    account: getAccountNameById(line.accountId),
+    account: line.accountName,
     debit: line.debit || 0,
     credit: line.credit || 0,
     description: line.description,

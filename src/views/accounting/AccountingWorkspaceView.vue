@@ -8,7 +8,7 @@
       </template>
     </PageHeader>
 
-    <v-tabs v-model="activeTab" bg-color="surface" show-arrows class="mb-4">
+    <!-- <v-tabs v-model="activeTab" bg-color="surface" show-arrows class="mb-4">
       <v-tab
         v-for="tab in tabs"
         :key="tab.value"
@@ -17,7 +17,7 @@
       >
         {{ tab.label }}
       </v-tab>
-    </v-tabs>
+    </v-tabs> -->
 
     <router-view />
   </PageShell>

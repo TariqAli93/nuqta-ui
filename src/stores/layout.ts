@@ -23,32 +23,36 @@ function readPosLayout(): PosLayoutMode {
   }
 }
 
-export const useLayoutStore = defineStore('layout', () => {
-  const drawerWidth = ref(readStoredWidth());
-  const posLayout = ref<PosLayoutMode>(readPosLayout());
+export const useLayoutStore = defineStore(
+  'layout',
+  () => {
+    const drawerWidth = ref(readStoredWidth());
+    const posLayout = ref<PosLayoutMode>(readPosLayout());
 
-  function setDrawerWidth(width: number) {
-    const w = clamp(Math.round(width), 300, 450);
-    drawerWidth.value = w;
-    try {
-      localStorage.setItem('drawerWidth', String(w));
-    } catch {
-      /* noop */
+    function setDrawerWidth(width: number) {
+      const w = clamp(Math.round(width), 300, 450);
+      drawerWidth.value = w;
+      try {
+        localStorage.setItem('drawerWidth', String(w));
+      } catch {
+        /* noop */
+      }
     }
-  }
 
-  function setPosLayout(mode: PosLayoutMode) {
-    posLayout.value = mode;
-    try {
-      localStorage.setItem('posLayout', mode);
-    } catch {
-      /* noop */
+    function setPosLayout(mode: PosLayoutMode) {
+      posLayout.value = mode;
+      try {
+        localStorage.setItem('posLayout', mode);
+      } catch {
+        /* noop */
+      }
     }
-  }
 
-  function togglePosLayout() {
-    setPosLayout(posLayout.value === 'grid' ? 'list' : 'grid');
-  }
+    function togglePosLayout() {
+      setPosLayout(posLayout.value === 'grid' ? 'list' : 'grid');
+    }
 
-  return { drawerWidth, setDrawerWidth, posLayout, setPosLayout, togglePosLayout };
-});
+    return { drawerWidth, setDrawerWidth, posLayout, setPosLayout, togglePosLayout };
+  },
+  { persist: true }
+);

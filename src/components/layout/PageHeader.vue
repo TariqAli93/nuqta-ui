@@ -1,5 +1,11 @@
 <template>
-  <v-app-bar border="0" density="comfortable" flat class="flex align-center justify-between">
+  <v-app-bar
+    border="0"
+    density="comfortable"
+    flat
+    class="flex align-center justify-between"
+    order="2"
+  >
     <v-container class="flex align-center justify-between ga-3">
       <div class="flex align-center justify-between ga-3">
         <v-btn v-if="showBack" icon="mdi-arrow-right" variant="text" size="small" @click="onBack" />

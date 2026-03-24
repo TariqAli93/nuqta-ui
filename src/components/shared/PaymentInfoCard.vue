@@ -25,6 +25,16 @@
           </v-list-item>
         </template>
 
+        <!-- Card reference number -->
+        <template v-if="resolvedMethod === 'card' && sale.referenceNumber">
+          <v-divider />
+          <v-list-item :title="t('sales.referenceNumber')" prepend-icon="mdi-card-text-outline">
+            <template #subtitle>
+              <span class="font-weight-medium" dir="ltr">{{ maskedReference }}</span>
+            </template>
+          </v-list-item>
+        </template>
+
         <!-- Paid amount -->
         <v-divider />
         <v-list-item
@@ -53,16 +63,6 @@
               <span class="text-success font-weight-medium">
                 {{ formatAmount(changeAmount) }}
               </span>
-            </template>
-          </v-list-item>
-        </template>
-
-        <!-- Card reference number -->
-        <template v-if="resolvedMethod === 'card' && sale.referenceNumber">
-          <v-divider />
-          <v-list-item :title="t('sales.referenceNumber')" prepend-icon="mdi-card-text-outline">
-            <template #subtitle>
-              <span class="font-weight-medium" dir="ltr">{{ maskedReference }}</span>
             </template>
           </v-list-item>
         </template>
@@ -122,7 +122,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { t } from '@/i18n/t';
 import type { Sale } from '@/types/domain';
 
@@ -216,4 +216,7 @@ function formatAmount(value: number): string {
     numberingSystem: 'latn',
   }).format(Number.isInteger(value) ? value : 0);
 }
+onMounted(() => {
+  console.log('PaymentInfoCard mounted with sale:', props.sale);
+});
 </script>

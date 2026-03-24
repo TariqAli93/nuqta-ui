@@ -1,6 +1,9 @@
 <template>
   <PageShell>
-    <PageHeader title="مساحة عمل المنتجات" subtitle="إدارة المنتج في شاشة واحدة: معلومات، حركات، مبيعات، مشتريات، وحدات، دفعات، وتعديل مخزون.">
+    <PageHeader
+      title="مساحة عمل المنتجات"
+      subtitle="إدارة المنتج في شاشة واحدة: معلومات، حركات، مبيعات، مشتريات، وحدات، دفعات، وتعديل مخزون."
+    >
       <template #actions>
         <v-btn color="primary" size="small" prepend-icon="mdi-plus" @click="openCreateDialog">
           إضافة منتج

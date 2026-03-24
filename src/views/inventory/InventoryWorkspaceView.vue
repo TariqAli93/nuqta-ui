@@ -2,22 +2,28 @@
   <PageShell>
     <PageHeader :title="t('nav.inventoryManagement')" subtitle="إدارة المخزون والحركات والمطابقة">
       <template #actions>
-        <v-btn variant="tonal" prepend-icon="mdi-refresh" @click="refreshAll">
-          {{ t('common.refresh') }}
-        </v-btn>
+        <div class="flex items-center gap-4">
+          <!-- <div id="tabs">
+            <v-tabs v-model="activeTab" bg-color="surface">
+              <v-tab
+                v-for="tab in tabs"
+                :key="tab.value"
+                :value="tab.value"
+                @click="navigateToTab(tab.route)"
+              >
+                {{ tab.label }}
+              </v-tab>
+            </v-tabs>
+          </div> -->
+
+          <div id="refresh">
+            <v-btn variant="tonal" prepend-icon="mdi-refresh" @click="refreshAll">
+              {{ t('common.refresh') }}
+            </v-btn>
+          </div>
+        </div>
       </template>
     </PageHeader>
-
-    <v-tabs v-model="activeTab" bg-color="surface" class="mb-4">
-      <v-tab
-        v-for="tab in tabs"
-        :key="tab.value"
-        :value="tab.value"
-        @click="navigateToTab(tab.route)"
-      >
-        {{ tab.label }}
-      </v-tab>
-    </v-tabs>
 
     <router-view />
   </PageShell>

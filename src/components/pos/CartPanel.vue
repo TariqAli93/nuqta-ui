@@ -8,7 +8,13 @@
     :location="drawerLocation"
   >
     <v-card flat rounded="0" border="0">
-      <v-card-title class="d-flex align-center justify-space-between pa-4" style="min-height: 72px">
+      <v-card-title
+        class="d-flex align-center justify-space-between pa-4"
+        style="
+          max-height: 53px;
+          border-bottom: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
+        "
+      >
         <span class="font-weight-medium">{{ t('pos.cart') }}</span>
         <v-chip size="small" variant="tonal" color="primary">
           {{ items.length }} {{ t('common.items') }}

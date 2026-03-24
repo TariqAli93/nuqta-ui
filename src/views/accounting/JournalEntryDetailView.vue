@@ -1,10 +1,15 @@
 <template>
   <PageShell>
-    <PageHeader :title="entryDisplay.entryNumber" :subtitle="journalSubtitle" show-back :back-to="{ name: 'AccountingJournal' }" />
+    <PageHeader
+      :title="entryDisplay?.entryNumber ?? ''"
+      :subtitle="journalSubtitle"
+      show-back
+      :back-to="{ name: 'AccountingJournal' }"
+    />
 
     <v-skeleton-loader v-if="accountingStore.loading" type="card" />
 
-    <v-alert v-else-if="!accountingStore.currentEntry" type="warning" variant="tonal">
+    <v-alert v-else-if="!entryDisplay" type="warning" variant="tonal">
       لم يتم العثور على القيد المطلوب
     </v-alert>
 
@@ -13,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
 import { useAccountingStore } from '@/stores/accountingStore';
@@ -23,16 +28,20 @@ import type { JournalEntryDisplay } from '@/components/shared/JournalEntryViewer
 const route = useRoute();
 const accountingStore = useAccountingStore();
 
-const entryDisplay = computed((): JournalEntryDisplay => {
-  const e = accountingStore.currentEntry;
-  if (!e) {
-    return {
-      entryNumber: '',
-      entryDate: '',
-      description: '',
-      totalAmount: 0,
-    };
+const accountsById = computed(() => {
+  const map = new Map<number, string>();
+  for (const account of accountingStore.accounts) {
+    if (typeof account.id === 'number') {
+      map.set(account.id, account.name);
+    }
   }
+  return map;
+});
+
+const entryDisplay = computed((): JournalEntryDisplay | null => {
+  const e = accountingStore.currentEntry;
+  if (!e) return null;
+
   return {
     id: e.id,
     entryNumber: e.entryNumber ?? `#${e.id}`,
@@ -42,30 +51,35 @@ const entryDisplay = computed((): JournalEntryDisplay => {
     sourceId: e.sourceId,
     isPosted: e.isPosted,
     isReversed: e.isReversed,
-    totalAmount: e.totalAmount ?? 0,
     currency: e.currency,
     notes: e.notes,
-    lines: (e.lines ?? []).map((line) => ({
-      ...line,
-      debit: line.debit ?? 0,
-      credit: line.credit ?? 0,
-      description: line.description ?? '',
+    lines: (e.lines ?? []).map((l) => ({
+      id: l.id,
+      accountId: l.accountId,
+      accountName: accountsById.value.get(l.accountId) ?? `حساب #${l.accountId}`,
+      debit: l.debit ?? 0,
+      credit: l.credit ?? 0,
+      description: l.description ?? '',
     })),
   };
 });
 
 const journalSubtitle = computed(() => {
   const base = 'عرض تفاصيل القيد';
-  if (entryDisplay.value.entryDate) {
+  if (entryDisplay.value?.entryDate) {
     return `${base} لتاريخ ${entryDisplay.value.entryDate}`;
   }
   return base;
 });
 
-onMounted(async () => {
-  const id = Number(route.params.id);
-  if (id) {
+watch(
+  () => route.params.id,
+  async () => {
+    const id = Number(route.params.id);
+    if (!Number.isFinite(id)) return;
+    await accountingStore.fetchAccounts();
     await accountingStore.fetchEntryById(id);
-  }
-});
+  },
+  { immediate: true }
+);
 </script>

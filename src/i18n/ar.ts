@@ -97,6 +97,7 @@
   'nav.products': 'المنتجات',
   'nav.customers': 'العملاء',
   'nav.sales': 'الفواتير',
+  'nav.salesManagement': 'إدارة المبيعات',
   'nav.dashboard': 'تقارير الأداء',
   'nav.reports': 'التقارير',
   'nav.settings': 'الإعدادات',

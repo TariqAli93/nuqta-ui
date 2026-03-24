@@ -133,7 +133,7 @@ export interface Sale {
   createdBy?: number;
   items?: SaleItem[];
   payments?: Payment[];
-  paymentMethod?: string;
+  paymentMethod?: PaymentMethod;
   referenceNumber?: string | null;
   cogs?: number;
   totalCogs?: number;
@@ -444,7 +444,7 @@ export type ProductInput = Pick<
 >;
 
 export type SaleInput = Omit<Sale, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'> & {
-  paymentMethod?: string;
+  paymentMethod?: PaymentMethod;
   referenceNumber?: string;
   idempotencyKey?: string;
 };

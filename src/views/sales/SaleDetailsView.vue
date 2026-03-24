@@ -1,6 +1,11 @@
 <template>
   <PageShell>
-    <PageHeader :title="t('sales.details')" :subtitle="sale?.invoiceNumber ?? ''" show-back :back-to="{ name: 'Sales' }">
+    <PageHeader
+      :title="t('sales.details')"
+      :subtitle="sale?.invoiceNumber ?? ''"
+      show-back
+      :back-to="{ name: 'Sales' }"
+    >
       <template #actions>
         <v-btn
           v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"
@@ -23,8 +28,7 @@
         <!-- تسوية الفاتورة في حال المتبقي اكبر من 0 -->
         <v-btn
           v-if="
-            sale?.status === 'pending' &&
-            (sale.paidAmount < sale.remainingAmount || sale.remainingAmount > 0)
+            sale?.status === 'pending' && sale?.remainingAmount != null && sale.remainingAmount > 0
           "
           color="success"
           prepend-icon="mdi-cash-check"
@@ -227,9 +231,7 @@
             <template v-if="refundReturnToStock">
               سيتم استرجاع المبلغ المحدد وإعادة جميع البضاعة للمخزون وعكس القيود المحاسبية.
             </template>
-            <template v-else>
-              سيتم استرجاع المبلغ المحدد فقط بدون إعادة البضاعة للمخزون.
-            </template>
+            <template v-else> سيتم استرجاع المبلغ المحدد فقط بدون إعادة البضاعة للمخزون. </template>
           </p>
           <v-text-field
             v-model.number="refundAmount"
@@ -346,7 +348,6 @@ import { mapErrorToArabic, t } from '@/i18n/t';
 import { useSalesStore } from '@/stores/salesStore';
 import EmptyState from '@/components/common/EmptyState.vue';
 import PaymentInfoCard from '@/components/shared/PaymentInfoCard.vue';
-import AuditLogTab from '@/components/shared/AuditLogTab.vue';
 import type { Sale, SaleItem } from '@/types/domain';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { useSystemSettingsStore } from '@/stores/settings';
@@ -581,6 +582,7 @@ async function loadSale() {
   loading.value = true;
   try {
     const result = await store.getSale(id);
+    console.log('Sale details load result:', result);
     if (result.ok) {
       sale.value = result.data;
     } else {

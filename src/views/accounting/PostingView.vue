@@ -1,9 +1,7 @@
 ﻿<template>
   <SubPageShell>
-    <PageHeader title="ترحيل القيود المحاسبية" subtitle="ترحيل القيود المسودة إلى دفعات مرحّلة حسب الفترة الزمنية" />
-
     <!-- Post New Batch Card -->
-    <v-card class="mb-6" variant="outlined">
+    <v-card class="mb-6">
       <v-card-title class="d-flex align-center ga-2">
         <v-icon color="primary">mdi-send-check</v-icon>
         ترحيل فترة جديدة
@@ -60,7 +58,7 @@
     </v-card>
 
     <!-- Batches Table -->
-    <v-card variant="outlined">
+    <v-card>
       <v-card-title class="d-flex align-center ga-2">
         <v-icon color="primary">mdi-history</v-icon>
         سجل الدفعات المرحّلة
