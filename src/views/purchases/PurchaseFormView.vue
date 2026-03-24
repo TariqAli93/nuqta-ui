@@ -200,7 +200,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
 import { usePurchasesStore } from '@/stores/purchasesStore';
@@ -249,6 +249,23 @@ const form = reactive({
 
 const subtotal = computed(() => form.items.reduce((s, l) => s + l.quantity * l.unitCost, 0));
 const grandTotal = computed(() => subtotal.value - form.discount + form.tax);
+
+/** Derive the paid amount to send based on paymentMode. */
+const resolvedPaidAmount = computed(() => {
+  if (form.paymentMode === 'cash') return grandTotal.value;
+  if (form.paymentMode === 'credit') return 0;
+  return form.paidAmount; // partial
+});
+
+// Reset paidAmount when switching away from 'partial' so stale values don't linger
+watch(
+  () => form.paymentMode,
+  (mode) => {
+    if (mode !== 'partial') {
+      form.paidAmount = 0;
+    }
+  },
+);
 
 // Lines that require expiry date but don't have one
 const missingExpiryLines = computed(() =>
@@ -330,7 +347,7 @@ async function onSubmit() {
     discount: form.discount,
     tax: form.tax,
     paymentMode: form.paymentMode,
-    paidAmount: form.paymentMode === 'cash' ? grandTotal.value : form.paymentMode === 'credit' ? 0 : form.paidAmount,
+    paidAmount: resolvedPaidAmount.value,
     notes: form.notes || undefined,
     idempotencyKey: generateIdempotencyKey('purchase'),
   });
