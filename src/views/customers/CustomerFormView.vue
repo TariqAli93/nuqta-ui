@@ -1,38 +1,74 @@
 ﻿<template>
   <PageShell>
-    <PageHeader :title="isEdit ? t('customers.edit') : t('customers.new')" :subtitle="t('customers.formHint')" show-back back-to="/customers" />
+    <PageHeader
+      :title="isEdit ? t('customers.edit') : t('customers.new')"
+      :subtitle="t('customers.formHint')"
+      show-back
+      back-to="/customers"
+    />
 
-    <v-card flat>
-      <v-form class="win-form" @submit.prevent="submit">
-        <v-text-field v-model="form.name" :label="t('common.name')" required />
-        <div class="d-flex flex-wrap ga-2">
-          <v-text-field v-model="form.phone" :label="t('common.phone')" />
-          <v-text-field v-model="form.city" :label="t('common.city')" />
-        </div>
-        <v-text-field v-model="form.address" :label="t('customers.address')" />
-        <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" />
-        <div class="d-flex ga-2">
-          <v-btn
-            type="submit"
-            color="primary"
-            variant="flat"
-            class="win-btn"
-            :loading="store.loading"
-          >
-            {{ t('common.save') }}
-          </v-btn>
-          <v-btn variant="text" class="win-ghost-btn" to="/customers">{{
-            t('common.cancel')
-          }}</v-btn>
-        </div>
-      </v-form>
-    </v-card>
+    <AppFormLayout
+      :loading="store.loading"
+      :submit-label="t('common.save')"
+      :cancel-label="t('common.cancel')"
+      @submit="submit"
+      @cancel="router.push('/customers')"
+    >
+      <AppSection :title="t('customers.basicInfo')">
+        <v-row dense>
+          <v-col cols="12">
+            <v-text-field
+              v-model="form.name"
+              :label="t('common.name')"
+              variant="outlined"
+              density="comfortable"
+              required
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model="form.phone"
+              :label="t('common.phone')"
+              variant="outlined"
+              density="comfortable"
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model="form.city"
+              :label="t('common.city')"
+              variant="outlined"
+              density="comfortable"
+            />
+          </v-col>
+          <v-col cols="12">
+            <v-text-field
+              v-model="form.address"
+              :label="t('customers.address')"
+              variant="outlined"
+              density="comfortable"
+            />
+          </v-col>
+        </v-row>
+      </AppSection>
+
+      <AppSection :title="t('common.notes')">
+        <v-textarea
+          v-model="form.notes"
+          :label="t('common.notes')"
+          variant="outlined"
+          density="comfortable"
+          rows="3"
+        />
+      </AppSection>
+    </AppFormLayout>
   </PageShell>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, watch } from 'vue';
 import { PageShell, PageHeader } from '@/components/layout';
+import { AppFormLayout, AppSection } from '@/components/common';
 import { useRoute, useRouter } from 'vue-router';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useCustomersStore } from '@/stores/customersStore';

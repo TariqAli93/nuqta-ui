@@ -8,7 +8,9 @@
     />
 
     <v-main>
-      <router-view />
+      <v-container>
+        <router-view />
+      </v-container>
       <AppHeader
         :current-user="currentUser"
         :current-date="currentDate"

@@ -282,6 +282,7 @@
   'customers.save': 'حفظ العميل',
   'customers.address': 'العنوان',
   'customers.formHint': 'حافظ على بيانات التواصل محدثة',
+  'customers.basicInfo': 'المعلومات الأساسية',
   'customers.search': 'بحث بالاسم أو رقم الهاتف...',
   'customers.noCustomers': 'لا يوجد عملاء',
   'customers.noCustomersHint': 'ابدأ بإضافة عملاء جدد',

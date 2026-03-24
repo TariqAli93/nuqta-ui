@@ -15,28 +15,32 @@
     </PageHeader>
 
     <v-row dense>
-      <!-- Customer selector -->
-      <v-col cols="12" md="4">
-        <v-card>
-          <v-card-title class="text-subtitle-1 font-weight-bold">العملاء</v-card-title>
-          <v-card-text class="pb-0">
-            <v-text-field
-              v-model="customerSearch"
-              prepend-inner-icon="mdi-magnify"
-              label="بحث عن عميل..."
-              density="compact"
-              hide-details
-              variant="outlined"
-              clearable
-              class="mb-2"
-              @update:model-value="searchCustomers"
-            />
+      <v-col cols="4">
+        <!-- Step 1: Select Customer -->
+        <AppCard>
+          <v-card-text>
+            <v-row dense align="center">
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model="customerSearch"
+                  prepend-inner-icon="mdi-magnify"
+                  label="بحث عن عميل..."
+                  density="compact"
+                  hide-details
+                  variant="outlined"
+                  clearable
+                  @update:model-value="searchCustomers"
+                />
+              </v-col>
+            </v-row>
           </v-card-text>
+
           <v-data-table
             :headers="customerHeaders"
             :items="ledgerStore.customers"
             :loading="ledgerStore.loading.customers"
             density="compact"
+            class="ds-table-enhanced ds-table-striped"
             :items-per-page="15"
             @click:row="onSelectCustomer"
           >
@@ -56,59 +60,83 @@
               <div class="text-center py-8 text-medium-emphasis">لا يوجد عملاء</div>
             </template>
           </v-data-table>
-        </v-card>
+        </AppCard>
       </v-col>
 
-      <!-- Ledger detail -->
-      <v-col cols="12" md="8">
-        <v-card class="mb-2">
-          <v-card-text class="d-flex align-center ga-3 flex-wrap">
-            <v-text-field
-              v-model="ledgerDateFrom"
-              type="date"
-              label="من تاريخ"
-              density="compact"
-              hide-details
-              variant="outlined"
-              style="max-width: 180px"
-              clearable
-            />
-            <v-text-field
-              v-model="ledgerDateTo"
-              type="date"
-              label="إلى تاريخ"
-              density="compact"
-              hide-details
-              variant="outlined"
-              style="max-width: 180px"
-              clearable
-            />
-            <v-btn
-              variant="text"
-              :disabled="!ledgerStore.selectedCustomerId"
-              :loading="ledgerStore.loading.customerLedger"
-              @click="reloadLedger"
-            >
-              تحديث دفتر العميل
-            </v-btn>
-          </v-card-text>
-        </v-card>
+      <v-col cols="8">
+        <template v-if="ledgerStore.selectedCustomerId">
+          <v-row class="mb-3">
+            <v-col cols="6">
+              <StatCard
+                icon="mdi-account"
+                label="العميل"
+                :value="selectedCustomerName"
+                color="primary"
+                size="sm"
+              />
+            </v-col>
+            <v-col cols="6">
+              <StatCard
+                icon="mdi-cash-clock"
+                label="الرصيد المستحق"
+                :color="(selectedCustomerDebt ?? 0) > 0 ? 'error' : 'success'"
+                size="sm"
+                :value="formatMoney(selectedCustomerDebt ?? 0)"
+              />
+            </v-col>
+          </v-row>
 
+          <!-- Filters -->
+          <AppCard class="mb-3">
+            <v-card-text class="flex flex-wrap gap-3">
+              <v-text-field
+                v-model="ledgerDateFrom"
+                type="date"
+                label="من تاريخ"
+                density="compact"
+                hide-details
+                variant="outlined"
+                clearable
+                class="grow"
+              />
+              <v-text-field
+                v-model="ledgerDateTo"
+                type="date"
+                label="إلى تاريخ"
+                density="compact"
+                hide-details
+                variant="outlined"
+                clearable
+                class="grow"
+              />
+              <v-btn
+                color="primary"
+                variant="tonal"
+                :loading="ledgerStore.loading.customerLedger"
+                prepend-icon="mdi-refresh"
+                @click="reloadLedger"
+              >
+                تحديث
+              </v-btn>
+            </v-card-text>
+          </AppCard>
+
+          <!-- Step 3: Ledger Table -->
+          <LedgerTable
+            :entries="customerLedgerRows"
+            :loading="ledgerStore.loading.customerLedger"
+            entity-type="customer"
+          />
+        </template>
         <v-alert
-          v-if="!ledgerStore.selectedCustomerId"
+          v-else
           type="info"
           variant="tonal"
           density="compact"
-          class="mb-3"
+          icon="mdi-information-outline"
         >
-          اختر عميلاً من القائمة لعرض كشف حسابه
+          اختر عميلاً من القائمة أعلاه لعرض كشف حسابه
         </v-alert>
-
-        <LedgerTable
-          :entries="customerLedgerRows"
-          :loading="ledgerStore.loading.customerLedger"
-          entity-type="customer"
-        />
       </v-col>
     </v-row>
   </PageShell>
@@ -118,6 +146,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
+import { AppCard, StatCard } from '@/components/common';
 import { formatMoney } from '@/utils/formatters';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import LedgerTable from '@/components/shared/LedgerTable.vue';
@@ -139,6 +168,20 @@ const customerHeaders = [
 const customerLedgerRows = computed(
   () => ledgerStore.customerLedgerEntries as unknown as LedgerEntry[]
 );
+
+const selectedCustomerName = computed(() => {
+  const c = ledgerStore.customers.find(
+    (c: { id?: number }) => c.id === ledgerStore.selectedCustomerId
+  );
+  return c?.name ?? '—';
+});
+
+const selectedCustomerDebt = computed(() => {
+  const c = ledgerStore.customers.find(
+    (c: { id?: number }) => c.id === ledgerStore.selectedCustomerId
+  );
+  return c?.totalDebt ?? 0;
+});
 
 async function onSelectCustomer(_event: Event, payload: { item: { id: number } }): Promise<void> {
   if (!payload.item.id) return;

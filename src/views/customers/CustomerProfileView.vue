@@ -16,73 +16,41 @@
         </template>
       </PageHeader>
 
-      <!-- Info Cards -->
+      <!-- Stat Cards -->
       <v-row dense>
         <v-col cols="6" sm="3">
-          <v-card flat>
-            <div class="ds-stat-card">
-              <v-avatar color="grey" variant="tonal" size="40">
-                <v-icon size="20">mdi-phone</v-icon>
-              </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">الهاتف</div>
-                <div class="ds-stat-card__value" style="font-size: 0.95rem" dir="ltr">
-                  {{ customer.phone || '—' }}
-                </div>
-              </div>
-            </div>
-          </v-card>
+          <StatCard
+            icon="mdi-phone"
+            label="الهاتف"
+            :value="customer.phone || '—'"
+            size="sm"
+            dir="ltr"
+          />
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card flat>
-            <div class="ds-stat-card">
-              <v-avatar color="grey" variant="tonal" size="40">
-                <v-icon size="20">mdi-city</v-icon>
-              </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">المدينة</div>
-                <div class="ds-stat-card__value" style="font-size: 0.95rem">
-                  {{ customer.city || '—' }}
-                </div>
-              </div>
-            </div>
-          </v-card>
+          <StatCard icon="mdi-city" label="المدينة" :value="customer.city || '—'" size="sm" />
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card flat>
-            <div class="ds-stat-card">
-              <v-avatar
-                :color="(customer.totalDebt ?? 0) > 0 ? 'error' : 'success'"
-                variant="tonal"
-                size="40"
-              >
-                <v-icon size="20">mdi-cash-clock</v-icon>
-              </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">الرصيد المستحق</div>
-                <MoneyDisplay :amount="customer.totalDebt ?? 0" size="lg" />
-              </div>
-            </div>
-          </v-card>
+          <StatCard
+            icon="mdi-cash-clock"
+            label="الرصيد المستحق"
+            :color="(customer.totalDebt ?? 0) > 0 ? 'error' : 'success'"
+            :value="formatMoney(customer.totalDebt ?? 0)"
+          />
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card flat>
-            <div class="ds-stat-card">
-              <v-avatar color="primary" variant="tonal" size="40">
-                <v-icon size="20">mdi-cart</v-icon>
-              </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">إجمالي المشتريات</div>
-                <MoneyDisplay :amount="customer.totalPurchases ?? 0" size="lg" />
-              </div>
-            </div>
-          </v-card>
+          <StatCard
+            icon="mdi-cart"
+            label="إجمالي المشتريات"
+            color="primary"
+            :value="formatMoney(customer.totalPurchases ?? 0)"
+          />
         </v-col>
       </v-row>
 
       <!-- Tabs -->
-      <v-card flat>
-        <v-tabs v-model="activeTab" color="primary" density="comfortable">
+      <AppCard>
+        <v-tabs v-model="activeTab" color="primary" density="comfortable" grow>
           <v-tab value="ledger">كشف الحساب</v-tab>
           <v-tab value="invoices">الفواتير</v-tab>
           <v-tab value="info">معلومات</v-tab>
@@ -92,89 +60,167 @@
         <v-window v-model="activeTab">
           <!-- Ledger Tab -->
           <v-window-item value="ledger">
-            <v-row class="mb-3">
-              <v-col cols="auto" class="d-flex ga-2">
-                <v-btn
-                  color="primary"
-                  prepend-icon="mdi-cash-plus"
-                  @click="showPaymentDialog = true"
-                  >تسجيل دفعة</v-btn
-                >
-                <v-btn
-                  variant="tonal"
-                  color="warning"
-                  prepend-icon="mdi-scale-balance"
-                  @click="showAdjustmentDialog = true"
-                  >تعديل رصيد</v-btn
-                >
-              </v-col>
-            </v-row>
-            <LedgerTable :entries="ledgerEntries" :loading="ledgerLoading" entity-type="customer" />
+            <div class="pa-4">
+              <v-row class="mb-3">
+                <v-col cols="auto" class="d-flex ga-2">
+                  <v-btn
+                    color="primary"
+                    prepend-icon="mdi-cash-plus"
+                    @click="showPaymentDialog = true"
+                    >تسجيل دفعة</v-btn
+                  >
+                  <v-btn
+                    variant="tonal"
+                    color="warning"
+                    prepend-icon="mdi-scale-balance"
+                    @click="showAdjustmentDialog = true"
+                    >تعديل رصيد</v-btn
+                  >
+                </v-col>
+              </v-row>
+              <LedgerTable
+                :entries="ledgerEntries"
+                :loading="ledgerLoading"
+                entity-type="customer"
+              />
+            </div>
           </v-window-item>
 
           <!-- Invoices Tab -->
           <v-window-item value="invoices">
-            <v-row dense class="mb-3">
-              <v-col cols="auto">
-                <v-btn-toggle v-model="invoiceFilter" mandatory density="compact" variant="outlined">
-                  <v-btn value="all">الكل</v-btn>
-                  <v-btn value="unpaid">غير مدفوعة</v-btn>
-                  <v-btn value="partial">مدفوعة جزئياً</v-btn>
-                </v-btn-toggle>
-              </v-col>
-            </v-row>
-            <v-data-table
-              :headers="saleHeaders"
-              :items="filteredSales"
-              :loading="salesLoading"
-              density="compact"
-              class="ds-table-enhanced ds-table-striped"
-              :items-per-page="20"
-              @click:row="(_: Event, { item }: { item: any }) => router.push({ name: 'SaleDetails', params: { id: item.id } })"
-            >
-              <template #item.total="{ item }">
-                <MoneyDisplay :amount="item.total" size="sm" />
-              </template>
-              <template #item.paidAmount="{ item }">
-                <MoneyDisplay :amount="item.paidAmount ?? 0" size="sm" colored />
-              </template>
-              <template #item.remainingAmount="{ item }">
-                <span :class="(item.remainingAmount ?? 0) > 0 ? 'text-error font-weight-bold' : 'text-success'">
-                  <MoneyDisplay :amount="item.remainingAmount ?? 0" size="sm" />
-                </span>
-              </template>
-              <template #item.status="{ item }">
-                <v-chip
-                  size="x-small"
-                  variant="tonal"
-                  :color="saleStatusColor(item.status)"
-                >
-                  {{ saleStatusLabel(item.status) }}
-                </v-chip>
-              </template>
-              <template #item.createdAt="{ item }">
-                {{ formatDate(item.createdAt) }}
-              </template>
-              <template #no-data>
-                <div class="text-center py-8 text-medium-emphasis">لا توجد فواتير لهذا العميل</div>
-              </template>
-            </v-data-table>
+            <div class="pa-4">
+              <v-row dense class="mb-3">
+                <v-col cols="auto">
+                  <v-btn-toggle
+                    v-model="invoiceFilter"
+                    mandatory
+                    density="compact"
+                    variant="outlined"
+                  >
+                    <v-btn value="all">الكل</v-btn>
+                    <v-btn value="unpaid">غير مدفوعة</v-btn>
+                    <v-btn value="partial">مدفوعة جزئياً</v-btn>
+                  </v-btn-toggle>
+                </v-col>
+              </v-row>
+              <v-data-table
+                :headers="saleHeaders"
+                :items="filteredSales"
+                :loading="salesLoading"
+                density="compact"
+                class="ds-table-enhanced ds-table-striped"
+                :items-per-page="20"
+                @click:row="
+                  (_: Event, { item }: { item: any }) =>
+                    router.push({ name: 'SaleDetails', params: { id: item.id } })
+                "
+              >
+                <template #item.total="{ item }">
+                  <MoneyDisplay :amount="item.total" size="sm" />
+                </template>
+                <template #item.paidAmount="{ item }">
+                  <MoneyDisplay :amount="item.paidAmount ?? 0" size="sm" colored />
+                </template>
+                <template #item.remainingAmount="{ item }">
+                  <span
+                    :class="
+                      (item.remainingAmount ?? 0) > 0
+                        ? 'text-error font-weight-bold'
+                        : 'text-success'
+                    "
+                  >
+                    <MoneyDisplay :amount="item.remainingAmount ?? 0" size="sm" />
+                  </span>
+                </template>
+                <template #item.status="{ item }">
+                  <v-chip size="x-small" variant="tonal" :color="saleStatusColor(item.status)">
+                    {{ saleStatusLabel(item.status) }}
+                  </v-chip>
+                </template>
+                <template #item.createdAt="{ item }">
+                  {{ formatDate(item.createdAt) }}
+                </template>
+                <template #no-data>
+                  <div class="text-center py-8 text-medium-emphasis">
+                    لا توجد فواتير لهذا العميل
+                  </div>
+                </template>
+              </v-data-table>
+            </div>
           </v-window-item>
 
           <!-- Info Tab -->
           <v-window-item value="info">
-            <v-card max-width="500">
-              <v-card-text>
-                <div class="mb-2"><strong>الاسم:</strong> {{ customer.name }}</div>
-                <div class="mb-2"><strong>الهاتف:</strong> {{ customer.phone || '—' }}</div>
-                <div class="mb-2"><strong>العنوان:</strong> {{ customer.address || '—' }}</div>
-                <div class="mb-2"><strong>المدينة:</strong> {{ customer.city || '—' }}</div>
-                <div class="mb-2"><strong>ملاحظات:</strong> {{ customer.notes || '—' }}</div>
-              </v-card-text>
-            </v-card>
+            <div class="pa-4">
+              <v-row dense>
+                <v-col cols="12" sm="6">
+                  <v-list density="compact" class="bg-transparent">
+                    <v-list-item>
+                      <template #prepend>
+                        <v-icon size="20" class="me-3">mdi-account</v-icon>
+                      </template>
+                      <v-list-item-title class="text-medium-emphasis text-caption"
+                        >الاسم</v-list-item-title
+                      >
+                      <v-list-item-subtitle class="font-weight-medium text-body-2">{{
+                        customer.name
+                      }}</v-list-item-subtitle>
+                    </v-list-item>
+                    <v-list-item>
+                      <template #prepend>
+                        <v-icon size="20" class="me-3">mdi-phone</v-icon>
+                      </template>
+                      <v-list-item-title class="text-medium-emphasis text-caption"
+                        >الهاتف</v-list-item-title
+                      >
+                      <v-list-item-subtitle class="font-weight-medium text-body-2" dir="ltr">{{
+                        customer.phone || '—'
+                      }}</v-list-item-subtitle>
+                    </v-list-item>
+                    <v-list-item>
+                      <template #prepend>
+                        <v-icon size="20" class="me-3">mdi-city</v-icon>
+                      </template>
+                      <v-list-item-title class="text-medium-emphasis text-caption"
+                        >المدينة</v-list-item-title
+                      >
+                      <v-list-item-subtitle class="font-weight-medium text-body-2">{{
+                        customer.city || '—'
+                      }}</v-list-item-subtitle>
+                    </v-list-item>
+                  </v-list>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-list density="compact" class="bg-transparent">
+                    <v-list-item>
+                      <template #prepend>
+                        <v-icon size="20" class="me-3">mdi-map-marker</v-icon>
+                      </template>
+                      <v-list-item-title class="text-medium-emphasis text-caption"
+                        >العنوان</v-list-item-title
+                      >
+                      <v-list-item-subtitle class="font-weight-medium text-body-2">{{
+                        customer.address || '—'
+                      }}</v-list-item-subtitle>
+                    </v-list-item>
+                    <v-list-item>
+                      <template #prepend>
+                        <v-icon size="20" class="me-3">mdi-note-text</v-icon>
+                      </template>
+                      <v-list-item-title class="text-medium-emphasis text-caption"
+                        >ملاحظات</v-list-item-title
+                      >
+                      <v-list-item-subtitle class="font-weight-medium text-body-2">{{
+                        customer.notes || '—'
+                      }}</v-list-item-subtitle>
+                    </v-list-item>
+                  </v-list>
+                </v-col>
+              </v-row>
+            </div>
           </v-window-item>
         </v-window>
-      </v-card>
+      </AppCard>
     </template>
 
     <!-- Payment Dialog -->
@@ -183,15 +229,13 @@
         <v-card-title>تسجيل دفعة</v-card-title>
         <v-card-text>
           <p class="mb-3 text-body-2 text-medium-emphasis">
-            الرصيد المستحق: <strong class="text-error">
+            الرصيد المستحق:
+            <strong class="text-error">
               <MoneyDisplay :amount="customer?.totalDebt ?? 0" size="sm" />
             </strong>
           </p>
           <MoneyInput v-model="paymentAmount" label="المبلغ" class="mb-3" />
-          <div
-            v-if="paymentAmount < 0"
-            class="text-error text-caption mb-2"
-          >
+          <div v-if="paymentAmount < 0" class="text-error text-caption mb-2">
             المبلغ لا يمكن أن يكون سالباً
           </div>
           <v-textarea
@@ -252,6 +296,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { PageShell, PageHeader } from '@/components/layout';
+import { AppCard, StatCard } from '@/components/common';
 import { useRoute, useRouter } from 'vue-router';
 import { customersClient, customerLedgerClient, salesClient } from '@/api';
 import type { Customer, Sale } from '@/types/domain';
@@ -263,6 +308,7 @@ import { formatDate } from '@/utils/formatters';
 import { generateIdempotencyKey } from '@/utils/idempotency';
 import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
+import { formatMoney } from '@/utils/formatters';
 
 const route = useRoute();
 const router = useRouter();
@@ -302,23 +348,35 @@ const saleHeaders = [
 
 function saleStatusColor(status: string | undefined): string {
   switch (status) {
-    case 'completed': return 'success';
-    case 'cancelled': return 'error';
-    case 'refunded': return 'error';
-    case 'partial_refund': return 'orange';
-    case 'pending': return 'warning';
-    default: return 'grey';
+    case 'completed':
+      return 'success';
+    case 'cancelled':
+      return 'error';
+    case 'refunded':
+      return 'error';
+    case 'partial_refund':
+      return 'orange';
+    case 'pending':
+      return 'warning';
+    default:
+      return 'grey';
   }
 }
 
 function saleStatusLabel(status: string | undefined): string {
   switch (status) {
-    case 'completed': return 'مكتمل';
-    case 'cancelled': return 'ملغي';
-    case 'refunded': return 'مسترد';
-    case 'partial_refund': return 'استرداد جزئي';
-    case 'pending': return 'معلق';
-    default: return status ?? '—';
+    case 'completed':
+      return 'مكتمل';
+    case 'cancelled':
+      return 'ملغي';
+    case 'refunded':
+      return 'مسترد';
+    case 'partial_refund':
+      return 'استرداد جزئي';
+    case 'pending':
+      return 'معلق';
+    default:
+      return status ?? '—';
   }
 }
 
@@ -382,6 +440,7 @@ async function onRecordPayment() {
     paymentAmount.value = 0;
     paymentNotes.value = '';
     fetchLedger(customer.value.id!);
+    fetchSales(customer.value.id!);
     // Refresh customer data to update debt balance
     const res = await customersClient.getById(customer.value.id!);
     if (res.ok) customer.value = res.data;
@@ -411,6 +470,7 @@ async function onAddAdjustment() {
     adjustmentAmount.value = 0;
     adjustmentNotes.value = '';
     fetchLedger(customer.value.id!);
+    fetchSales(customer.value.id!);
     const res = await customersClient.getById(customer.value.id!);
     if (res.ok) customer.value = res.data;
     notifySuccess('تم تعديل الرصيد بنجاح');
