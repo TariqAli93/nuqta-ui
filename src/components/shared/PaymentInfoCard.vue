@@ -35,7 +35,7 @@
           </v-list-item>
         </template>
 
-        <!-- Paid amount -->
+        <!-- Paid amount — maps to invoice.paidAmount only, NOT ledger balance -->
         <v-divider />
         <v-list-item
           :title="t('sales.paidAmount')"
@@ -43,25 +43,30 @@
           prepend-icon="mdi-cash-check"
         />
 
-        <!-- Remaining (credit / installment) -->
-        <template v-if="sale.remainingAmount && sale.remainingAmount > 0">
+        <!-- Remaining Due — maps directly to invoice.remainingAmount from backend -->
+        <template v-if="(sale.remainingAmount ?? 0) > 0">
           <v-divider />
           <v-list-item :title="t('sales.remaining')" prepend-icon="mdi-cash-clock">
             <template #subtitle>
               <span class="text-error font-weight-medium">
-                {{ formatAmount(sale.remainingAmount) }}
+                {{ formatAmount(sale.remainingAmount ?? 0) }}
               </span>
             </template>
           </v-list-item>
         </template>
 
-        <!-- Change (overpayment) -->
-        <template v-if="changeAmount > 0">
+        <!--
+          Cash change display — shown only for completed cash transactions where
+          the customer paid more than the total and received change back.
+          This is a display-only helper; it does NOT affect remainingAmount.
+          remainingAmount = 0 means the invoice is fully settled per backend.
+        -->
+        <template v-if="cashChange > 0">
           <v-divider />
           <v-list-item :title="t('sales.changeAmount')" prepend-icon="mdi-cash-refund">
             <template #subtitle>
               <span class="text-success font-weight-medium">
-                {{ formatAmount(changeAmount) }}
+                {{ formatAmount(cashChange) }}
               </span>
             </template>
           </v-list-item>
@@ -122,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { t } from '@/i18n/t';
 import type { Sale } from '@/types/domain';
 
@@ -147,7 +152,13 @@ const isCreditSale = computed(
     (props.sale.remainingAmount ?? 0) > 0
 );
 
-const changeAmount = computed(() => {
+/**
+ * Cash change given back to the customer.
+ * Only meaningful for cash transactions where the customer overpaid.
+ * backend.remainingAmount = 0 confirms the invoice is fully settled.
+ * This computed is display-only and does not affect any financial state.
+ */
+const cashChange = computed(() => {
   const paid = props.sale.paidAmount ?? 0;
   const total = props.sale.total ?? 0;
   return Math.max(paid - total, 0);
@@ -216,7 +227,4 @@ function formatAmount(value: number): string {
     numberingSystem: 'latn',
   }).format(Number.isInteger(value) ? value : 0);
 }
-onMounted(() => {
-  console.log('PaymentInfoCard mounted with sale:', props.sale);
-});
 </script>

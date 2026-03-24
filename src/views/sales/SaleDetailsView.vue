@@ -25,22 +25,18 @@
         >
           استرجاع مع إرجاع البضاعة
         </v-btn>
-        <!-- تسوية الفاتورة في حال المتبقي اكبر من 0 -->
+        <!-- تسوية الفاتورة: عندما يكون الدفع غير مكتمل -->
         <v-btn
-          v-if="
-            sale?.status === 'pending' && sale?.remainingAmount != null && sale.remainingAmount > 0
-          "
+          v-if="sale?.paymentStatus === 'unpaid' || sale?.paymentStatus === 'partial'"
           color="success"
           prepend-icon="mdi-cash-check"
           @click="settleDialog = true"
         >
           تسوية
         </v-btn>
-        <!-- تحصيل دفعة جزئية -->
+        <!-- تحصيل دفعة جزئية: عندما يكون الدفع غير مكتمل -->
         <v-btn
-          v-if="
-            sale?.status === 'pending' && sale?.remainingAmount != null && sale.remainingAmount > 0
-          "
+          v-if="sale?.paymentStatus === 'unpaid' || sale?.paymentStatus === 'partial'"
           color="primary"
           prepend-icon="mdi-cash-plus"
           @click="collectPaymentDialog = true"
@@ -461,10 +457,9 @@ import { mapErrorToArabic, t } from '@/i18n/t';
 import { useSalesStore } from '@/stores/salesStore';
 import EmptyState from '@/components/common/EmptyState.vue';
 import PaymentInfoCard from '@/components/shared/PaymentInfoCard.vue';
-import type { Sale, SaleItem } from '@/types/domain';
+import type { Sale, SaleItem, PaymentMethod } from '@/types/domain';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 import { useSystemSettingsStore } from '@/stores/settings';
-import type { PaymentMethod } from '@/types/domain';
 import MoneyInput from '@/components/shared/MoneyInput.vue';
 
 const store = useSalesStore();
@@ -761,7 +756,6 @@ async function loadSale() {
   loading.value = true;
   try {
     const result = await store.getSale(id);
-    console.log('Sale details load result:', result);
     if (result.ok) {
       sale.value = result.data;
     } else {

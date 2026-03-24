@@ -64,6 +64,17 @@
               {{ statusLabel(item.status) }}
             </v-chip>
           </template>
+          <template #item.paymentStatus="{ item }">
+            <v-chip
+              v-if="item.paymentStatus"
+              size="small"
+              variant="tonal"
+              :color="paymentStatusColor(item.paymentStatus as Sale['paymentStatus'])"
+            >
+              {{ paymentStatusLabel(item.paymentStatus as Sale['paymentStatus']) }}
+            </v-chip>
+            <span v-else class="text-disabled">—</span>
+          </template>
           <template #item.actions="{ item }">
             <v-btn
               size="small"
@@ -97,6 +108,8 @@ import EmptyState from '@/components/common/EmptyState.vue';
 import { useCurrency } from '@/composables/useCurrency';
 import { notifyError } from '@/utils/notify';
 import { useCustomersStore } from '@/stores/customersStore';
+import { paymentStatusLabel, paymentStatusColor } from '@/types/invoice';
+import type { Sale } from '@/types/domain';
 
 const store = useSalesStore();
 const searchQuery = ref('');
@@ -124,6 +137,7 @@ const tableHeaders = computed(() => [
   { title: t('sales.customer'), key: 'customerId' },
   { title: t('sales.total'), key: 'total' },
   { title: t('sales.status'), key: 'status' },
+  { title: 'حالة الدفع', key: 'paymentStatus' },
   { title: '', key: 'actions', sortable: false, width: 120 },
 ]);
 

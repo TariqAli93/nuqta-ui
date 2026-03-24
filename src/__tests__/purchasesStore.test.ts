@@ -24,7 +24,12 @@ vi.mock('@/api/endpoints/purchases', () => ({
     getAll: vi.fn(),
     getById: vi.fn(),
     create: vi.fn(),
+    addPayment: vi.fn(),
   },
+}));
+
+vi.mock('@/utils/idempotency', () => ({
+  generateIdempotencyKey: vi.fn(() => 'idem-key-mock'),
 }));
 
 describe('purchasesStore — initial state', () => {
@@ -163,6 +168,114 @@ describe('purchasesStore — fetchPurchaseById', () => {
 
     expect(store.currentPurchase).toEqual(existing); // unchanged
     expect(store.error).toBe('Purchase not found');
+  });
+});
+
+describe('purchasesStore — addPayment', () => {
+  let store: ReturnType<typeof usePurchasesStore>;
+
+  beforeEach(() => {
+    setActivePinia(createPinia());
+    store = usePurchasesStore();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('updates currentPurchase with backend response on success', async () => {
+    const { purchasesClient } = await import('@/api/endpoints/purchases');
+    const updatedPurchase = createMockPurchase({
+      id: 5,
+      paidAmount: 10000,
+      remainingAmount: 0,
+      paymentStatus: 'paid',
+    });
+    vi.mocked(purchasesClient.addPayment).mockResolvedValue(createApiSuccess(updatedPurchase));
+
+    const result = await store.addPayment({
+      purchaseId: 5,
+      supplierId: 1,
+      amount: 10000,
+      paymentMethod: 'cash',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(store.currentPurchase).toEqual(updatedPurchase);
+    // remainingAmount must come from backend — not manually calculated
+    expect(store.currentPurchase?.remainingAmount).toBe(0);
+    expect(store.currentPurchase?.paymentStatus).toBe('paid');
+    expect(store.loading).toBe(false);
+  });
+
+  it('does not mutate currentPurchase on failure', async () => {
+    const { purchasesClient } = await import('@/api/endpoints/purchases');
+    const existing = createMockPurchase({ id: 5, paidAmount: 0, remainingAmount: 10000, paymentStatus: 'unpaid' });
+    store.currentPurchase = existing;
+
+    vi.mocked(purchasesClient.addPayment).mockResolvedValue(
+      createApiFailure('OVERPAYMENT', 'المبلغ يتجاوز المتبقي')
+    );
+
+    const result = await store.addPayment({
+      purchaseId: 5,
+      supplierId: 1,
+      amount: 99999,
+      paymentMethod: 'cash',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(store.error).toBe('المبلغ يتجاوز المتبقي');
+    // currentPurchase must remain unchanged — no stale optimistic update
+    expect(store.currentPurchase).toEqual(existing);
+    expect(store.loading).toBe(false);
+  });
+
+  it('generates idempotency key when not provided', async () => {
+    const { purchasesClient } = await import('@/api/endpoints/purchases');
+    vi.mocked(purchasesClient.addPayment).mockResolvedValue(
+      createApiSuccess(createMockPurchase())
+    );
+
+    await store.addPayment({
+      purchaseId: 1,
+      amount: 1000,
+      paymentMethod: 'cash',
+    });
+
+    expect(purchasesClient.addPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ idempotencyKey: 'idem-key-mock' })
+    );
+  });
+
+  it('preserves caller-supplied idempotency key', async () => {
+    const { purchasesClient } = await import('@/api/endpoints/purchases');
+    vi.mocked(purchasesClient.addPayment).mockResolvedValue(
+      createApiSuccess(createMockPurchase())
+    );
+
+    await store.addPayment({
+      purchaseId: 1,
+      amount: 1000,
+      paymentMethod: 'cash',
+      idempotencyKey: 'my-key',
+    });
+
+    expect(purchasesClient.addPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ idempotencyKey: 'my-key' })
+    );
+  });
+
+  it('sets loading true during payment, false after', async () => {
+    const { purchasesClient } = await import('@/api/endpoints/purchases');
+    vi.mocked(purchasesClient.addPayment).mockResolvedValue(
+      createApiSuccess(createMockPurchase())
+    );
+
+    const promise = store.addPayment({ purchaseId: 1, amount: 1000, paymentMethod: 'cash' });
+    expect(store.loading).toBe(true);
+    await promise;
+    expect(store.loading).toBe(false);
   });
 });
 

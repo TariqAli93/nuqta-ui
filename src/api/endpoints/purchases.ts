@@ -29,7 +29,7 @@ export interface PurchaseCreateInput {
   idempotencyKey?: string;
 }
 
-interface PurchasePaymentInput {
+export interface PurchasePaymentInput {
   purchaseId: number;
   supplierId?: number;
   amount: number;

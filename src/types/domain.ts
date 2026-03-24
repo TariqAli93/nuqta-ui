@@ -125,6 +125,8 @@ export interface Sale {
   paidAmount?: number;
   refundedAmount?: number;
   remainingAmount?: number;
+  /** Backend-authoritative payment status — trust this field, never override. */
+  paymentStatus?: 'unpaid' | 'partial' | 'paid';
   status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial_refund';
   notes?: string | null;
   idempotencyKey?: string | null;

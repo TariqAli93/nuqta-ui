@@ -115,8 +115,8 @@ export const salesClient = {
   create: (sale: SaleCreateInput): Promise<ApiResult<Sale>> =>
     apiPost<Sale>('/sales/', sanitizeSalePayload(sale)),
 
-  addPayment: (saleId: number, payment: Omit<Payment, 'saleId'>): Promise<ApiResult<unknown>> =>
-    apiPost<unknown>(`/sales/${saleId}/payments`, payment),
+  addPayment: (saleId: number, payment: Omit<Payment, 'saleId'>): Promise<ApiResult<Sale>> =>
+    apiPost<Sale>(`/sales/${saleId}/payments`, payment),
 
   getById: (id: number): Promise<ApiResult<Sale>> => apiGet<Sale>(`/sales/${id}`),
 

@@ -1,7 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, shallowRef } from 'vue';
-import { purchasesClient, type PurchaseCreateInput } from '../api/endpoints/purchases';
+import {
+  purchasesClient,
+  type PurchaseCreateInput,
+  type PurchasePaymentInput,
+} from '../api/endpoints/purchases';
 import type { Purchase } from '../types/domain';
+import { generateIdempotencyKey } from '../utils/idempotency';
 
 export const usePurchasesStore = defineStore(
   'purchases',
@@ -56,6 +61,33 @@ export const usePurchasesStore = defineStore(
       return result;
     }
 
+    /**
+     * Record a payment against a purchase.
+     * On success, updates currentPurchase with the backend response directly —
+     * no stale values, no manual recalculation.
+     */
+    async function addPayment(data: Omit<PurchasePaymentInput, 'idempotencyKey'> & { idempotencyKey?: string }) {
+      loading.value = true;
+      error.value = null;
+      try {
+        const result = await purchasesClient.addPayment({
+          ...data,
+          idempotencyKey: data.idempotencyKey || generateIdempotencyKey('purchase-payment'),
+        });
+        if (result.ok) {
+          currentPurchase.value = result.data;
+        } else {
+          error.value = result.error.message;
+        }
+        return result;
+      } catch (err: unknown) {
+        error.value = err instanceof Error ? err.message : 'فشل في تسجيل الدفعة';
+        return { ok: false as const, error: { code: 'PAYMENT_FAILED', message: error.value! } };
+      } finally {
+        loading.value = false;
+      }
+    }
+
     return {
       items,
       total,
@@ -65,6 +97,7 @@ export const usePurchasesStore = defineStore(
       fetchPurchases,
       fetchPurchaseById,
       createPurchase,
+      addPayment,
     };
   },
   { persist: true }
