@@ -84,6 +84,7 @@
       <v-card flat>
         <v-tabs v-model="activeTab" color="primary" density="comfortable">
           <v-tab value="ledger">كشف الحساب</v-tab>
+          <v-tab value="invoices">الفواتير</v-tab>
           <v-tab value="info">معلومات</v-tab>
         </v-tabs>
         <v-divider />
@@ -111,6 +112,55 @@
             <LedgerTable :entries="ledgerEntries" :loading="ledgerLoading" entity-type="customer" />
           </v-window-item>
 
+          <!-- Invoices Tab -->
+          <v-window-item value="invoices">
+            <v-row dense class="mb-3">
+              <v-col cols="auto">
+                <v-btn-toggle v-model="invoiceFilter" mandatory density="compact" variant="outlined">
+                  <v-btn value="all">الكل</v-btn>
+                  <v-btn value="unpaid">غير مدفوعة</v-btn>
+                  <v-btn value="partial">مدفوعة جزئياً</v-btn>
+                </v-btn-toggle>
+              </v-col>
+            </v-row>
+            <v-data-table
+              :headers="saleHeaders"
+              :items="filteredSales"
+              :loading="salesLoading"
+              density="compact"
+              class="ds-table-enhanced ds-table-striped"
+              :items-per-page="20"
+              @click:row="(_: Event, { item }: { item: any }) => router.push({ name: 'SaleDetails', params: { id: item.id } })"
+            >
+              <template #item.total="{ item }">
+                <MoneyDisplay :amount="item.total" size="sm" />
+              </template>
+              <template #item.paidAmount="{ item }">
+                <MoneyDisplay :amount="item.paidAmount ?? 0" size="sm" colored />
+              </template>
+              <template #item.remainingAmount="{ item }">
+                <span :class="(item.remainingAmount ?? 0) > 0 ? 'text-error font-weight-bold' : 'text-success'">
+                  <MoneyDisplay :amount="item.remainingAmount ?? 0" size="sm" />
+                </span>
+              </template>
+              <template #item.status="{ item }">
+                <v-chip
+                  size="x-small"
+                  variant="tonal"
+                  :color="saleStatusColor(item.status)"
+                >
+                  {{ saleStatusLabel(item.status) }}
+                </v-chip>
+              </template>
+              <template #item.createdAt="{ item }">
+                {{ formatDate(item.createdAt) }}
+              </template>
+              <template #no-data>
+                <div class="text-center py-8 text-medium-emphasis">لا توجد فواتير لهذا العميل</div>
+              </template>
+            </v-data-table>
+          </v-window-item>
+
           <!-- Info Tab -->
           <v-window-item value="info">
             <v-card max-width="500">
@@ -132,7 +182,18 @@
       <v-card rounded="lg">
         <v-card-title>تسجيل دفعة</v-card-title>
         <v-card-text>
+          <p class="mb-3 text-body-2 text-medium-emphasis">
+            الرصيد المستحق: <strong class="text-error">
+              <MoneyDisplay :amount="customer?.totalDebt ?? 0" size="sm" />
+            </strong>
+          </p>
           <MoneyInput v-model="paymentAmount" label="المبلغ" class="mb-3" />
+          <div
+            v-if="paymentAmount < 0"
+            class="text-error text-caption mb-2"
+          >
+            المبلغ لا يمكن أن يكون سالباً
+          </div>
           <v-textarea
             v-model="paymentNotes"
             label="ملاحظات"
@@ -144,7 +205,14 @@
         <v-card-actions>
           <v-spacer />
           <v-btn variant="text" @click="showPaymentDialog = false">إلغاء</v-btn>
-          <v-btn color="primary" :loading="paymentLoading" @click="onRecordPayment">حفظ</v-btn>
+          <v-btn
+            color="primary"
+            :loading="paymentLoading"
+            :disabled="paymentAmount <= 0"
+            @click="onRecordPayment"
+          >
+            حفظ
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -182,15 +250,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { PageShell, PageHeader } from '@/components/layout';
 import { useRoute, useRouter } from 'vue-router';
-import { customersClient, customerLedgerClient } from '@/api';
-import type { Customer } from '@/types/domain';
+import { customersClient, customerLedgerClient, salesClient } from '@/api';
+import type { Customer, Sale } from '@/types/domain';
 import type { LedgerEntry } from '@/components/shared/LedgerTable.vue';
 import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
 import MoneyInput from '@/components/shared/MoneyInput.vue';
 import LedgerTable from '@/components/shared/LedgerTable.vue';
+import { formatDate } from '@/utils/formatters';
 import { generateIdempotencyKey } from '@/utils/idempotency';
 import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
@@ -205,6 +274,53 @@ const activeTab = ref('ledger');
 // Ledger
 const ledgerEntries = ref<LedgerEntry[]>([]);
 const ledgerLoading = ref(false);
+
+// Sales / Invoices
+const sales = ref<Sale[]>([]);
+const salesLoading = ref(false);
+const invoiceFilter = ref<'all' | 'unpaid' | 'partial'>('all');
+
+const filteredSales = computed(() => {
+  if (invoiceFilter.value === 'all') return sales.value;
+  if (invoiceFilter.value === 'unpaid') {
+    return sales.value.filter((s) => (s.paidAmount ?? 0) === 0 && s.status !== 'cancelled');
+  }
+  // partial: has some payment but remaining > 0
+  return sales.value.filter(
+    (s) => (s.paidAmount ?? 0) > 0 && (s.remainingAmount ?? 0) > 0 && s.status !== 'cancelled'
+  );
+});
+
+const saleHeaders = [
+  { title: 'رقم الفاتورة', key: 'invoiceNumber' },
+  { title: 'التاريخ', key: 'createdAt', width: '140px' },
+  { title: 'الإجمالي', key: 'total', align: 'end' as const },
+  { title: 'المدفوع', key: 'paidAmount', align: 'end' as const },
+  { title: 'المتبقي', key: 'remainingAmount', align: 'end' as const },
+  { title: 'الحالة', key: 'status', width: '120px' },
+];
+
+function saleStatusColor(status: string | undefined): string {
+  switch (status) {
+    case 'completed': return 'success';
+    case 'cancelled': return 'error';
+    case 'refunded': return 'error';
+    case 'partial_refund': return 'orange';
+    case 'pending': return 'warning';
+    default: return 'grey';
+  }
+}
+
+function saleStatusLabel(status: string | undefined): string {
+  switch (status) {
+    case 'completed': return 'مكتمل';
+    case 'cancelled': return 'ملغي';
+    case 'refunded': return 'مسترد';
+    case 'partial_refund': return 'استرداد جزئي';
+    case 'pending': return 'معلق';
+    default: return status ?? '—';
+  }
+}
 
 // Payment dialog
 const showPaymentDialog = ref(false);
@@ -222,6 +338,7 @@ onMounted(async () => {
   }
   loading.value = false;
   fetchLedger(id);
+  fetchSales(id);
   if (!customer.value) {
     notifyWarn('لم يتم العثور على العميل', { dedupeKey: 'customer-not-found' });
   }
@@ -236,6 +353,17 @@ async function fetchLedger(customerId: number) {
     notifyError(toUserMessage(result.error), { dedupeKey: 'customer-ledger-error' });
   }
   ledgerLoading.value = false;
+}
+
+async function fetchSales(customerId: number) {
+  salesLoading.value = true;
+  const result = await salesClient.getAll({ customerId, limit: 100, offset: 0 });
+  if (result.ok) {
+    sales.value = result.data.items;
+  } else {
+    notifyError(toUserMessage(result.error), { dedupeKey: 'customer-sales-error' });
+  }
+  salesLoading.value = false;
 }
 
 async function onRecordPayment() {
