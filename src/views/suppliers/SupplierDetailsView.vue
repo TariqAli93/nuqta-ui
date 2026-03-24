@@ -65,9 +65,18 @@
         </v-window-item>
 
         <v-window-item value="purchases">
+          <v-row dense class="mb-3">
+            <v-col cols="auto">
+              <v-btn-toggle v-model="purchaseFilter" mandatory density="compact" variant="outlined">
+                <v-btn value="all">الكل</v-btn>
+                <v-btn value="unpaid">غير مدفوعة</v-btn>
+                <v-btn value="partial">مدفوعة جزئياً</v-btn>
+              </v-btn-toggle>
+            </v-col>
+          </v-row>
           <v-data-table
             :headers="purchaseHeaders"
-            :items="purchases"
+            :items="filteredPurchases"
             :loading="purchasesLoading"
             density="compact"
             :items-per-page="20"
@@ -79,11 +88,25 @@
             <template #item.total="{ item }">
               <MoneyDisplay :amount="item.total" size="sm" />
             </template>
+            <template #item.paidAmount="{ item }">
+              <MoneyDisplay :amount="item.paidAmount ?? 0" size="sm" colored />
+            </template>
             <template #item.remainingAmount="{ item }">
-              <MoneyDisplay :amount="item.remainingAmount ?? 0" size="sm" colored />
+              <span :class="(item.remainingAmount ?? 0) > 0 ? 'text-error font-weight-bold' : 'text-success'">
+                <MoneyDisplay :amount="item.remainingAmount ?? 0" size="sm" />
+              </span>
             </template>
             <template #item.createdAt="{ item }">
               {{ formatDate(item.createdAt) }}
+            </template>
+            <template #item.status="{ item }">
+              <v-chip
+                size="x-small"
+                variant="tonal"
+                :color="purchaseStatusColor(item)"
+              >
+                {{ purchasePaymentLabel(item) }}
+              </v-chip>
             </template>
             <template #no-data>
               <div class="text-center py-8 text-medium-emphasis">لا توجد مشتريات لهذا المورد</div>
@@ -109,7 +132,16 @@
       <v-card rounded="lg">
         <v-card-title>تسجيل دفعة مورد</v-card-title>
         <v-card-text>
+          <p class="mb-3 text-body-2 text-medium-emphasis">
+            الرصيد المستحق: <strong class="text-error"><MoneyDisplay :amount="supplier?.currentBalance ?? 0" size="sm" /></strong>
+          </p>
           <MoneyInput v-model="paymentAmount" label="المبلغ" class="mb-3" />
+          <div
+            v-if="paymentAmount < 0"
+            class="text-error text-caption mb-2"
+          >
+            المبلغ لا يمكن أن يكون سالباً
+          </div>
           <v-textarea
             v-model="paymentNotes"
             label="ملاحظات"
@@ -121,7 +153,14 @@
         <v-card-actions>
           <v-spacer />
           <v-btn variant="text" @click="showPaymentDialog = false">إلغاء</v-btn>
-          <v-btn color="primary" :loading="paymentLoading" @click="onRecordPayment">حفظ</v-btn>
+          <v-btn
+            color="primary"
+            :loading="paymentLoading"
+            :disabled="paymentAmount <= 0"
+            @click="onRecordPayment"
+          >
+            حفظ
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -129,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { formatDate } from '@/utils/formatters';
 import { useRoute, useRouter } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
@@ -165,9 +204,39 @@ const purchaseHeaders = [
   { title: 'رقم الفاتورة', key: 'invoiceNumber' },
   { title: 'التاريخ', key: 'createdAt', width: '140px' },
   { title: 'الإجمالي', key: 'total', align: 'end' as const },
+  { title: 'المدفوع', key: 'paidAmount', align: 'end' as const },
   { title: 'المتبقي', key: 'remainingAmount', align: 'end' as const },
   { title: 'الحالة', key: 'status', width: '120px' },
 ];
+
+const purchaseFilter = ref<'all' | 'unpaid' | 'partial'>('all');
+
+const filteredPurchases = computed(() => {
+  if (purchaseFilter.value === 'all') return purchases.value;
+  if (purchaseFilter.value === 'unpaid') {
+    return purchases.value.filter((p) => (p.paidAmount ?? 0) === 0 && p.status !== 'cancelled');
+  }
+  return purchases.value.filter(
+    (p) => (p.paidAmount ?? 0) > 0 && (p.remainingAmount ?? 0) > 0 && p.status !== 'cancelled'
+  );
+});
+
+function purchaseStatusColor(p: { remainingAmount?: number; paidAmount?: number; status?: string }): string {
+  if (p.status === 'cancelled') return 'error';
+  const remaining = p.remainingAmount ?? 0;
+  const paid = p.paidAmount ?? 0;
+  if (remaining <= 0 && paid > 0) return 'success';
+  if (paid > 0 && remaining > 0) return 'warning';
+  return 'error';
+}
+
+function purchasePaymentLabel(p: { remainingAmount?: number; paidAmount?: number }): string {
+  const remaining = p.remainingAmount ?? 0;
+  const paid = p.paidAmount ?? 0;
+  if (remaining <= 0 && paid > 0) return 'مدفوع';
+  if (paid > 0 && remaining > 0) return 'جزئي';
+  return 'غير مدفوع';
+}
 
 onMounted(async () => {
   await refreshSupplier();

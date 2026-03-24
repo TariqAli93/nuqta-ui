@@ -23,6 +23,7 @@ export interface PurchaseCreateInput {
   discount?: number;
   tax?: number;
   paidAmount?: number;
+  paymentMode?: 'cash' | 'credit' | 'partial';
   currency?: string;
   notes?: string;
   idempotencyKey?: string;

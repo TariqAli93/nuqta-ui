@@ -36,6 +36,17 @@
         >
           تسوية
         </v-btn>
+        <!-- تحصيل دفعة جزئية -->
+        <v-btn
+          v-if="
+            sale?.status === 'pending' && sale?.remainingAmount != null && sale.remainingAmount > 0
+          "
+          color="primary"
+          prepend-icon="mdi-cash-plus"
+          @click="collectPaymentDialog = true"
+        >
+          تحصيل دفعة
+        </v-btn>
         <!-- Cancel is only allowed when no refund payments exist.
              Backend blocks cancellation if a refund payment is present
              (partial_refund status) to prevent double inventory reversal. -->
@@ -107,6 +118,41 @@
 
       <!-- Payment details -->
       <PaymentInfoCard :sale="sale" class="mb-4" />
+
+      <!-- Payment history -->
+      <v-card v-if="sale.payments?.length" class="ds-table-wrapper mb-4" flat>
+        <v-card-title class="text-body-1 font-weight-bold d-flex align-center">
+          سجل الدفعات
+          <v-spacer />
+          <v-chip size="small" variant="tonal" color="primary">
+            {{ sale.payments.length }}
+          </v-chip>
+        </v-card-title>
+        <v-card-text class="pa-0">
+          <v-data-table
+            :headers="paymentHistoryHeaders"
+            :items="sale.payments"
+            density="compact"
+            class="ds-table-enhanced ds-table-striped"
+            :hide-default-footer="sale.payments.length <= 10"
+          >
+            <template #item.amount="{ item }">
+              <span class="font-weight-bold">{{ formatAmount(item.amount) }}</span>
+            </template>
+            <template #item.paymentMethod="{ item }">
+              <v-chip size="x-small" variant="tonal" :color="paymentMethodColor(item.paymentMethod)">
+                {{ paymentMethodLabel(item.paymentMethod) }}
+              </v-chip>
+            </template>
+            <template #item.paymentDate="{ item }">
+              {{ item.paymentDate || item.createdAt || '—' }}
+            </template>
+            <template #item.notes="{ item }">
+              {{ item.notes || '—' }}
+            </template>
+          </v-data-table>
+        </v-card-text>
+      </v-card>
 
       <!-- Line items -->
       <v-card class="ds-table-wrapper" flat>
@@ -337,6 +383,73 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <!-- Collect Payment dialog -->
+    <v-dialog v-model="collectPaymentDialog" max-width="480" class="ds-dialog">
+      <v-card rounded="lg">
+        <v-card-title>تحصيل دفعة</v-card-title>
+        <v-card-text>
+          <p class="mb-4 text-body-2 text-medium-emphasis">
+            المتبقي: <strong class="text-error">{{ formatAmount(sale?.remainingAmount ?? 0) }}</strong>
+          </p>
+
+          <MoneyInput
+            v-model="collectPaymentAmount"
+            label="مبلغ الدفعة"
+            class="mb-3"
+          />
+          <div
+            v-if="collectPaymentAmount > (sale?.remainingAmount ?? 0)"
+            class="text-error text-caption mb-2"
+          >
+            المبلغ يتجاوز المتبقي
+          </div>
+          <div
+            v-if="collectPaymentAmount < 0"
+            class="text-error text-caption mb-2"
+          >
+            المبلغ لا يمكن أن يكون سالباً
+          </div>
+
+          <v-select
+            v-model="collectPaymentMethod"
+            :items="paymentMethodOptions"
+            item-title="title"
+            item-value="value"
+            label="طريقة الدفع"
+            variant="outlined"
+            density="comfortable"
+            hide-details="auto"
+            class="mb-3"
+          />
+
+          <v-textarea
+            v-model="collectPaymentNotes"
+            label="ملاحظات"
+            variant="outlined"
+            density="comfortable"
+            hide-details
+            rows="2"
+            auto-grow
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="collectPaymentDialog = false">إلغاء</v-btn>
+          <v-btn
+            color="primary"
+            :loading="collectingPayment"
+            :disabled="
+              !collectPaymentAmount ||
+              collectPaymentAmount <= 0 ||
+              collectPaymentAmount > (sale?.remainingAmount ?? 0)
+            "
+            @click="executeCollectPayment"
+          >
+            تحصيل
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </PageShell>
 </template>
 
@@ -349,9 +462,10 @@ import { useSalesStore } from '@/stores/salesStore';
 import EmptyState from '@/components/common/EmptyState.vue';
 import PaymentInfoCard from '@/components/shared/PaymentInfoCard.vue';
 import type { Sale, SaleItem } from '@/types/domain';
-import { notifyError, notifySuccess } from '@/utils/notify';
+import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 import { useSystemSettingsStore } from '@/stores/settings';
 import type { PaymentMethod } from '@/types/domain';
+import MoneyInput from '@/components/shared/MoneyInput.vue';
 
 const store = useSalesStore();
 const route = useRoute();
@@ -381,6 +495,13 @@ const paymentMethodOptions = [
 ];
 
 const settleRefRequired = computed(() => settleForm.value.paymentMethod === 'card');
+
+// Collect payment dialog
+const collectPaymentDialog = ref(false);
+const collectPaymentAmount = ref(0);
+const collectPaymentMethod = ref<PaymentMethod>('cash');
+const collectPaymentNotes = ref('');
+const collectingPayment = ref(false);
 
 const settingsStore = useSystemSettingsStore();
 
@@ -424,6 +545,33 @@ const itemHeaders = computed(() => {
   }
   return headers;
 });
+
+const paymentHistoryHeaders = [
+  { title: 'التاريخ', key: 'paymentDate', width: '140px' },
+  { title: 'الطريقة', key: 'paymentMethod', width: '120px' },
+  { title: 'المبلغ', key: 'amount', align: 'end' as const },
+  { title: 'ملاحظات', key: 'notes' },
+];
+
+function paymentMethodColor(method: string | undefined): string {
+  switch (method) {
+    case 'cash': return 'success';
+    case 'card': return 'primary';
+    case 'bank_transfer': return 'info';
+    case 'credit': return 'warning';
+    default: return 'grey';
+  }
+}
+
+function paymentMethodLabel(method: string | undefined): string {
+  switch (method) {
+    case 'cash': return 'نقدي';
+    case 'card': return 'بطاقة';
+    case 'bank_transfer': return 'حوالة';
+    case 'credit': return 'آجل';
+    default: return method ?? '—';
+  }
+}
 
 function statusLabel(status: string | undefined): string {
   if (!status) return t('common.none');
@@ -573,6 +721,37 @@ async function executeSettle() {
     }
   } finally {
     settling.value = false;
+  }
+}
+
+async function executeCollectPayment() {
+  if (!sale.value?.id) return;
+  const remaining = sale.value.remainingAmount ?? 0;
+  if (collectPaymentAmount.value <= 0 || collectPaymentAmount.value > remaining) {
+    notifyWarn('المبلغ غير صالح', { dedupeKey: 'collect-payment-invalid' });
+    return;
+  }
+  collectingPayment.value = true;
+  collectPaymentDialog.value = false;
+  store.error = null;
+
+  try {
+    const result = await store.addPayment(sale.value.id, {
+      amount: collectPaymentAmount.value,
+      paymentMethod: collectPaymentMethod.value,
+      notes: collectPaymentNotes.value.trim() || undefined,
+    });
+    if (result.ok) {
+      notifySuccess('تم تحصيل الدفعة بنجاح');
+      collectPaymentAmount.value = 0;
+      collectPaymentMethod.value = 'cash';
+      collectPaymentNotes.value = '';
+      await loadSale();
+    } else {
+      notifyError(mapErrorToArabic(result.error, 'errors.paymentFailed'));
+    }
+  } finally {
+    collectingPayment.value = false;
   }
 }
 

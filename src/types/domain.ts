@@ -226,6 +226,7 @@ export interface Purchase {
   total: number;
   paidAmount?: number;
   remainingAmount?: number;
+  paymentStatus?: 'unpaid' | 'partial' | 'paid';
   currency?: string;
   exchangeRate?: number;
   status?: 'pending' | 'completed' | 'cancelled' | 'received' | 'partial';
@@ -236,7 +237,7 @@ export interface Purchase {
   updatedAt?: string;
   createdBy?: number;
   items?: PurchaseItem[];
-  payments?: any[];
+  payments?: Payment[];
   movements?: any[];
 }
 
