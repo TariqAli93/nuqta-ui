@@ -49,15 +49,26 @@
             </span>
           </template>
           <template #item.actions="{ item }">
-            <v-btn
-              size="small"
-              variant="text"
-              class="win-ghost-btn"
-              :to="`/customers/${item.id}/edit`"
-              prepend-icon="mdi-pencil"
-            >
-              {{ t('common.edit') }}
-            </v-btn>
+            <v-btn-toggle>
+              <v-btn
+                size="small"
+                variant="text"
+                class="win-ghost-btn"
+                :to="`/customers/${item.id}`"
+                prepend-icon="mdi-eye"
+              >
+                {{ t('customers.view') }}
+              </v-btn>
+              <v-btn
+                size="small"
+                variant="text"
+                class="win-ghost-btn"
+                :to="`/customers/${item.id}/edit`"
+                prepend-icon="mdi-pencil"
+              >
+                {{ t('customers.edit') }}
+              </v-btn>
+            </v-btn-toggle>
           </template>
         </v-data-table>
 

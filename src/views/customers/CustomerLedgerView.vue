@@ -116,12 +116,14 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
 import { formatMoney } from '@/utils/formatters';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import LedgerTable from '@/components/shared/LedgerTable.vue';
 import type { LedgerEntry } from '@/components/shared/LedgerTable.vue';
 
+const route = useRoute();
 const ledgerStore = useLedgerStore();
 
 const customerSearch = ref('');
@@ -173,5 +175,10 @@ function searchCustomers(): void {
 
 onMounted(async () => {
   await ledgerStore.fetchCustomers({ limit: 200, offset: 0 });
+
+  const routeId = Number(route.params.id);
+  if (routeId > 0) {
+    await ledgerStore.fetchCustomerLedger(routeId, { limit: 100, offset: 0 });
+  }
 });
 </script>

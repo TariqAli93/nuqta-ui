@@ -38,6 +38,15 @@
           </template>
           <template #item.actions="{ item }">
             <v-btn
+              size="small"
+              variant="text"
+              class="win-ghost-btn"
+              :to="{ name: 'SupplierDetails', params: { id: item.id } }"
+              prepend-icon="mdi-eye"
+            >
+              {{ t('suppliers.view') }}
+            </v-btn>
+            <v-btn
               icon="mdi-pencil"
               size="small"
               variant="text"
@@ -53,7 +62,9 @@
             />
           </template>
           <template #no-data>
-            <div class="text-center py-8 text-medium-emphasis">{{ t('suppliers.noSuppliers') }}</div>
+            <div class="text-center py-8 text-medium-emphasis">
+              {{ t('suppliers.noSuppliers') }}
+            </div>
           </template>
         </v-data-table>
       </v-card-text>

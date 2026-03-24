@@ -285,6 +285,7 @@
   'customers.search': 'بحث بالاسم أو رقم الهاتف...',
   'customers.noCustomers': 'لا يوجد عملاء',
   'customers.noCustomersHint': 'ابدأ بإضافة عملاء جدد',
+  'customers.view': 'عرض العميل',
 
   'sales.title': 'المبيعات',
   'sales.subtitle': 'متابعة الفواتير والمدفوعات والحالات',
@@ -335,6 +336,8 @@
   'suppliers.new': 'إضافة مورد',
   'suppliers.noSuppliers': 'لا يوجد موردين',
   'suppliers.currentBalance': 'الرصيد الحالي',
+  'suppliers.save': 'حفظ المورد',
+  'suppliers.view': 'عرض المورد',
 
   'purchases.title': 'المشتريات',
   'purchases.subtitle': 'متابعة فواتير الشراء والمدفوعات',
