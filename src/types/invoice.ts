@@ -31,7 +31,7 @@ export interface InvoiceFinancialState {
   /** Present for sales invoices */
   customerId?: number;
   /** Present for purchase invoices */
-  vendorId?: number;
+  supplierId?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -78,7 +78,7 @@ export function purchaseToInvoiceFinancialState(purchase: Purchase): InvoiceFina
     paymentStatus:
       purchase.paymentStatus ?? derivePaymentStatus(paidAmount, purchase.total, remainingAmount),
     status: purchase.status ?? 'pending',
-    vendorId: purchase.supplierId,
+    supplierId: purchase.supplierId,
     createdAt: purchase.createdAt ?? '',
     updatedAt: purchase.updatedAt ?? '',
   };
