@@ -24,7 +24,6 @@ export const useSalesStore = defineStore(
         } else {
           error.value = result.error.message;
         }
-        console.log('Fetched sales:', result);
         return result;
       } catch (err: unknown) {
         error.value = err instanceof Error ? err.message : 'فشل في تحميل المبيعات';

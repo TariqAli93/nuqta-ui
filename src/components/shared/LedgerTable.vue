@@ -76,6 +76,8 @@ const props = withDefaults(
 );
 
 const TYPE_LABELS: Record<string, string> = {
+  // 'sale' is what the backend actually returns for invoice transactions
+  sale: 'فاتورة',
   invoice: 'فاتورة',
   payment: 'دفعة',
   return: 'مرتجع',
@@ -84,6 +86,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
+  sale: 'error',
   invoice: 'error',
   payment: 'success',
   return: 'warning',

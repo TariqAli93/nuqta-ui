@@ -125,6 +125,8 @@ export interface Sale {
   paidAmount?: number;
   refundedAmount?: number;
   remainingAmount?: number;
+  /** Backend-authoritative payment status — trust this field, never override. */
+  paymentStatus?: 'unpaid' | 'partial' | 'paid';
   status?: 'pending' | 'completed' | 'cancelled' | 'refunded' | 'partial_refund';
   notes?: string | null;
   idempotencyKey?: string | null;
@@ -320,7 +322,11 @@ export interface JournalEntry {
 export interface CustomerLedgerEntry {
   id?: number;
   customerId: number;
-  transactionType: 'invoice' | 'payment' | 'return' | 'adjustment' | 'opening';
+  /**
+   * Transaction type as returned by the backend.
+   * Backend may return 'sale' for invoice transactions (not 'invoice').
+   */
+  transactionType: 'sale' | 'invoice' | 'payment' | 'return' | 'adjustment' | 'opening';
   amount: number;
   balanceAfter: number;
   saleId?: number;

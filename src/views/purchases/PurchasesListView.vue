@@ -52,8 +52,23 @@
           <template #item.total="{ item }">
             <MoneyDisplay :amount="item.total" size="sm" />
           </template>
-          <template #item.paidAmount="{ item }">
-            <MoneyDisplay :amount="item.paidAmount ?? 0" size="sm" colored />
+          <template #item.remainingAmount="{ item }">
+            <MoneyDisplay
+              :amount="item.remainingAmount ?? 0"
+              size="sm"
+              :colored="(item.remainingAmount ?? 0) === 0"
+            />
+          </template>
+          <template #item.paymentStatus="{ item }">
+            <v-chip
+              v-if="item.paymentStatus"
+              size="small"
+              variant="tonal"
+              :color="paymentStatusColor(item.paymentStatus as Purchase['paymentStatus'])"
+            >
+              {{ paymentStatusLabel(item.paymentStatus as Purchase['paymentStatus']) }}
+            </v-chip>
+            <span v-else class="text-disabled">—</span>
           </template>
           <template #item.status="{ item }">
             <v-chip
@@ -90,6 +105,8 @@ import { useRouter } from 'vue-router';
 import { usePurchasesStore } from '@/stores/purchasesStore';
 import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
 import { t } from '@/i18n/t';
+import { paymentStatusLabel, paymentStatusColor } from '@/types/invoice';
+import type { Purchase } from '@/types/domain';
 
 const router = useRouter();
 const purchasesStore = usePurchasesStore();
@@ -106,8 +123,9 @@ const headers = [
   { title: t('purchases.invoiceNumber'), key: 'invoiceNumber' },
   { title: t('common.date'), key: 'createdAt', width: '140px' },
   { title: t('purchases.total'), key: 'total', align: 'end' as const },
-  { title: t('purchases.paidAmount'), key: 'paidAmount', align: 'end' as const },
+  { title: 'المتبقي', key: 'remainingAmount', align: 'end' as const },
   { title: t('common.status'), key: 'status', width: '120px' },
+  { title: 'حالة الدفع', key: 'paymentStatus', width: '130px' },
 ];
 
 onMounted(() => {
