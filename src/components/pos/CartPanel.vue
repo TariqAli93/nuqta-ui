@@ -10,7 +10,7 @@
   >
     <div class="d-flex flex-column h-100 bg-surface">
       <div
-        class="d-flex align-center justify-space-between pa-4 flex-shrink-0"
+        class="d-flex align-center justify-space-between pa-4 shrink-0"
         style="
           max-height: 53px;
           border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
@@ -22,7 +22,7 @@
         </v-chip>
       </div>
 
-      <div class="overflow-y-auto pa-0 flex-grow-1 custom-scrollbar">
+      <div class="overflow-y-auto pa-0 grow custom-scrollbar">
         <v-list v-if="items.length > 0" density="comfortable" bg-color="transparent" class="py-0">
           <CartItem
             v-for="(item, index) in items"
@@ -52,7 +52,7 @@
       </div>
 
       <div
-        class="flex-shrink-0 bg-surface"
+        class="shrink-0 bg-surface"
         style="
           border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
           box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.03);

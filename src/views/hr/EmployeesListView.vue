@@ -19,7 +19,7 @@
           clearable
           autofocus
           hide-details
-          class="flex-grow-1"
+          class="grow"
         />
         <v-select
           v-model="statusFilter"

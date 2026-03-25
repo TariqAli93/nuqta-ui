@@ -21,9 +21,9 @@
     />
 
     <div
-      class="pos-main-content flex-grow-1 d-flex flex-column h-100 overflow-hidden py-4 px-4 py-md-6 px-md-8"
+      class="pos-main-content grow d-flex flex-column h-100 overflow-hidden py-4 px-4 py-md-6 px-md-8"
     >
-      <div class="pos-header flex-shrink-0">
+      <div class="pos-header shrink-0">
         <PosSearchBar
           ref="searchBarRef"
           :model-value="search.searchQuery.value"

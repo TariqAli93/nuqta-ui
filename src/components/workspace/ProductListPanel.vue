@@ -80,7 +80,7 @@
     </v-card-text>
 
     <v-data-table-server
-      class="flex-grow-1"
+      class="grow"
       :headers="headers"
       :items="products"
       :items-length="total"
