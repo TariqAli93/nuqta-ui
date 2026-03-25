@@ -66,6 +66,6 @@ const emit = defineEmits<{ 'add-to-cart': [product: Product] }>();
 .pos-highlight {
   outline: 2px solid rgb(var(--v-theme-primary));
   outline-offset: 2px;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 </style>

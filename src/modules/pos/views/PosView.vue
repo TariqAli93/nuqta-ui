@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid>
+  <div class="pos-layout-container bg-background w-100 h-100 d-flex">
     <PosCart
       :cart-items="cart.cartItems.value"
       :cart-item-units-map="cart.cartItemUnitsMap.value"
@@ -20,36 +20,44 @@
       @more="dialogs.openMoreDialog"
     />
 
-    <PosSearchBar
-      ref="searchBarRef"
-      :model-value="search.searchQuery.value"
-      @update:model-value="
-        search.searchQuery.value = $event;
-        search.handleSearch();
-      "
-      @submit="search.handleSearchOrSelectSubmit"
-      @highlight-next="search.highlightNext"
-      @highlight-prev="search.highlightPrev"
-      @clear="search.clearSearch"
-    />
+    <div
+      class="pos-main-content flex-grow-1 d-flex flex-column h-100 overflow-hidden py-4 px-4 py-md-6 px-md-8"
+    >
+      <div class="pos-header flex-shrink-0">
+        <PosSearchBar
+          ref="searchBarRef"
+          :model-value="search.searchQuery.value"
+          @update:model-value="
+            search.searchQuery.value = $event;
+            search.handleSearch();
+          "
+          @submit="search.handleSearchOrSelectSubmit"
+          @highlight-next="search.highlightNext"
+          @highlight-prev="search.highlightPrev"
+          @clear="search.clearSearch"
+        />
 
-    <PosToolbar
-      :categories="search.categories.value"
-      :selected-category="search.selectedCategory.value"
-      :layout="layoutStore.posLayout"
-      @select-category="search.selectCategory"
-      @show-shortcuts="ui.showShortcutsHelp = true"
-      @update:layout="(v: string) => layoutStore.setPosLayout(v as PosLayoutMode)"
-    />
+        <PosToolbar
+          :categories="search.categories.value"
+          :selected-category="search.selectedCategory.value"
+          :layout="layoutStore.posLayout"
+          @select-category="search.selectCategory"
+          @show-shortcuts="ui.showShortcutsHelp = true"
+          @update:layout="(v: string) => layoutStore.setPosLayout(v as PosLayoutMode)"
+        />
+      </div>
 
-    <PosProductGrid
-      :products="search.filteredProducts.value"
-      :highlighted-index="search.highlightedProductIndex.value"
-      :loading="productsStore.loading"
-      :layout="layoutStore.posLayout"
-      @add-to-cart="safeAddToCart"
-    />
-  </v-container>
+      <div class="pos-scroll-area grow custom-scrollbar">
+        <PosProductGrid
+          :products="search.filteredProducts.value"
+          :highlighted-index="search.highlightedProductIndex.value"
+          :loading="productsStore.loading"
+          :layout="layoutStore.posLayout"
+          @add-to-cart="safeAddToCart"
+        />
+      </div>
+    </div>
+  </div>
 
   <PaymentOverlay
     v-model="payment.payOpen.value"

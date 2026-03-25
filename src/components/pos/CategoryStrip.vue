@@ -1,26 +1,51 @@
 <template>
-  <v-sheet rounded="lg" border class="pa-2">
-    <v-chip-group
+  <div class="category-strip-container">
+    <v-slide-group
       :model-value="selectedId"
-      next-icon="mdi-chevron-right"
-      prev-icon="mdi-chevron-left"
       show-arrows
       @update:model-value="$emit('select', $event)"
     >
-      <v-chip
+      <v-slide-group-item
         v-for="category in categories"
         :key="category.id ?? 'all'"
         :value="category.id"
-        filter
-        size="small"
-        variant="outlined"
-        class="ma-1"
+        v-slot="{ isSelected, toggle }"
       >
-        {{ category.name }}
-      </v-chip>
-    </v-chip-group>
-  </v-sheet>
+        <v-btn
+          :color="isSelected ? 'primary' : undefined"
+          :variant="isSelected ? 'flat' : 'text'"
+          rounded="pill"
+          size="large"
+          class="text-none font-weight-medium ma-1 px-6 transition-all category-pill"
+          :class="[
+            !isSelected ? 'text-medium-emphasis bg-surface border' : 'elevation-2 border-primary',
+          ]"
+          @click="toggle"
+        >
+          {{ category.name }}
+        </v-btn>
+      </v-slide-group-item>
+    </v-slide-group>
+  </div>
 </template>
+
+<style scoped>
+.category-pill {
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  letter-spacing: 0.2px;
+}
+.category-pill.border-primary {
+  border-color: rgb(var(--v-theme-primary)) !important;
+}
+.transition-all {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.category-strip-container :deep(.v-slide-group__prev),
+.category-strip-container :deep(.v-slide-group__next) {
+  min-width: 32px;
+  flex: 0 1 32px;
+}
+</style>
 
 <script setup lang="ts">
 interface CategoryItem {

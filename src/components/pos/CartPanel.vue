@@ -6,23 +6,24 @@
     class="pa-0 resizable-drawer border-b-0 border-t-0"
     :width="drawerWidth"
     :location="drawerLocation"
+    style="border-right: 1px solid rgba(var(--v-border-color), var(--v-border-opacity))"
   >
-    <v-card flat rounded="0" border="0">
-      <v-card-title
-        class="d-flex align-center justify-space-between pa-4"
+    <div class="d-flex flex-column h-100 bg-surface">
+      <div
+        class="d-flex align-center justify-space-between pa-4 flex-shrink-0"
         style="
           max-height: 53px;
-          border-bottom: thin solid rgba(var(--v-border-color), var(--v-border-opacity));
+          border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
         "
       >
-        <span class="font-weight-medium">{{ t('pos.cart') }}</span>
-        <v-chip size="small" variant="tonal" color="primary">
+        <span class="text-h6 font-weight-bold">{{ t('pos.cart') }}</span>
+        <v-chip size="small" variant="flat" color="primary" class="font-weight-bold px-3">
           {{ items.length }} {{ t('common.items') }}
         </v-chip>
-      </v-card-title>
+      </div>
 
-      <v-card-text class="overflow-y-auto pa-0">
-        <v-list v-if="items.length > 0" density="comfortable" bg-color="transparent" class="py-2">
+      <div class="overflow-y-auto pa-0 flex-grow-1 custom-scrollbar">
+        <v-list v-if="items.length > 0" density="comfortable" bg-color="transparent" class="py-0">
           <CartItem
             v-for="(item, index) in items"
             :key="`${item.productId}-${item.unitName}`"
@@ -35,27 +36,34 @@
           />
         </v-list>
 
-        <div v-else class="d-flex flex-column align-center justify-center px-6 py-8">
-          <v-icon size="56" color="grey-lighten-2">mdi-cart-outline</v-icon>
-          <div class="text-subtitle-1 mt-4 text-medium-emphasis">{{ t('pos.cartEmpty') }}</div>
-          <div class="text-body-2 text-center text-medium-emphasis mt-2">
+        <div v-else class="d-flex flex-column align-center justify-center h-100 px-6">
+          <v-sheet
+            width="96"
+            height="96"
+            class="d-flex align-center justify-center rounded-circle bg-surface-variant mb-6"
+          >
+            <v-icon size="48" color="medium-emphasis">mdi-cart-outline</v-icon>
+          </v-sheet>
+          <div class="text-h6 font-weight-medium mb-2">{{ t('pos.cartEmpty') }}</div>
+          <div class="text-body-2 text-center text-medium-emphasis">
             {{ t('pos.cartEmptyHint') }}
           </div>
         </div>
-      </v-card-text>
-    </v-card>
+      </div>
 
-    <template #append>
-      <v-card border="0" class="px-0">
-        <v-card-title>
-          <slot name="totals"></slot>
-        </v-card-title>
-
-        <v-card-text>
+      <div
+        class="flex-shrink-0 bg-surface"
+        style="
+          border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+          box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.03);
+        "
+      >
+        <slot name="totals"></slot>
+        <div class="px-4 pb-4">
           <slot name="actions"></slot>
-        </v-card-text>
-      </v-card>
-    </template>
+        </div>
+      </div>
+    </div>
 
     <!-- Handle للسحب -->
     <div

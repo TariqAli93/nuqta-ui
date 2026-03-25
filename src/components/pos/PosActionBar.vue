@@ -1,19 +1,20 @@
 <template>
-  <div>
+  <div class="pt-2">
     <v-btn
-      :color="props.canPay ? 'primary' : undefined"
-      :variant="props.canPay ? 'elevated' : 'outlined'"
+      :color="props.canPay ? 'primary' : 'surface-variant'"
+      :variant="props.canPay ? 'flat' : 'flat'"
       :disabled="!props.canPay"
       block
-      class="grow pay-button"
-      size="large"
+      class="grow pay-button mb-4 rounded-lg button-premium"
+      height="64"
+      elevation="0"
       @click="emit('pay')"
     >
-      <template #prepend class="w-fit">
-        <v-icon size="18">mdi-cash-register</v-icon>
+      <template #prepend>
+        <v-icon size="28" class="mr-2">mdi-cash-register</v-icon>
       </template>
       <template #default>
-        <span class="text-body-2"> {{ t('pos.pay') }}</span>
+        <span class="text-h6 font-weight-bold tracking-wide text-uppercase"> {{ t('pos.pay') }}</span>
       </template>
       <template #append>
         <v-hotkey border="0" display-mode="icon" elevation="0" keys="f5" />
@@ -21,24 +22,22 @@
     </v-btn>
 
     <div class="item-group-container">
-      <v-item-group class="actions-grid-auto mt-2">
+      <v-item-group class="actions-grid-auto">
         <v-item v-for="action in actions" :key="action.event">
           <v-btn
-            :color="action.color"
-            :variant="action.variant"
+            :color="action.color || 'surface-variant'"
+            :variant="action.color === 'error' ? 'outlined' : 'flat'"
             :disabled="action.disabled"
             block
-            class="grow min-h-10 sm:min-h-12"
+            class="grow min-h-12 rounded-lg button-secondary"
+            elevation="0"
             @click="emitAction(action.event)"
           >
             <template #prepend>
-              <v-icon size="18">{{ action.icon }}</v-icon>
+              <v-icon size="20">{{ action.icon }}</v-icon>
             </template>
             <template #default>
-              <span class="text-body-2">{{ action.label }}</span>
-            </template>
-            <template #append>
-              <v-hotkey border="0" display-mode="symbol" elevation="0" :keys="action.key" />
+              <span class="text-caption font-weight-bold">{{ action.label }}</span>
             </template>
           </v-btn>
         </v-item>
@@ -46,6 +45,23 @@
     </div>
   </div>
 </template>
+
+<style scoped>
+.button-premium {
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+}
+.button-premium:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(var(--v-theme-primary), 0.2) !important;
+}
+.button-secondary {
+  transition: background-color 0.2s;
+}
+.button-secondary:not(.text-error):hover:not(:disabled) {
+  background-color: rgba(var(--v-theme-primary), 0.1) !important;
+  color: rgb(var(--v-theme-primary)) !important;
+}
+</style>
 
 <script setup lang="ts">
 import { computed } from 'vue';

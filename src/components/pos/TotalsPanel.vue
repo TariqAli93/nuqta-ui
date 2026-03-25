@@ -1,47 +1,47 @@
 <template>
-  <v-sheet class="px-0 py-3">
-    <v-list density="comfortable" bg-color="transparent">
-      <v-list-item class="px-0" min-height="32">
+  <v-sheet class="px-2 py-3 bg-transparent">
+    <v-list density="compact" bg-color="transparent" class="py-0">
+      <v-list-item class="px-2" min-height="28">
         <template #title>
-          <span class="text-body-2 text-medium-emphasis">{{ t('sales.subtotal') }}</span>
+          <span class="text-body-2 text-medium-emphasis font-weight-medium">{{ t('sales.subtotal') }}</span>
         </template>
         <template #append>
-          <span class="text-body-2 font-weight-medium text-no-wrap">{{
+          <span class="text-body-2 font-weight-bold text-no-wrap">{{
             formatPrice(subtotal)
           }}</span>
         </template>
       </v-list-item>
 
-      <v-list-item v-if="discount > 0" class="px-0" min-height="32">
+      <v-list-item v-if="discount > 0" class="px-2" min-height="28">
         <template #title>
-          <span class="text-body-2 text-medium-emphasis">{{ t('sales.discount') }}</span>
+          <span class="text-body-2 text-medium-emphasis font-weight-medium">{{ t('sales.discount') }}</span>
         </template>
         <template #append>
-          <span class="text-body-2 font-weight-medium text-no-wrap"
+          <span class="text-body-2 font-weight-bold text-error text-no-wrap"
             >-{{ formatPrice(discount) }}</span
           >
         </template>
       </v-list-item>
 
-      <v-list-item v-if="tax > 0" class="px-0" min-height="32">
+      <v-list-item v-if="tax > 0" class="px-2" min-height="28">
         <template #title>
-          <span class="text-body-2 text-medium-emphasis">{{ t('sales.tax') }}</span>
+          <span class="text-body-2 text-medium-emphasis font-weight-medium">{{ t('sales.tax') }}</span>
         </template>
         <template #append>
-          <span class="text-body-2 font-weight-medium text-no-wrap">{{ formatPrice(tax) }}</span>
+          <span class="text-body-2 font-weight-bold text-no-wrap">{{ formatPrice(tax) }}</span>
         </template>
       </v-list-item>
     </v-list>
 
-    <v-divider class="my-3" />
+    <v-divider class="my-3 border-opacity-50"></v-divider>
 
-    <v-list density="comfortable" bg-color="transparent">
-      <v-list-item class="px-0" min-height="44">
+    <v-list density="compact" bg-color="transparent" class="py-0">
+      <v-list-item class="px-2" min-height="48">
         <template #title>
-          <span class="text-subtitle-1 font-weight-bold">{{ t('common.total') }}</span>
+          <span class="text-h6 font-weight-bold text-uppercase tracking-wide">{{ t('common.total') }}</span>
         </template>
         <template #append>
-          <span class="text-h6 font-weight-bold text-primary text-no-wrap">
+          <span class="text-h4 font-weight-black text-primary text-no-wrap">
             {{ formatPrice(total) }}
           </span>
         </template>
