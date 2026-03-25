@@ -37,9 +37,9 @@
           -->
           <StatCard
             icon="mdi-cash-clock"
-            label="الرصيد المستحق"
+            :label="customerLedgerBalance < 0 ? 'رصيد دائن (سلفة)' : 'الرصيد المستحق'"
             :color="customerLedgerBalance > 0 ? 'error' : 'success'"
-            :value="formatMoney(customerLedgerBalance)"
+            :value="formatMoney(Math.abs(customerLedgerBalance))"
           />
         </v-col>
         <v-col cols="6" sm="3">
@@ -104,6 +104,7 @@
                     <v-btn value="all">الكل</v-btn>
                     <v-btn value="unpaid">غير مدفوعة</v-btn>
                     <v-btn value="partial">مدفوعة جزئياً</v-btn>
+                    <v-btn value="paid">مدفوعة</v-btn>
                   </v-btn-toggle>
                 </v-col>
               </v-row>
@@ -315,7 +316,7 @@ import { PageShell, PageHeader } from '@/components/layout';
 import { AppCard, StatCard } from '@/components/common';
 import { useRoute, useRouter } from 'vue-router';
 import { customersClient, customerLedgerClient, salesClient } from '@/api';
-import type { Customer, Sale } from '@/types/domain';
+import type { Customer, Sale, CustomerPaymentResult } from '@/types/domain';
 import type { LedgerEntry } from '@/components/shared/LedgerTable.vue';
 import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
 import MoneyInput from '@/components/shared/MoneyInput.vue';
@@ -326,6 +327,7 @@ import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/noti
 import { toUserMessage } from '@/utils/errorMessage';
 import { formatMoney } from '@/utils/formatters';
 import { paymentStatusLabel, paymentStatusColor } from '@/types/invoice';
+import { invalidateCache } from '@/composables/useQueryCache';
 
 const route = useRoute();
 const router = useRouter();
@@ -355,7 +357,7 @@ const customerLedgerBalance = computed<number>(() => {
 // Sales / Invoices
 const sales = ref<Sale[]>([]);
 const salesLoading = ref(false);
-const invoiceFilter = ref<'all' | 'unpaid' | 'partial'>('all');
+const invoiceFilter = ref<'all' | 'unpaid' | 'partial' | 'paid'>('all');
 
 /**
  * Filter invoices by payment state using backend-authoritative paymentStatus.
@@ -363,11 +365,7 @@ const invoiceFilter = ref<'all' | 'unpaid' | 'partial'>('all');
  */
 const filteredSales = computed(() => {
   if (invoiceFilter.value === 'all') return sales.value;
-  if (invoiceFilter.value === 'unpaid') {
-    return sales.value.filter((s) => s.paymentStatus === 'unpaid');
-  }
-  // partial: backend paymentStatus = 'partial'
-  return sales.value.filter((s) => s.paymentStatus === 'partial');
+  return sales.value.filter((s) => s.paymentStatus === invoiceFilter.value);
 });
 
 const saleHeaders = [
@@ -439,14 +437,66 @@ async function onRecordPayment() {
     showPaymentDialog.value = false;
     paymentAmount.value = 0;
     paymentNotes.value = '';
-    // Refetch ledger to get the updated running balance — customerLedgerBalance
-    // will update automatically from the new ledgerEntries.
-    await fetchLedger(customer.value.id!);
-    fetchSales(customer.value.id!);
-    notifySuccess('تم تسجيل الدفعة بنجاح');
+
+    const paymentResult = normalizePaymentResult(result.data);
+
+    // Refresh ALL relevant data sources in parallel so the UI is fully consistent.
+    // Do NOT fire-and-forget — await all to prevent stale state.
+    const customerId = customer.value.id!;
+    await Promise.all([
+      refreshCustomerProfile(customerId),
+      fetchLedger(customerId),
+      fetchSales(customerId),
+    ]);
+
+    // Invalidate customers-list cache so CustomersListView shows updated totalDebt.
+    invalidateCache('customers-list');
+
+    // Build success message with allocation details when available.
+    const msg = buildPaymentSuccessMessage(paymentResult);
+    notifySuccess(msg);
   } else {
     notifyError(toUserMessage(result.error));
   }
+}
+
+/**
+ * Normalize backend response: supports both the new CustomerPaymentResult shape
+ * and the legacy plain CustomerLedgerEntry shape for backwards compatibility.
+ */
+function normalizePaymentResult(data: CustomerPaymentResult): CustomerPaymentResult {
+  // If the backend returns the new shape with ledgerEntry, use it directly.
+  if (data.ledgerEntry) return data;
+  // Legacy: backend returned a plain ledger entry — wrap it.
+  return { ledgerEntry: data as any, allocations: [], creditAmount: 0 };
+}
+
+/** Refetch the customer profile to update stat cards (totalPurchases, etc.) */
+async function refreshCustomerProfile(customerId: number) {
+  const result = await customersClient.getById(customerId);
+  if (result.ok) {
+    customer.value = result.data;
+  }
+}
+
+/** Build a human-readable Arabic success message from allocation details. */
+function buildPaymentSuccessMessage(result: CustomerPaymentResult): string {
+  const parts: string[] = ['تم تسجيل الدفعة بنجاح'];
+  if (result.allocations && result.allocations.length > 0) {
+    const count = result.allocations.length;
+    const fullyPaid = result.allocations.filter((a) => a.newPaymentStatus === 'paid').length;
+    if (fullyPaid > 0 && fullyPaid === count) {
+      parts.push(`(تمت تسوية ${count} فاتورة بالكامل)`);
+    } else if (fullyPaid > 0) {
+      parts.push(`(${fullyPaid} فاتورة مسددة من أصل ${count})`);
+    } else {
+      parts.push(`(تمت التسوية الجزئية لـ ${count} فاتورة)`);
+    }
+  }
+  if (result.creditAmount && result.creditAmount > 0) {
+    parts.push(`— رصيد دائن: ${formatMoney(result.creditAmount)}`);
+  }
+  return parts.join(' ');
 }
 
 // Adjustment dialog
@@ -468,9 +518,14 @@ async function onAddAdjustment() {
     showAdjustmentDialog.value = false;
     adjustmentAmount.value = 0;
     adjustmentNotes.value = '';
-    // Refetch ledger to get the updated running balance.
-    await fetchLedger(customer.value.id!);
-    fetchSales(customer.value.id!);
+    // Refresh all relevant data sources in parallel to prevent stale state.
+    const customerId = customer.value.id!;
+    await Promise.all([
+      refreshCustomerProfile(customerId),
+      fetchLedger(customerId),
+      fetchSales(customerId),
+    ]);
+    invalidateCache('customers-list');
     notifySuccess('تم تعديل الرصيد بنجاح');
   } else {
     notifyError(toUserMessage(result.error));

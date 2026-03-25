@@ -20,6 +20,8 @@ import type {
   JournalEntry,
   JournalLine,
   CustomerLedgerEntry,
+  CustomerPaymentResult,
+  PaymentAllocation,
   SupplierLedgerEntry,
   ProductUnit,
   ProductBatch,
@@ -299,6 +301,32 @@ export const createMockCustomerLedgerEntry = (
   saleId: 1,
   createdAt: '2025-01-01T00:00:00Z',
   createdBy: 1,
+  ...overrides,
+});
+
+export const createMockPaymentAllocation = (
+  overrides?: Partial<PaymentAllocation>
+): PaymentAllocation => ({
+  saleId: 1,
+  invoiceNumber: 'INV-001',
+  allocatedAmount: 3000,
+  newPaidAmount: 3000,
+  newRemainingAmount: 0,
+  newPaymentStatus: 'paid',
+  ...overrides,
+});
+
+export const createMockCustomerPaymentResult = (
+  overrides?: Partial<CustomerPaymentResult>
+): CustomerPaymentResult => ({
+  ledgerEntry: createMockCustomerLedgerEntry({
+    transactionType: 'payment',
+    amount: -3000,
+    balanceAfter: 0,
+  }),
+  allocations: [createMockPaymentAllocation()],
+  creditAmount: 0,
+  newBalance: 0,
   ...overrides,
 });
 

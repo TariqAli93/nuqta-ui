@@ -4,7 +4,7 @@
  * Replaces: ipc/customerLedgerClient.ts
  */
 import type { ApiResult, PagedResult } from '../contracts';
-import type { CustomerLedgerEntry } from '../../types/domain';
+import type { CustomerLedgerEntry, CustomerPaymentResult } from '../../types/domain';
 import { apiGet, apiGetPaged, apiPost } from '../http';
 
 interface RecordPaymentInput {
@@ -33,9 +33,21 @@ export const customerLedgerClient = {
   ): Promise<ApiResult<PagedResult<CustomerLedgerEntry>>> =>
     apiGetPaged<CustomerLedgerEntry>(`/customer-ledger/${customerId}`, params),
 
-  recordPayment: (data: RecordPaymentInput): Promise<ApiResult<CustomerLedgerEntry>> => {
+  /**
+   * Record a payment from customer profile.
+   *
+   * The backend allocates against open invoices and returns:
+   * - ledgerEntry: the new ledger entry
+   * - allocations: per-invoice settlement details (optional)
+   * - creditAmount: overpayment stored as customer credit (optional)
+   * - newBalance: updated customer balance (optional)
+   *
+   * If the backend returns only a plain CustomerLedgerEntry (old format),
+   * we normalize it into a CustomerPaymentResult for consistent handling.
+   */
+  recordPayment: (data: RecordPaymentInput): Promise<ApiResult<CustomerPaymentResult>> => {
     const { customerId, ...body } = data;
-    return apiPost<CustomerLedgerEntry>(`/customer-ledger/${customerId}/payments`, body);
+    return apiPost<CustomerPaymentResult>(`/customer-ledger/${customerId}/payments`, body);
   },
 
   addAdjustment: (data: LedgerAdjustmentInput): Promise<ApiResult<CustomerLedgerEntry>> => {

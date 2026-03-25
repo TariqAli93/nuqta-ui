@@ -337,6 +337,34 @@ export interface CustomerLedgerEntry {
   createdBy?: number;
 }
 
+/**
+ * Per-invoice allocation detail returned by the backend when a customer
+ * profile payment settles one or more open invoices.
+ */
+export interface PaymentAllocation {
+  saleId: number;
+  invoiceNumber: string;
+  allocatedAmount: number;
+  newPaidAmount: number;
+  newRemainingAmount: number;
+  newPaymentStatus: 'unpaid' | 'partial' | 'paid';
+}
+
+/**
+ * Backend response shape for customer-profile payment recording.
+ * Includes the ledger entry plus optional invoice allocation details
+ * and credit/advance information.
+ */
+export interface CustomerPaymentResult {
+  ledgerEntry: CustomerLedgerEntry;
+  /** Allocations applied to open invoices (empty if no open invoices). */
+  allocations?: PaymentAllocation[];
+  /** Amount applied as customer credit/advance (overpayment beyond open invoices). */
+  creditAmount?: number;
+  /** Updated customer balance after the payment. */
+  newBalance?: number;
+}
+
 export interface SupplierLedgerEntry {
   id?: number;
   supplierId: number;

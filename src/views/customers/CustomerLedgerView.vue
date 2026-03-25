@@ -78,10 +78,12 @@
             <v-col cols="6">
               <StatCard
                 icon="mdi-cash-clock"
-                label="الرصيد المستحق"
-                :color="(selectedCustomerDebt ?? 0) > 0 ? 'error' : 'success'"
+                :label="
+                  (selectedCustomerLedgerBalance ?? 0) < 0 ? 'رصيد دائن (سلفة)' : 'الرصيد المستحق'
+                "
+                :color="(selectedCustomerLedgerBalance ?? 0) > 0 ? 'error' : 'success'"
                 size="sm"
-                :value="formatMoney(selectedCustomerDebt ?? 0)"
+                :value="formatMoney(Math.abs(selectedCustomerLedgerBalance ?? 0))"
               />
             </v-col>
           </v-row>
@@ -176,7 +178,16 @@ const selectedCustomerName = computed(() => {
   return c?.name ?? '—';
 });
 
-const selectedCustomerDebt = computed(() => {
+/**
+ * Customer balance derived from ledger entries (running balance) — NOT from
+ * customer.totalDebt which may be stale. Falls back to customer.totalDebt
+ * only when no ledger entries are loaded yet.
+ */
+const selectedCustomerLedgerBalance = computed(() => {
+  if (ledgerStore.customerLedgerEntries.length > 0) {
+    // API returns entries newest-first; first entry holds the current running balance.
+    return ledgerStore.customerLedgerEntries[0].balanceAfter;
+  }
   const c = ledgerStore.customers.find(
     (c: { id?: number }) => c.id === ledgerStore.selectedCustomerId
   );

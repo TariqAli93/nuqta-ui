@@ -12,6 +12,7 @@ import { posClient, postingClient, accountingClient } from '@/api';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { generateIdempotencyKey } from '@/utils/idempotency';
 import { notifyError, notifySuccess } from '@/utils/notify';
+import { invalidateCacheByPrefix } from '@/composables/useQueryCache';
 import type { SaleCreateInput, SaleItem, PaymentMethod } from '@/types/domain';
 
 export interface PaymentOverlayPayload {
@@ -138,6 +139,11 @@ export function usePosPayment() {
         const saleData = result.ok && 'data' in result ? result.data : null;
         // notifySuccess(t('pos.saleCompleted'));
         void productsStore.fetchProducts();
+        // Invalidate customer-related caches so customer profile/list views
+        // show updated balance and invoice states after this sale.
+        if (selectedCustomerId) {
+          invalidateCacheByPrefix('customers');
+        }
         if (saleData?.id) {
           void triggerAfterPay(saleData.id, saleData.journalEntryId);
         }
