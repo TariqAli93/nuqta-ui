@@ -322,7 +322,11 @@ export interface JournalEntry {
 export interface CustomerLedgerEntry {
   id?: number;
   customerId: number;
-  transactionType: 'invoice' | 'payment' | 'return' | 'adjustment' | 'opening';
+  /**
+   * Transaction type as returned by the backend.
+   * Backend may return 'sale' for invoice transactions (not 'invoice').
+   */
+  transactionType: 'sale' | 'invoice' | 'payment' | 'return' | 'adjustment' | 'opening';
   amount: number;
   balanceAfter: number;
   saleId?: number;

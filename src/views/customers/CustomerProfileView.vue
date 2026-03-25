@@ -31,11 +31,15 @@
           <StatCard icon="mdi-city" label="المدينة" :value="customer.city || '—'" size="sm" />
         </v-col>
         <v-col cols="6" sm="3">
+          <!--
+            Customer balance derived from ledger running balance — the single
+            source of truth on this page.  Do NOT use customer.totalDebt here.
+          -->
           <StatCard
             icon="mdi-cash-clock"
             label="الرصيد المستحق"
-            :color="(customer.totalDebt ?? 0) > 0 ? 'error' : 'success'"
-            :value="formatMoney(customer.totalDebt ?? 0)"
+            :color="customerLedgerBalance > 0 ? 'error' : 'success'"
+            :value="formatMoney(customerLedgerBalance)"
           />
         </v-col>
         <v-col cols="6" sm="3">
@@ -58,7 +62,7 @@
         <v-divider />
 
         <v-window v-model="activeTab">
-          <!-- Ledger Tab -->
+          <!-- Ledger Tab — account balance history, not invoice dues -->
           <v-window-item value="ledger">
             <div class="pa-4">
               <v-row class="mb-3">
@@ -86,7 +90,7 @@
             </div>
           </v-window-item>
 
-          <!-- Invoices Tab -->
+          <!-- Invoices Tab — individual invoice payment state -->
           <v-window-item value="invoices">
             <div class="pa-4">
               <v-row dense class="mb-3">
@@ -121,6 +125,7 @@
                 <template #item.paidAmount="{ item }">
                   <MoneyDisplay :amount="item.paidAmount ?? 0" size="sm" colored />
                 </template>
+                <!-- Remaining Due — directly from invoice.remainingAmount, NOT customer balance -->
                 <template #item.remainingAmount="{ item }">
                   <span
                     :class="
@@ -132,10 +137,17 @@
                     <MoneyDisplay :amount="item.remainingAmount ?? 0" size="sm" />
                   </span>
                 </template>
-                <template #item.status="{ item }">
-                  <v-chip size="x-small" variant="tonal" :color="saleStatusColor(item.status)">
-                    {{ saleStatusLabel(item.status) }}
+                <!-- Payment status — from backend paymentStatus field, never derived manually -->
+                <template #item.paymentStatus="{ item }">
+                  <v-chip
+                    v-if="item.paymentStatus"
+                    size="x-small"
+                    variant="tonal"
+                    :color="paymentStatusColor(item.paymentStatus)"
+                  >
+                    {{ paymentStatusLabel(item.paymentStatus) }}
                   </v-chip>
+                  <span v-else class="text-disabled">—</span>
                 </template>
                 <template #item.createdAt="{ item }">
                   {{ formatDate(item.createdAt) }}
@@ -230,8 +242,12 @@
         <v-card-text>
           <p class="mb-3 text-body-2 text-medium-emphasis">
             الرصيد المستحق:
+            <!--
+              Customer balance comes from ledger, not customer.totalDebt.
+              customerLedgerBalance is the single source of truth for this display.
+            -->
             <strong class="text-error">
-              <MoneyDisplay :amount="customer?.totalDebt ?? 0" size="sm" />
+              <MoneyDisplay :amount="customerLedgerBalance" size="sm" />
             </strong>
           </p>
           <MoneyInput v-model="paymentAmount" label="المبلغ" class="mb-3" />
@@ -309,6 +325,7 @@ import { generateIdempotencyKey } from '@/utils/idempotency';
 import { notifyError, notifyInfo, notifySuccess, notifyWarn } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
 import { formatMoney } from '@/utils/formatters';
+import { paymentStatusLabel, paymentStatusColor } from '@/types/invoice';
 
 const route = useRoute();
 const router = useRouter();
@@ -321,20 +338,36 @@ const activeTab = ref('ledger');
 const ledgerEntries = ref<LedgerEntry[]>([]);
 const ledgerLoading = ref(false);
 
+/**
+ * Current customer account balance — the SINGLE source of truth on this page.
+ * Derived from the ledger running balance (first entry = newest, per API sort order).
+ * Falls back to 0 when no ledger entries exist.
+ *
+ * Do NOT use customer.totalDebt for display — it can be stale.
+ * Do NOT mix this with invoice.remainingAmount — they are separate concepts.
+ */
+const customerLedgerBalance = computed<number>(() => {
+  if (!ledgerEntries.value.length) return 0;
+  // API returns entries newest-first; first entry holds the current running balance.
+  return ledgerEntries.value[0].balanceAfter;
+});
+
 // Sales / Invoices
 const sales = ref<Sale[]>([]);
 const salesLoading = ref(false);
 const invoiceFilter = ref<'all' | 'unpaid' | 'partial'>('all');
 
+/**
+ * Filter invoices by payment state using backend-authoritative paymentStatus.
+ * Do NOT fall back to manual paidAmount/remainingAmount derivations here.
+ */
 const filteredSales = computed(() => {
   if (invoiceFilter.value === 'all') return sales.value;
   if (invoiceFilter.value === 'unpaid') {
-    return sales.value.filter((s) => (s.paidAmount ?? 0) === 0 && s.status !== 'cancelled');
+    return sales.value.filter((s) => s.paymentStatus === 'unpaid');
   }
-  // partial: has some payment but remaining > 0
-  return sales.value.filter(
-    (s) => (s.paidAmount ?? 0) > 0 && (s.remainingAmount ?? 0) > 0 && s.status !== 'cancelled'
-  );
+  // partial: backend paymentStatus = 'partial'
+  return sales.value.filter((s) => s.paymentStatus === 'partial');
 });
 
 const saleHeaders = [
@@ -343,42 +376,9 @@ const saleHeaders = [
   { title: 'الإجمالي', key: 'total', align: 'end' as const },
   { title: 'المدفوع', key: 'paidAmount', align: 'end' as const },
   { title: 'المتبقي', key: 'remainingAmount', align: 'end' as const },
-  { title: 'الحالة', key: 'status', width: '120px' },
+  // Payment state column — uses paymentStatus (not operational status)
+  { title: 'حالة الدفع', key: 'paymentStatus', width: '130px' },
 ];
-
-function saleStatusColor(status: string | undefined): string {
-  switch (status) {
-    case 'completed':
-      return 'success';
-    case 'cancelled':
-      return 'error';
-    case 'refunded':
-      return 'error';
-    case 'partial_refund':
-      return 'orange';
-    case 'pending':
-      return 'warning';
-    default:
-      return 'grey';
-  }
-}
-
-function saleStatusLabel(status: string | undefined): string {
-  switch (status) {
-    case 'completed':
-      return 'مكتمل';
-    case 'cancelled':
-      return 'ملغي';
-    case 'refunded':
-      return 'مسترد';
-    case 'partial_refund':
-      return 'استرداد جزئي';
-    case 'pending':
-      return 'معلق';
-    default:
-      return status ?? '—';
-  }
-}
 
 // Payment dialog
 const showPaymentDialog = ref(false);
@@ -439,11 +439,10 @@ async function onRecordPayment() {
     showPaymentDialog.value = false;
     paymentAmount.value = 0;
     paymentNotes.value = '';
-    fetchLedger(customer.value.id!);
+    // Refetch ledger to get the updated running balance — customerLedgerBalance
+    // will update automatically from the new ledgerEntries.
+    await fetchLedger(customer.value.id!);
     fetchSales(customer.value.id!);
-    // Refresh customer data to update debt balance
-    const res = await customersClient.getById(customer.value.id!);
-    if (res.ok) customer.value = res.data;
     notifySuccess('تم تسجيل الدفعة بنجاح');
   } else {
     notifyError(toUserMessage(result.error));
@@ -469,10 +468,9 @@ async function onAddAdjustment() {
     showAdjustmentDialog.value = false;
     adjustmentAmount.value = 0;
     adjustmentNotes.value = '';
-    fetchLedger(customer.value.id!);
+    // Refetch ledger to get the updated running balance.
+    await fetchLedger(customer.value.id!);
     fetchSales(customer.value.id!);
-    const res = await customersClient.getById(customer.value.id!);
-    if (res.ok) customer.value = res.data;
     notifySuccess('تم تعديل الرصيد بنجاح');
   } else {
     notifyError(toUserMessage(result.error));
