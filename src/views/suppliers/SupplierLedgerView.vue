@@ -21,9 +21,8 @@
     <v-row dense>
       <!-- Supplier selector -->
       <v-col cols="12" md="4">
-        <v-card class="border" elevation="0" variant="flat" rounded="lg">
-          <v-card-title class="text-subtitle-1 font-weight-bold">الموردون</v-card-title>
-          <v-card-text class="pb-0">
+        <AppCard>
+          <v-card-text>
             <v-text-field
               v-model="supplierSearch"
               prepend-inner-icon="mdi-magnify"
@@ -32,7 +31,6 @@
               hide-details
               variant="outlined"
               clearable
-              class="mb-2"
               @update:model-value="searchSuppliers"
             />
           </v-card-text>
@@ -61,58 +59,85 @@
               <div class="text-center py-8 text-medium-emphasis">لا يوجد موردون</div>
             </template>
           </v-data-table>
-        </v-card>
+        </AppCard>
       </v-col>
 
       <!-- Ledger detail -->
       <v-col cols="12" md="8">
-        <v-card class="mb-2 border" elevation="0" variant="flat" rounded="lg">
-          <v-card-text class="d-flex align-center ga-3 flex-wrap">
-            <AppDateInput
-              v-model="ledgerDateFrom"
-              label="من تاريخ"
-              density="comfortable"
-              hide-details
-              variant="outlined"
-              style="max-width: 180px"
-              clearable
-            />
-            <AppDateInput
-              v-model="ledgerDateTo"
-              label="إلى تاريخ"
-              density="comfortable"
-              hide-details
-              variant="outlined"
-              style="max-width: 180px"
-              clearable
-            />
-            <v-btn
-              class="win-ghost-btn"
-              variant="text"
-              :disabled="!ledgerStore.selectedSupplierId"
-              :loading="ledgerStore.loading.supplierLedger"
-              @click="reloadLedger"
-            >
-              تحديث دفتر المورد
-            </v-btn>
-          </v-card-text>
-        </v-card>
+        <template v-if="ledgerStore.selectedSupplierId">
+          <v-row class="mb-3">
+            <v-col cols="6">
+              <StatCard
+                icon="mdi-account"
+                label="المورد"
+                :value="selectedSupplierName"
+                color="primary"
+                size="sm"
+              />
+            </v-col>
+            <v-col cols="6">
+              <StatCard
+                icon="mdi-cash-clock"
+                label="الرصيد المستحق"
+                :color="(selectedSupplierBalance ?? 0) > 0 ? 'error' : 'success'"
+                size="sm"
+                :value="formatMoney(Math.abs(selectedSupplierBalance ?? 0))"
+              />
+            </v-col>
+          </v-row>
 
+          <!-- Filters -->
+          <AppCard class="mb-3">
+            <v-card-text class="d-flex align-center ga-3 flex-wrap">
+              <AppDateInput
+                v-model="ledgerDateFrom"
+                label="من تاريخ"
+                density="compact"
+                hide-details
+                variant="outlined"
+                clearable
+                class="grow"
+                style="max-width: 180px"
+              />
+              <AppDateInput
+                v-model="ledgerDateTo"
+                label="إلى تاريخ"
+                density="compact"
+                hide-details
+                variant="outlined"
+                clearable
+                class="grow"
+                style="max-width: 180px"
+              />
+              <v-btn
+                class="win-btn"
+                color="primary"
+                variant="tonal"
+                :loading="ledgerStore.loading.supplierLedger"
+                prepend-icon="mdi-refresh"
+                @click="reloadLedger"
+              >
+                تحديث
+              </v-btn>
+            </v-card-text>
+          </AppCard>
+
+          <!-- Ledger Table -->
+          <LedgerTable
+            :entries="supplierLedgerRows"
+            :loading="ledgerStore.loading.supplierLedger"
+            entity-type="supplier"
+          />
+        </template>
         <v-alert
-          v-if="!ledgerStore.selectedSupplierId"
+          v-else
           type="info"
           variant="tonal"
           density="compact"
-          class="mb-3"
+          icon="mdi-information-outline"
         >
           اختر مورداً من القائمة لعرض كشف حسابه
         </v-alert>
-
-        <LedgerTable
-          :entries="supplierLedgerRows"
-          :loading="ledgerStore.loading.supplierLedger"
-          entity-type="supplier"
-        />
       </v-col>
     </v-row>
   </PageShell>
@@ -122,6 +147,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { formatMoney } from '@/utils/formatters';
 import { PageShell, PageHeader } from '@/components/layout';
+import { AppCard, StatCard } from '@/components/common';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import LedgerTable from '@/components/shared/LedgerTable.vue';
 import AppDateInput from '@/components/shared/AppDateInput.vue';
@@ -142,6 +168,12 @@ const supplierHeaders = [
 const supplierLedgerRows = computed(
   () => ledgerStore.supplierLedgerEntries as unknown as LedgerEntry[]
 );
+
+const selectedSupplier = computed(() =>
+  ledgerStore.suppliers.find((s) => s.id === ledgerStore.selectedSupplierId)
+);
+const selectedSupplierName = computed(() => selectedSupplier.value?.name ?? '');
+const selectedSupplierBalance = computed(() => selectedSupplier.value?.currentBalance ?? 0);
 
 async function onSelectSupplier(_event: Event, payload: { item: { id: number } }): Promise<void> {
   if (!payload.item.id) return;

@@ -8,7 +8,7 @@
       </template>
     </PageHeader>
 
-    <v-card flat>
+    <v-card elevation="0" variant="flat" class="border" rounded="lg">
       <v-card-text class="pa-0">
         <v-skeleton-loader v-if="loading" type="table-row@3" class="ma-4" />
 

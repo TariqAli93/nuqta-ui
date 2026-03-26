@@ -1,67 +1,76 @@
 <template>
   <PageShell>
-    <PageHeader :title="isEdit ? 'تعديل مورد' : 'إضافة مورد'" show-back :back-to="{ name: 'Suppliers' }" />
+    <PageHeader
+      :title="isEdit ? 'تعديل مورد' : 'إضافة مورد'"
+      show-back
+      :back-to="{ name: 'Suppliers' }"
+    />
 
+    <AppFormLayout
+      :loading="suppliersStore.loading"
+      submit-label="حفظ"
+      cancel-label="إلغاء"
+      @submit="onSubmit"
+      @cancel="router.push({ name: 'Suppliers' })"
+    >
+      <AppSection title="المعلومات الأساسية">
+        <v-row dense>
+          <v-col cols="12">
+            <v-text-field
+              v-model="form.name"
+              label="اسم المورد"
+              :rules="[(v) => !!v || 'مطلوب']"
+              variant="outlined"
+              density="comfortable"
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model="form.phone"
+              label="الهاتف"
+              variant="outlined"
+              density="comfortable"
+              dir="ltr"
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model="form.phone2"
+              label="هاتف إضافي"
+              variant="outlined"
+              density="comfortable"
+              dir="ltr"
+            />
+          </v-col>
+          <v-col cols="12">
+            <v-text-field
+              v-model="form.address"
+              label="العنوان"
+              variant="outlined"
+              density="comfortable"
+            />
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model="form.city"
+              label="المدينة"
+              variant="outlined"
+              density="comfortable"
+            />
+          </v-col>
+        </v-row>
+      </AppSection>
 
-    <v-card max-width="600" class="border" elevation="0" variant="flat" rounded="lg">
-      <v-card-text>
-        <v-form class="win-form" ref="formRef" @submit.prevent="onSubmit">
-          <v-text-field
-            v-model="form.name"
-            label="اسم المورد"
-            :rules="[(v) => !!v || 'مطلوب']"
-            variant="outlined"
-            density="comfortable"
-            class="mb-3"
-          />
-          <v-text-field
-            v-model="form.phone"
-            label="الهاتف"
-            variant="outlined"
-            density="comfortable"
-            class="mb-3"
-            dir="ltr"
-          />
-          <v-text-field
-            v-model="form.phone2"
-            label="هاتف إضافي"
-            variant="outlined"
-            density="comfortable"
-            class="mb-3"
-            dir="ltr"
-          />
-          <v-text-field
-            v-model="form.address"
-            label="العنوان"
-            variant="outlined"
-            density="comfortable"
-            class="mb-3"
-          />
-          <v-text-field
-            v-model="form.city"
-            label="المدينة"
-            variant="outlined"
-            density="comfortable"
-            class="mb-3"
-          />
-          <v-textarea
-            v-model="form.notes"
-            label="ملاحظات"
-            variant="outlined"
-            density="comfortable"
-            rows="3"
-            class="mb-3"
-          />
-
-          <div class="d-flex ga-3 mt-4">
-            <v-btn class="win-btn" type="submit" color="primary" :loading="suppliersStore.loading">
-              {{ isEdit ? 'تحديث' : 'حفظ' }}
-            </v-btn>
-            <v-btn class="win-ghost-btn" variant="text" :to="{ name: 'Suppliers' }">إلغاء</v-btn>
-          </div>
-        </v-form>
-      </v-card-text>
-    </v-card>
+      <AppSection title="ملاحظات">
+        <v-textarea
+          v-model="form.notes"
+          label="ملاحظات"
+          variant="outlined"
+          density="comfortable"
+          rows="3"
+        />
+      </AppSection>
+    </AppFormLayout>
   </PageShell>
 </template>
 
@@ -69,12 +78,12 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
+import { AppFormLayout, AppSection } from '@/components/common';
 import { useSuppliersStore } from '@/stores/suppliersStore';
 
 const route = useRoute();
 const router = useRouter();
 const suppliersStore = useSuppliersStore();
-const formRef = ref();
 
 const isEdit = computed(() => route.name === 'SupplierEdit');
 
@@ -105,8 +114,7 @@ onMounted(async () => {
 });
 
 async function onSubmit() {
-  const { valid } = await formRef.value.validate();
-  if (!valid) return;
+  if (!form.name) return;
 
   const payload = { ...form };
   let result;

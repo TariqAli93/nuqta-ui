@@ -223,6 +223,30 @@ export function usePosNavigation() {
       },
       //   end of customer management
 
+      //  start of supplier management
+      {
+        type: 'head',
+        id: 'supplier-management',
+        label: t('nav.supplierManagement'),
+        visible: can('suppliers:read'),
+      },
+      {
+        type: 'item',
+        to: '/suppliers',
+        icon: 'mdi-domain',
+        label: t('nav.suppliers'),
+        activeMode: 'exact',
+      },
+      {
+        type: 'item' as const,
+        to: '/suppliers/ledger',
+        icon: 'mdi-book-account',
+        label: t('nav.supplierLedger'),
+        visible: systemSettingsStore.data?.ledgersEnabled,
+        activeMode: 'exact',
+      },
+      //  end of supplier management
+
       //   start of hr management
       {
         type: 'head',
@@ -252,28 +276,6 @@ export function usePosNavigation() {
         activeMode: 'exact',
       },
       //   end of hr management
-
-      {
-        type: 'head',
-        id: 'supplier-management',
-        label: t('nav.supplierManagement'),
-        visible: can('suppliers:read'),
-      },
-      {
-        type: 'item',
-        to: '/suppliers',
-        icon: 'mdi-domain',
-        label: t('nav.suppliers'),
-        activeMode: 'exact',
-      },
-      {
-        type: 'item' as const,
-        to: '/suppliers/ledger',
-        icon: 'mdi-book-account',
-        label: t('nav.supplierLedger'),
-        visible: systemSettingsStore.data?.ledgersEnabled,
-        activeMode: 'exact',
-      },
     ];
 
     return entries

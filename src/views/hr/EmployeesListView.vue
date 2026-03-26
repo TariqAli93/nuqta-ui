@@ -9,29 +9,28 @@
     </PageHeader>
 
     <FilterBar>
-      <div class="d-flex ga-4">
-        <v-text-field
-          v-model="searchQuery"
-          :placeholder="t('hr.employees.search')"
-          variant="outlined"
-          density="comfortable"
-          prepend-inner-icon="mdi-magnify"
-          clearable
-          autofocus
-          hide-details
-          class="grow"
-        />
-        <v-select
-          v-model="statusFilter"
-          :items="statusOptions"
-          :label="t('common.status')"
-          variant="outlined"
-          density="comfortable"
-          clearable
-          hide-details
-          style="max-width: 200px"
-        />
-      </div>
+      <v-text-field
+        v-model="searchQuery"
+        :placeholder="t('hr.employees.search')"
+        variant="outlined"
+        density="comfortable"
+        prepend-inner-icon="mdi-magnify"
+        clearable
+        autofocus
+        hide-details
+        class="flex-grow-1"
+        style="min-width: 200px"
+      />
+      <v-select
+        v-model="statusFilter"
+        :items="statusOptions"
+        :label="t('common.status')"
+        variant="outlined"
+        density="comfortable"
+        clearable
+        hide-details
+        style="max-width: 200px"
+      />
     </FilterBar>
 
     <v-card elevation="0" variant="flat" class="border" rounded="lg">

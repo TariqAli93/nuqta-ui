@@ -2,14 +2,14 @@
   <v-dialog
     :model-value="props.modelValue"
     max-width="100vw"
-    width="95vw"
-    height="95vh"
     scrollable
     persistent
     transition="dialog-bottom-transition"
+    scrim="background"
+    :opacity="0.95"
     @update:model-value="updateModelValue"
   >
-    <v-card rounded="xl" class="payment-dialog-shell">
+    <v-card rounded="xl" class="payment-dialog-shell h-100">
       <v-card-text class="pa-5 pa-md-6">
         <PaymentDialogHeader :cashier-name="cashierNameText" @close="closeOverlay" />
 
@@ -36,7 +36,7 @@
           </v-col>
 
           <v-col cols="12" md="8">
-            <div class="d-flex flex-column ga-3">
+            <div class="d-flex flex-column ga-3 h-full">
               <PaymentAmountField
                 :amount-input="entry.amountInput.value"
                 :currency="props.currency"

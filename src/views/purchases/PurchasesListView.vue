@@ -9,31 +9,28 @@
     </PageHeader>
 
     <FilterBar>
-      <v-row dense>
-        <v-col cols="12" sm="8">
-          <v-text-field
-            v-model="search"
-            prepend-inner-icon="mdi-magnify"
-            :placeholder="t('common.search')"
-            hide-details
-            variant="outlined"
-            density="comfortable"
-            @update:model-value="onSearch"
-          />
-        </v-col>
-        <v-col cols="12" sm="4">
-          <v-select
-            v-model="statusFilter"
-            :items="statuses"
-            :label="t('common.status')"
-            hide-details
-            variant="outlined"
-            density="comfortable"
-            clearable
-            @update:model-value="onSearch"
-          />
-        </v-col>
-      </v-row>
+      <v-text-field
+        v-model="search"
+        prepend-inner-icon="mdi-magnify"
+        :placeholder="t('common.search')"
+        hide-details
+        variant="outlined"
+        density="comfortable"
+        class="flex-grow-1"
+        style="min-width: 200px"
+        @update:model-value="onSearch"
+      />
+      <v-select
+        v-model="statusFilter"
+        :items="statuses"
+        :label="t('common.status')"
+        hide-details
+        variant="outlined"
+        density="comfortable"
+        clearable
+        style="max-width: 200px"
+        @update:model-value="onSearch"
+      />
     </FilterBar>
 
     <v-card class="border" elevation="0" variant="flat" rounded="lg">

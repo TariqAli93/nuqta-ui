@@ -2,7 +2,13 @@
   <PageShell>
     <PageHeader :title="t('dashboard.title')" :subtitle="t('dashboard.subtitle')">
       <template #actions>
-        <v-btn class="win-ghost-btn" variant="outlined" size="small" :loading="isDownloadingSales" @click="exportSales">
+        <v-btn
+          class="win-ghost-btn"
+          variant="outlined"
+          size="small"
+          :loading="isDownloadingSales"
+          @click="exportSales"
+        >
           تصدير المبيعات CSV
         </v-btn>
         <v-btn
@@ -24,65 +30,72 @@
       <v-row dense>
         <v-col cols="12" sm="6" md="3">
           <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <div class="ds-stat-card">
-              <v-avatar color="success" variant="tonal" size="44">
-                <v-icon>mdi-cash-register</v-icon>
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar color="success" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">mdi-cash-register</v-icon>
               </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">مبيعات اليوم</div>
-                <div class="ds-stat-card__value">{{ stats?.salesToday?.count ?? 0 }}</div>
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">مبيعات اليوم</div>
+                <div class="text-h6 font-weight-bold">{{ stats?.salesToday?.count ?? 0 }}</div>
               </div>
-            </div>
+            </v-card-text>
           </v-card>
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
           <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <div class="ds-stat-card">
-              <v-avatar color="primary" variant="tonal" size="44">
-                <v-icon>mdi-currency-usd</v-icon>
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar color="primary" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">mdi-currency-usd</v-icon>
               </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">إيرادات اليوم</div>
-                <div class="ds-stat-card__value">
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">إيرادات اليوم</div>
+                <div class="text-h6 font-weight-bold">
                   {{ formatMoney(stats?.salesToday?.revenue ?? 0) }}
                 </div>
               </div>
-            </div>
+            </v-card-text>
           </v-card>
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
           <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <div class="ds-stat-card">
-              <v-avatar color="info" variant="tonal" size="44">
-                <v-icon>mdi-calculator</v-icon>
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar color="info" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">mdi-calculator</v-icon>
               </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">متوسط الفاتورة</div>
-                <div class="ds-stat-card__value">
-                  {{ formatMoney(stats?.salesToday?.count ? (stats.salesToday.revenue / stats.salesToday.count) : 0) }}
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">متوسط الفاتورة</div>
+                <div class="text-h6 font-weight-bold">
+                  {{
+                    formatMoney(
+                      stats?.salesToday?.count
+                        ? stats.salesToday.revenue / stats.salesToday.count
+                        : 0
+                    )
+                  }}
                 </div>
               </div>
-            </div>
+            </v-card-text>
           </v-card>
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
           <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <div class="ds-stat-card">
+            <v-card-text class="d-flex align-center ga-3 pa-4">
               <v-avatar
                 :color="(stats?.lowStockCount ?? 0) > 0 ? 'error' : 'grey'"
                 variant="tonal"
-                size="44"
+                size="48"
+                rounded="lg"
               >
-                <v-icon>mdi-alert-circle-outline</v-icon>
+                <v-icon size="24">mdi-alert-circle-outline</v-icon>
               </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">منتجات منخفضة المخزون</div>
-                <div class="ds-stat-card__value">{{ stats?.lowStockCount ?? 0 }}</div>
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">منتجات منخفضة المخزون</div>
+                <div class="text-h6 font-weight-bold">{{ stats?.lowStockCount ?? 0 }}</div>
               </div>
-            </div>
+            </v-card-text>
           </v-card>
         </v-col>
       </v-row>

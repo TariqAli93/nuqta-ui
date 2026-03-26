@@ -1,84 +1,95 @@
 <template>
   <SubPageShell>
-    <v-row dense class="mb-3">
-      <v-col cols="12" md="6">
-        <v-card variant="tonal" color="warning">
-          <v-card-title class="text-subtitle-1 font-weight-bold"
-            >منتجات منخفضة المخزون</v-card-title
-          >
-          <v-card-text>
-            <div class="text-h5 text-center mb-2">
-              {{ inventoryStore.dashboard?.lowStockCount ?? 0 }}
-            </div>
-            <div class="text-caption text-center text-medium-emphasis">
-              منتجات وصلت لحد إعادة الطلب
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-      <v-col cols="12" md="6">
-        <v-card variant="tonal" color="error">
-          <v-card-title class="text-subtitle-1 font-weight-bold">تنبيهات الصلاحية</v-card-title>
-          <v-card-text>
-            <div class="text-h5 text-center mb-2">
-              {{ inventoryStore.expiryAlerts.length }}
-            </div>
-            <div class="text-caption text-center text-medium-emphasis">
-              منتجات قاربت أو تجاوزت تاريخ الصلاحية
-            </div>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+    <div class="d-flex flex-column ga-4">
+      <!-- KPI summary strip -->
+      <v-row dense>
+        <v-col cols="12" md="6">
+          <v-card elevation="0" variant="flat" class="border ds-card-hover" rounded="lg">
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar color="warning" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">mdi-package-variant-closed-minus</v-icon>
+              </v-avatar>
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">منتجات منخفضة المخزون</div>
+                <div class="text-h6 font-weight-bold">
+                  {{ inventoryStore.dashboard?.lowStockCount ?? 0 }}
+                </div>
+                <div class="text-caption text-medium-emphasis">منتجات وصلت لحد إعادة الطلب</div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-card elevation="0" variant="flat" class="border ds-card-hover" rounded="lg">
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar color="error" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">mdi-clock-alert-outline</v-icon>
+              </v-avatar>
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">تنبيهات الصلاحية</div>
+                <div class="text-h6 font-weight-bold">
+                  {{ inventoryStore.expiryAlerts.length }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  منتجات قاربت أو تجاوزت تاريخ الصلاحية
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
-    <!-- Expiry Alerts Table -->
-    <v-card elevation="0" variant="flat" class="border mb-4" rounded="lg">
-      <v-card-title class="text-subtitle-1 font-weight-bold d-flex align-center">
-        <v-icon start color="error" size="20">mdi-clock-alert-outline</v-icon>
-        تنبيهات الصلاحية
-        <v-spacer />
-        <v-text-field
-          v-model.number="daysAhead"
-          type="number"
-          label="أيام للأمام"
+      <!-- Expiry Alerts Table -->
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-text class="d-flex align-center ga-3 py-3 px-4">
+          <v-icon color="error" size="20">mdi-clock-alert-outline</v-icon>
+          <span class="text-subtitle-1 font-weight-bold">تنبيهات الصلاحية</span>
+          <v-spacer />
+          <v-text-field
+            v-model.number="daysAhead"
+            type="number"
+            label="أيام للأمام"
+            density="comfortable"
+            hide-details
+            variant="outlined"
+            style="max-width: 140px"
+            min="1"
+            @change="refreshAlerts"
+          />
+        </v-card-text>
+        <v-data-table
+          :headers="expiryHeaders"
+          :items="inventoryStore.expiryAlerts"
+          :loading="inventoryStore.loadingAlerts"
           density="comfortable"
-          hide-details
-          variant="outlined"
-          style="max-width: 140px"
-          min="1"
-          @change="refreshAlerts"
-        />
-      </v-card-title>
-      <v-data-table
-        :headers="expiryHeaders"
-        :items="inventoryStore.expiryAlerts"
-        :loading="inventoryStore.loadingAlerts"
-        density="comfortable"
-        class="ds-table-enhanced ds-table-striped"
-        :items-per-page="15"
-      >
-        <template #item.expiryDate="{ item }">
-          <v-chip
-            size="x-small"
-            variant="tonal"
-            :color="isExpired(item.expiryDate) ? 'error' : 'warning'"
-          >
-            {{ formatDate(item.expiryDate) }}
-          </v-chip>
-        </template>
-        <template #item.daysUntilExpiry="{ item }">
-          <span :class="item.daysUntilExpiry <= 0 ? 'text-error font-weight-bold' : 'text-warning'">
-            {{ item.daysUntilExpiry <= 0 ? 'منتهية' : `${item.daysUntilExpiry} يوم` }}
-          </span>
-        </template>
-        <template #no-data>
-          <div class="text-center py-8 text-medium-emphasis">
-            <v-icon size="48" color="success" class="mb-2">mdi-check-circle-outline</v-icon>
-            <div>لا توجد تنبيهات صلاحية حالياً</div>
-          </div>
-        </template>
-      </v-data-table>
-    </v-card>
+          class="ds-table-enhanced ds-table-striped"
+          :items-per-page="15"
+        >
+          <template #item.expiryDate="{ item }">
+            <v-chip
+              size="x-small"
+              variant="tonal"
+              :color="isExpired(item.expiryDate) ? 'error' : 'warning'"
+            >
+              {{ formatDate(item.expiryDate) }}
+            </v-chip>
+          </template>
+          <template #item.daysUntilExpiry="{ item }">
+            <span
+              :class="item.daysUntilExpiry <= 0 ? 'text-error font-weight-bold' : 'text-warning'"
+            >
+              {{ item.daysUntilExpiry <= 0 ? 'منتهية' : `${item.daysUntilExpiry} يوم` }}
+            </span>
+          </template>
+          <template #no-data>
+            <div class="text-center py-8 text-medium-emphasis">
+              <v-icon size="48" color="success" class="mb-2">mdi-check-circle-outline</v-icon>
+              <div>لا توجد تنبيهات صلاحية حالياً</div>
+            </div>
+          </template>
+        </v-data-table>
+      </v-card>
+    </div>
   </SubPageShell>
 </template>
 

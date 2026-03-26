@@ -184,6 +184,7 @@
                     v-for="item in bs.assets"
                     :key="item.accountId"
                     class="bs-account-row"
+                    rounded="0"
                   >
                     <v-list-item-title class="text-body-2">{{ item.name }}</v-list-item-title>
                     <template #append>
@@ -225,6 +226,7 @@
                     v-for="item in bs.liabilities"
                     :key="item.accountId"
                     class="bs-account-row"
+                    rounded="0"
                   >
                     <v-list-item-title class="text-body-2">{{ item.name }}</v-list-item-title>
                     <template #append>
@@ -266,6 +268,7 @@
                     v-for="item in bs.equity"
                     :key="item.accountId"
                     class="bs-account-row"
+                    rounded="0"
                   >
                     <v-list-item-title class="text-body-2">{{ item.name }}</v-list-item-title>
                     <template #append>
@@ -283,7 +286,7 @@
                 </v-list-item>
                 <!-- Current period earnings – always shown -->
                 <v-divider />
-                <v-list-item class="bs-account-row">
+                <v-list-item class="bs-account-row" rounded="0">
                   <v-list-item-title class="text-body-2 font-italic">
                     أرباح الفترة الحالية
                   </v-list-item-title>

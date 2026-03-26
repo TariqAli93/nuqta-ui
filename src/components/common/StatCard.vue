@@ -1,23 +1,21 @@
 <template>
   <v-card elevation="0" variant="flat" class="border ds-card-hover" rounded="lg">
-    <div class="ds-stat-card">
-      <v-avatar :color="color" variant="tonal" :size="avatarSize">
-        <v-icon :size="iconSize">{{ icon }}</v-icon>
+    <v-card-text class="d-flex align-center ga-3 pa-4">
+      <v-avatar :color="color" variant="tonal" size="48" rounded="lg">
+        <v-icon size="24">{{ icon }}</v-icon>
       </v-avatar>
-      <div class="ds-stat-card__info">
-        <div class="ds-stat-card__label">{{ label }}</div>
-        <div class="ds-stat-card__value" :style="valueStyle" :dir="dir">
+      <div class="flex-grow-1">
+        <div class="text-caption text-medium-emphasis">{{ label }}</div>
+        <div class="text-h6 font-weight-bold" :dir="dir">
           <slot>{{ value }}</slot>
         </div>
       </div>
-    </div>
+    </v-card-text>
   </v-card>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-
-const props = withDefaults(
+withDefaults(
   defineProps<{
     icon: string;
     label: string;
@@ -33,8 +31,4 @@ const props = withDefaults(
     value: undefined,
   }
 );
-
-const avatarSize = computed(() => (props.size === 'sm' ? 36 : 40));
-const iconSize = computed(() => (props.size === 'sm' ? 18 : 20));
-const valueStyle = computed(() => (props.size === 'sm' ? { fontSize: '0.95rem' } : undefined));
 </script>

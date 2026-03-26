@@ -1,6 +1,9 @@
 <template>
   <PageShell>
-    <PageHeader title="مساحة عمل النسخ الاحتياطي" subtitle="إدارة النسخ الاحتياطية لقاعدة البيانات: إنشاء، استعادة، وحذف النسخ الاحتياطية.">
+    <PageHeader
+      title="مساحة عمل النسخ الاحتياطي"
+      subtitle="إدارة النسخ الاحتياطية لقاعدة البيانات: إنشاء، استعادة، وحذف النسخ الاحتياطية."
+    >
       <template #actions>
         <v-btn
           class="win-btn"
@@ -18,46 +21,58 @@
     <v-row v-if="stats" dense>
       <v-col cols="6" sm="3">
         <v-card class="border" elevation="0" variant="flat" rounded="lg">
-          <div class="ds-stat-card">
-            <div class="ds-stat-card__info">
-              <div class="ds-stat-card__label">عدد النسخ</div>
-              <div class="ds-stat-card__value">{{ stats.totalBackups }}</div>
+          <v-card-text class="d-flex align-center ga-3 pa-4">
+            <v-avatar color="primary" variant="tonal" size="48" rounded="lg">
+              <v-icon size="24">mdi-database</v-icon>
+            </v-avatar>
+            <div class="flex-grow-1">
+              <div class="text-caption text-medium-emphasis">عدد النسخ</div>
+              <div class="text-h6 font-weight-bold">{{ stats.totalBackups }}</div>
             </div>
-          </div>
+          </v-card-text>
         </v-card>
       </v-col>
       <v-col cols="6" sm="3">
         <v-card class="border" elevation="0" variant="flat" rounded="lg">
-          <div class="ds-stat-card">
-            <div class="ds-stat-card__info">
-              <div class="ds-stat-card__label">الحجم الإجمالي</div>
-              <div class="ds-stat-card__value">{{ formatSize(stats.totalSizeBytes) }}</div>
+          <v-card-text class="d-flex align-center ga-3 pa-4">
+            <v-avatar color="info" variant="tonal" size="48" rounded="lg">
+              <v-icon size="24">mdi-harddisk</v-icon>
+            </v-avatar>
+            <div class="flex-grow-1">
+              <div class="text-caption text-medium-emphasis">الحجم الإجمالي</div>
+              <div class="text-h6 font-weight-bold">{{ formatSize(stats.totalSizeBytes) }}</div>
             </div>
-          </div>
+          </v-card-text>
         </v-card>
       </v-col>
       <v-col cols="6" sm="3">
         <v-card class="border" elevation="0" variant="flat" rounded="lg">
-          <div class="ds-stat-card">
-            <div class="ds-stat-card__info">
-              <div class="ds-stat-card__label">أقدم نسخة</div>
-              <div class="ds-stat-card__value" style="font-size: 0.9rem">
+          <v-card-text class="d-flex align-center ga-3 pa-4">
+            <v-avatar color="warning" variant="tonal" size="48" rounded="lg">
+              <v-icon size="24">mdi-clock-outline</v-icon>
+            </v-avatar>
+            <div class="flex-grow-1">
+              <div class="text-caption text-medium-emphasis">أقدم نسخة</div>
+              <div class="text-body-1 font-weight-bold">
                 {{ stats.oldestBackup ? formatTimestamp(stats.oldestBackup.createdAt) : '—' }}
               </div>
             </div>
-          </div>
+          </v-card-text>
         </v-card>
       </v-col>
       <v-col cols="6" sm="3">
         <v-card class="border" elevation="0" variant="flat" rounded="lg">
-          <div class="ds-stat-card">
-            <div class="ds-stat-card__info">
-              <div class="ds-stat-card__label">أحدث نسخة</div>
-              <div class="ds-stat-card__value" style="font-size: 0.9rem">
+          <v-card-text class="d-flex align-center ga-3 pa-4">
+            <v-avatar color="success" variant="tonal" size="48" rounded="lg">
+              <v-icon size="24">mdi-clock-check-outline</v-icon>
+            </v-avatar>
+            <div class="flex-grow-1">
+              <div class="text-caption text-medium-emphasis">أحدث نسخة</div>
+              <div class="text-body-1 font-weight-bold">
                 {{ stats.latestBackup ? formatTimestamp(stats.latestBackup.createdAt) : '—' }}
               </div>
             </div>
-          </div>
+          </v-card-text>
         </v-card>
       </v-col>
     </v-row>
@@ -152,7 +167,12 @@
         <v-card-actions>
           <v-spacer />
           <v-btn class="win-ghost-btn" variant="text" @click="restoreDialog = false">إلغاء</v-btn>
-          <v-btn class="win-btn" color="error" :loading="restoringName !== null" @click="executeRestore">
+          <v-btn
+            class="win-btn"
+            color="error"
+            :loading="restoringName !== null"
+            @click="executeRestore"
+          >
             استعادة
           </v-btn>
         </v-card-actions>
@@ -164,12 +184,19 @@
       <v-card rounded="lg">
         <v-card-title>تأكيد الحذف</v-card-title>
         <v-card-text>
-          هل أنت متأكد من حذف النسخة الاحتياطية <strong>{{ deleteTarget }}</strong>؟
+          هل أنت متأكد من حذف النسخة الاحتياطية <strong>{{ deleteTarget }}</strong
+          >؟
         </v-card-text>
         <v-card-actions>
           <v-spacer />
           <v-btn class="win-ghost-btn" variant="text" @click="deleteDialog = false">إلغاء</v-btn>
-          <v-btn class="win-btn" color="error" :loading="deletingName !== null" @click="executeDelete">حذف</v-btn>
+          <v-btn
+            class="win-btn"
+            color="error"
+            :loading="deletingName !== null"
+            @click="executeDelete"
+            >حذف</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>

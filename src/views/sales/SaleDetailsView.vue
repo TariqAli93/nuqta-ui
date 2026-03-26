@@ -70,49 +70,45 @@
       <v-row dense>
         <v-col cols="12" sm="4">
           <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <div class="ds-stat-card">
-              <v-avatar color="primary" variant="tonal" size="40">
-                <v-icon>mdi-receipt-text-outline</v-icon>
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar color="primary" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">mdi-receipt-text-outline</v-icon>
               </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">{{ t('sales.invoice') }}</div>
-                <div class="ds-stat-card__value" style="font-size: 1rem">
-                  {{ sale.invoiceNumber }}
-                </div>
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">{{ t('sales.invoice') }}</div>
+                <div class="text-h6 font-weight-bold">{{ sale.invoiceNumber }}</div>
               </div>
-            </div>
+            </v-card-text>
           </v-card>
         </v-col>
 
         <v-col cols="12" sm="4">
           <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <div class="ds-stat-card">
-              <v-avatar :color="statusColor(sale.status)" variant="tonal" size="40">
-                <v-icon>{{ statusIcon(sale.status) }}</v-icon>
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar :color="statusColor(sale.status)" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">{{ statusIcon(sale.status) }}</v-icon>
               </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">{{ t('sales.status') }}</div>
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">{{ t('sales.status') }}</div>
                 <v-chip :color="statusColor(sale.status)" size="small" variant="tonal" label>
                   {{ statusLabel(sale.status) }}
                 </v-chip>
               </div>
-            </div>
+            </v-card-text>
           </v-card>
         </v-col>
 
         <v-col cols="12" sm="4">
           <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <div class="ds-stat-card">
-              <v-avatar color="success" variant="tonal" size="40">
-                <v-icon>mdi-cash-multiple</v-icon>
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar color="success" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">mdi-cash-multiple</v-icon>
               </v-avatar>
-              <div class="ds-stat-card__info">
-                <div class="ds-stat-card__label">{{ t('sales.total') }}</div>
-                <div class="ds-stat-card__value" style="font-size: 1rem">
-                  {{ formatAmount(sale.total) }}
-                </div>
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">{{ t('sales.total') }}</div>
+                <div class="text-h6 font-weight-bold">{{ formatAmount(sale.total) }}</div>
               </div>
-            </div>
+            </v-card-text>
           </v-card>
         </v-col>
       </v-row>
@@ -121,7 +117,13 @@
       <PaymentInfoCard :sale="sale" class="mb-4" />
 
       <!-- Payment history -->
-      <v-card v-if="sale.payments?.length" class="border ds-table-wrapper mb-4" elevation="0" variant="flat" rounded="lg">
+      <v-card
+        v-if="sale.payments?.length"
+        class="border ds-table-wrapper mb-4"
+        elevation="0"
+        variant="flat"
+        rounded="lg"
+      >
         <v-card-title class="text-body-1 font-weight-bold d-flex align-center">
           سجل الدفعات
           <v-spacer />
@@ -141,7 +143,11 @@
               <span class="font-weight-bold">{{ formatAmount(item.amount) }}</span>
             </template>
             <template #item.paymentMethod="{ item }">
-              <v-chip size="x-small" variant="tonal" :color="paymentMethodColor(item.paymentMethod)">
+              <v-chip
+                size="x-small"
+                variant="tonal"
+                :color="paymentMethodColor(item.paymentMethod)"
+              >
                 {{ paymentMethodLabel(item.paymentMethod) }}
               </v-chip>
             </template>
@@ -241,7 +247,13 @@
       </v-card>
 
       <!-- COGS Summary (server-computed) -->
-      <v-card v-if="sale.cogs != null" class="border mt-4" elevation="0" variant="flat" rounded="lg">
+      <v-card
+        v-if="sale.cogs != null"
+        class="border mt-4"
+        elevation="0"
+        variant="flat"
+        rounded="lg"
+      >
         <v-card-title class="text-body-1 font-weight-bold"> ملخص التكلفة </v-card-title>
         <v-card-text>
           <v-row dense>
@@ -322,7 +334,9 @@
         <v-card-actions>
           <v-spacer />
           <v-btn class="win-ghost-btn" variant="text" @click="cancelDialog = false">إلغاء</v-btn>
-          <v-btn class="win-btn" color="error" :loading="cancelling" @click="executeCancel">تأكيد الإلغاء</v-btn>
+          <v-btn class="win-btn" color="error" :loading="cancelling" @click="executeCancel"
+            >تأكيد الإلغاء</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -392,24 +406,18 @@
         <v-card-title>تحصيل دفعة</v-card-title>
         <v-card-text>
           <p class="mb-4 text-body-2 text-medium-emphasis">
-            المتبقي: <strong class="text-error">{{ formatAmount(sale?.remainingAmount ?? 0) }}</strong>
+            المتبقي:
+            <strong class="text-error">{{ formatAmount(sale?.remainingAmount ?? 0) }}</strong>
           </p>
 
-          <MoneyInput
-            v-model="collectPaymentAmount"
-            label="مبلغ الدفعة"
-            class="mb-3"
-          />
+          <MoneyInput v-model="collectPaymentAmount" label="مبلغ الدفعة" class="mb-3" />
           <div
             v-if="collectPaymentAmount > (sale?.remainingAmount ?? 0)"
             class="text-error text-caption mb-2"
           >
             المبلغ يتجاوز المتبقي
           </div>
-          <div
-            v-if="collectPaymentAmount < 0"
-            class="text-error text-caption mb-2"
-          >
+          <div v-if="collectPaymentAmount < 0" class="text-error text-caption mb-2">
             المبلغ لا يمكن أن يكون سالباً
           </div>
 
@@ -437,7 +445,9 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn class="win-ghost-btn" variant="text" @click="collectPaymentDialog = false">إلغاء</v-btn>
+          <v-btn class="win-ghost-btn" variant="text" @click="collectPaymentDialog = false"
+            >إلغاء</v-btn
+          >
           <v-btn
             class="win-btn"
             color="primary"
@@ -558,21 +568,31 @@ const paymentHistoryHeaders = [
 
 function paymentMethodColor(method: string | undefined): string {
   switch (method) {
-    case 'cash': return 'success';
-    case 'card': return 'primary';
-    case 'bank_transfer': return 'info';
-    case 'credit': return 'warning';
-    default: return 'grey';
+    case 'cash':
+      return 'success';
+    case 'card':
+      return 'primary';
+    case 'bank_transfer':
+      return 'info';
+    case 'credit':
+      return 'warning';
+    default:
+      return 'grey';
   }
 }
 
 function paymentMethodLabel(method: string | undefined): string {
   switch (method) {
-    case 'cash': return 'نقدي';
-    case 'card': return 'بطاقة';
-    case 'bank_transfer': return 'حوالة';
-    case 'credit': return 'آجل';
-    default: return method ?? '—';
+    case 'cash':
+      return 'نقدي';
+    case 'card':
+      return 'بطاقة';
+    case 'bank_transfer':
+      return 'حوالة';
+    case 'credit':
+      return 'آجل';
+    default:
+      return method ?? '—';
   }
 }
 

@@ -66,7 +66,9 @@ export const usePurchasesStore = defineStore(
      * On success, updates currentPurchase with the backend response directly —
      * no stale values, no manual recalculation.
      */
-    async function addPayment(data: Omit<PurchasePaymentInput, 'idempotencyKey'> & { idempotencyKey?: string }) {
+    async function addPayment(
+      data: Omit<PurchasePaymentInput, 'idempotencyKey'> & { idempotencyKey?: string }
+    ) {
       loading.value = true;
       error.value = null;
       try {

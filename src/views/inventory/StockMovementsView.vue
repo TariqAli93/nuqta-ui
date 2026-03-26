@@ -1,89 +1,96 @@
 <template>
   <SubPageShell>
-    <v-card elevation="0" variant="flat" class="border" rounded="lg">
-      <v-card-text class="d-flex align-center ga-3 flex-wrap">
-        <AppDateInput
-          v-model="dateFrom"
-          label="من تاريخ"
-          density="comfortable"
-          hide-details
-          variant="outlined"
-          style="max-width: 200px"
-          clearable
-        />
-        <AppDateInput
-          v-model="dateTo"
-          label="إلى تاريخ"
-          density="comfortable"
-          hide-details
-          variant="outlined"
-          style="max-width: 200px"
-          clearable
-        />
-        <v-select
-          v-model="movementTypeFilter"
-          :items="movementTypes"
-          label="نوع الحركة"
-          density="comfortable"
-          hide-details
-          variant="outlined"
-          style="max-width: 180px"
-          clearable
-        />
-        <v-btn
-          class="win-btn"
-          color="primary"
-          variant="tonal"
-          :loading="inventoryStore.loadingMovements"
-          @click="refresh"
-        >
-          تصفية
-        </v-btn>
-      </v-card-text>
+    <div class="d-flex flex-column ga-4">
+      <!-- ───── Filter toolbar ───── -->
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-text class="d-flex align-center ga-3 flex-wrap py-3">
+          <AppDateInput
+            v-model="dateFrom"
+            label="من تاريخ"
+            density="comfortable"
+            hide-details
+            variant="outlined"
+            style="max-width: 200px"
+            clearable
+          />
+          <AppDateInput
+            v-model="dateTo"
+            label="إلى تاريخ"
+            density="comfortable"
+            hide-details
+            variant="outlined"
+            style="max-width: 200px"
+            clearable
+          />
+          <v-select
+            v-model="movementTypeFilter"
+            :items="movementTypes"
+            label="نوع الحركة"
+            density="comfortable"
+            hide-details
+            variant="outlined"
+            style="max-width: 180px"
+            clearable
+          />
+          <v-btn
+            class="win-btn"
+            color="primary"
+            variant="tonal"
+            :loading="inventoryStore.loadingMovements"
+            prepend-icon="mdi-refresh"
+            @click="refresh"
+          >
+            تصفية
+          </v-btn>
+        </v-card-text>
+      </v-card>
 
-      <v-card-text class="pa-0">
-        <v-data-table
-          :headers="movementHeaders"
-          :items="inventoryStore.movements"
-          :loading="inventoryStore.loadingMovements"
-          density="comfortable"
-          class="ds-table-enhanced ds-table-striped"
-          :items-per-page="25"
-        >
-          <template #item.createdAt="{ item }">
-            {{ formatDate(item.createdAt) }}
-          </template>
-          <template #item.movementType="{ item }">
-            <v-chip size="x-small" variant="tonal" :color="movementColor(item.movementType)">
-              {{ movementLabel(item.movementType) }}
-            </v-chip>
-          </template>
-          <template #item.reason="{ item }">
-            <v-chip size="x-small" variant="tonal" :color="reasonSignedColor(item.reason)">
-              {{ reasonLabel(item.reason) || '—' }}
-            </v-chip>
-          </template>
-          <template #item.sourceType="{ item }">
-            <v-chip
-              size="x-small"
-              variant="tonal"
-              :color="reasonSignedColor(item.sourceType || '')"
-            >
-              {{ reasonLabel(item.sourceType || '') }}
-            </v-chip>
-          </template>
-          <template #item.quantityBase="{ item }">
-            <span :class="movementSignedClass(item.movementType)">
-              {{ movementSignedPrefix(item.movementType) }}{{ item.quantityBase }}
-            </span>
-          </template>
-          <template #item.productName="{ item }">{{ getProductName(item.productId) }}</template>
-          <template #no-data>
-            <div class="text-center py-8 text-medium-emphasis">لا توجد حركات مخزون بعد.</div>
-          </template>
-        </v-data-table>
-      </v-card-text>
-    </v-card>
+      <!-- Data table -->
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-text class="pa-0">
+          <v-data-table
+            :headers="movementHeaders"
+            :items="inventoryStore.movements"
+            :loading="inventoryStore.loadingMovements"
+            density="comfortable"
+            class="ds-table-enhanced ds-table-striped"
+            :items-per-page="25"
+          >
+            <template #item.createdAt="{ item }">
+              {{ formatDate(item.createdAt) }}
+            </template>
+            <template #item.movementType="{ item }">
+              <v-chip size="x-small" variant="tonal" :color="movementColor(item.movementType)">
+                {{ movementLabel(item.movementType) }}
+              </v-chip>
+            </template>
+            <template #item.reason="{ item }">
+              <v-chip size="x-small" variant="tonal" :color="reasonSignedColor(item.reason)">
+                {{ reasonLabel(item.reason) || '—' }}
+              </v-chip>
+            </template>
+            <template #item.sourceType="{ item }">
+              <v-chip
+                size="x-small"
+                variant="tonal"
+                :color="reasonSignedColor(item.sourceType || '')"
+              >
+                {{ reasonLabel(item.sourceType || '') }}
+              </v-chip>
+            </template>
+            <template #item.quantityBase="{ item }">
+              <span :class="movementSignedClass(item.movementType)">
+                {{ movementSignedPrefix(item.movementType) }}{{ item.quantityBase }}
+              </span>
+            </template>
+            <template #item.productName="{ item }">{{ getProductName(item.productId) }}</template>
+            <template #no-data>
+              <div class="text-center py-8 text-medium-emphasis">لا توجد حركات مخزون بعد.</div>
+            </template>
+          </v-data-table>
+        </v-card-text>
+      </v-card>
+    </div>
   </SubPageShell>
 </template>
 

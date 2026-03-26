@@ -17,73 +17,34 @@
     <v-skeleton-loader v-if="purchasesStore.loading" type="card" />
 
     <template v-else-if="purchase">
-      <v-card class="mb-4 border" elevation="0" variant="flat" rounded="lg">
-        <v-card-text>
-          <v-row dense>
-            <v-col cols="6" sm="3"
-              ><strong>رقم الفاتورة:</strong> {{ purchase.invoiceNumber }}</v-col
+      <div class="d-flex flex-column ga-4">
+        <!-- Payment summary — values from backend -->
+        <v-row dense>
+          <v-col cols="6" sm="3">
+            <StatCard icon="mdi-cash-multiple" label="الإجمالي" color="primary">
+              <MoneyDisplay :amount="purchase.total" size="lg" />
+            </StatCard>
+          </v-col>
+          <v-col cols="6" sm="3">
+            <StatCard icon="mdi-cash-check" label="المدفوع" color="success">
+              <MoneyDisplay :amount="purchase.paidAmount ?? 0" size="lg" colored />
+            </StatCard>
+          </v-col>
+          <v-col cols="6" sm="3">
+            <StatCard
+              icon="mdi-cash-minus"
+              label="المتبقي"
+              :color="(purchase.remainingAmount ?? 0) > 0 ? 'error' : 'success'"
             >
-            <v-col cols="6" sm="3"
-              ><strong>التاريخ:</strong> {{ formatDate(purchase.createdAt) }}</v-col
+              <MoneyDisplay :amount="purchase.remainingAmount ?? 0" size="lg" />
+            </StatCard>
+          </v-col>
+          <v-col cols="6" sm="3">
+            <StatCard
+              icon="mdi-clipboard-check-outline"
+              label="حالة الدفع"
+              :color="paymentStatusColor(purchase.paymentStatus as NonNullable<Purchase['paymentStatus']>)"
             >
-            <v-col cols="6" sm="3">
-              <strong>الحالة:</strong>
-              <v-chip
-                :color="invoiceStatusColor(purchase.status)"
-                size="small"
-                variant="tonal"
-              >
-                {{ invoiceStatusLabel(purchase.status) }}
-              </v-chip>
-            </v-col>
-            <v-col cols="6" sm="3">
-              <strong>الإجمالي:</strong> <MoneyDisplay :amount="purchase.total" size="md" />
-            </v-col>
-          </v-row>
-        </v-card-text>
-      </v-card>
-
-      <!-- Payment summary cards — values come directly from backend, no manual calculation -->
-      <v-row dense class="mb-4">
-        <v-col cols="6" sm="3">
-          <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <v-card-text class="text-center">
-              <div class="text-caption text-medium-emphasis">الإجمالي</div>
-              <div class="text-h6 font-weight-bold">
-                <MoneyDisplay :amount="purchase.total" size="lg" />
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-        <v-col cols="6" sm="3">
-          <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <v-card-text class="text-center">
-              <div class="text-caption text-medium-emphasis">المدفوع</div>
-              <div class="text-h6 font-weight-bold text-success">
-                <MoneyDisplay :amount="purchase.paidAmount ?? 0" size="lg" colored />
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-        <v-col cols="6" sm="3">
-          <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <v-card-text class="text-center">
-              <!-- Label is "Remaining Due" — maps directly to remainingAmount from backend -->
-              <div class="text-caption text-medium-emphasis">المتبقي</div>
-              <div
-                class="text-h6 font-weight-bold"
-                :class="(purchase.remainingAmount ?? 0) > 0 ? 'text-error' : 'text-success'"
-              >
-                <MoneyDisplay :amount="purchase.remainingAmount ?? 0" size="lg" />
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-        <v-col cols="6" sm="3">
-          <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <v-card-text class="text-center">
-              <div class="text-caption text-medium-emphasis">حالة الدفع</div>
-              <!-- paymentStatus is backend-authoritative — never override -->
               <v-chip
                 :color="paymentStatusColor(purchase.paymentStatus as NonNullable<Purchase['paymentStatus']>)"
                 size="small"
@@ -92,13 +53,21 @@
               >
                 {{ paymentStatusLabel(purchase.paymentStatus as NonNullable<Purchase['paymentStatus']>) }}
               </v-chip>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
+            </StatCard>
+          </v-col>
+        </v-row>
 
-      <v-card class="border ds-table-wrapper" elevation="0" variant="flat" rounded="lg">
-        <v-card-title class="text-subtitle-1 font-weight-bold">المنتجات</v-card-title>
+        <!-- Tabs -->
+        <v-card elevation="0" variant="flat" class="border" rounded="lg">
+          <v-tabs v-model="activeTab" color="primary" density="comfortable" grow>
+            <v-tab value="products">المنتجات</v-tab>
+            <v-tab value="payments">الدفعات</v-tab>
+            <v-tab value="info">معلومات</v-tab>
+          </v-tabs>
+          <v-divider />
+
+          <v-window v-model="activeTab">
+            <v-window-item value="products">
         <v-data-table
           :headers="itemHeaders"
           :items="purchase.items ?? []"
@@ -116,88 +85,84 @@
           <template #no-data>
             <div class="text-center py-6 text-medium-emphasis">لا توجد أصناف في هذه الفاتورة</div>
           </template>
-        </v-data-table>
-      </v-card>
-
-      <v-row class="mb-4" dense>
-        <v-col cols="12" md="6">
-          <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <v-card-title class="text-subtitle-1 font-weight-bold">الدفعات</v-card-title>
-            <v-data-table
-              :headers="paymentHeaders"
-              :items="purchase.payments ?? []"
-              density="comfortable"
-              class="ds-table-enhanced ds-table-striped"
-              :items-per-page="10"
-            >
-              <template #item.amount="{ item }">
-                <MoneyDisplay :amount="item.amount" size="sm" colored />
-              </template>
-              <template #item.paymentDate="{ item }">
-                {{ formatDate(item.paymentDate) }}
-              </template>
-              <template #no-data>
-                <div class="text-center py-6 text-medium-emphasis">لا توجد دفعات بعد</div>
-              </template>
             </v-data-table>
-          </v-card>
-        </v-col>
+            </v-window-item>
 
-        <v-col cols="12" md="6">
-          <v-card class="border" elevation="0" variant="flat" rounded="lg">
-            <v-card-title class="text-subtitle-1 font-weight-bold">حركات المخزون</v-card-title>
-            <v-data-table
-              :headers="movementHeaders"
-              :items="purchase.movements ?? []"
-              density="comfortable"
-              class="ds-table-enhanced ds-table-striped"
-              :items-per-page="10"
-            >
-              <template #item.movementType="{ item }">
-                <v-chip
-                  size="x-small"
-                  variant="tonal"
-                  :color="item.movementType === 'in' ? 'success' : 'warning'"
+            <v-window-item value="payments">
+              <div class="pa-4">
+                <v-data-table
+                  :headers="paymentHeaders"
+                  :items="purchase.payments ?? []"
+                  density="comfortable"
+                  class="ds-table-enhanced ds-table-striped"
+                  :items-per-page="10"
                 >
-                  {{ item.movementType === 'in' ? 'دخول' : item.movementType }}
-                </v-chip>
-              </template>
-              <template #item.createdAt="{ item }">
-                {{ formatDate(item.createdAt) }}
-              </template>
-              <template #no-data>
-                <div class="text-center py-6 text-medium-emphasis">لا توجد حركات مخزون</div>
-              </template>
-            </v-data-table>
-          </v-card>
-        </v-col>
-      </v-row>
+                  <template #item.amount="{ item }">
+                    <MoneyDisplay :amount="item.amount" size="sm" colored />
+                  </template>
+                  <template #item.paymentDate="{ item }">
+                    {{ formatDate(item.paymentDate) }}
+                  </template>
+                  <template #no-data>
+                    <div class="text-center py-6 text-medium-emphasis">لا توجد دفعات بعد</div>
+                  </template>
+                </v-data-table>
+              </div>
+            </v-window-item>
 
-      <v-card class="border" elevation="0" variant="flat" rounded="lg">
-        <v-card-text>
-          <v-row dense>
-            <v-col cols="6" sm="3">
-              <strong>المجموع الفرعي:</strong>
-              <MoneyDisplay :amount="purchase.subtotal" size="md" />
-            </v-col>
-            <v-col cols="6" sm="3">
-              <strong>الخصم:</strong> <MoneyDisplay :amount="purchase.discount ?? 0" size="md" />
-            </v-col>
-            <v-col cols="6" sm="3">
-              <strong>الضريبة:</strong> <MoneyDisplay :amount="purchase.tax ?? 0" size="md" />
-            </v-col>
-            <v-col cols="6" sm="3">
-              <strong>المدفوع:</strong>
-              <MoneyDisplay :amount="purchase.paidAmount ?? 0" size="md" colored />
-            </v-col>
-          </v-row>
-        </v-card-text>
-      </v-card>
+ 
+
+            <v-window-item value="info">
+              <v-list lines="two" class="bg-transparent">
+                <v-list-item prepend-icon="mdi-file-document-outline">
+                  <v-list-item-title>رقم الفاتورة</v-list-item-title>
+                  <v-list-item-subtitle>{{ purchase.invoiceNumber }}</v-list-item-subtitle>
+                </v-list-item>
+                <v-list-item prepend-icon="mdi-calendar">
+                  <v-list-item-title>التاريخ</v-list-item-title>
+                  <v-list-item-subtitle>{{ formatDate(purchase.createdAt) }}</v-list-item-subtitle>
+                </v-list-item>
+                <v-list-item prepend-icon="mdi-information-outline">
+                  <v-list-item-title>حالة الفاتورة</v-list-item-title>
+                  <v-list-item-subtitle>
+                    <v-chip
+                      :color="invoiceStatusColor(purchase.status)"
+                      size="small"
+                      variant="tonal"
+                    >
+                      {{ invoiceStatusLabel(purchase.status) }}
+                    </v-chip>
+                  </v-list-item-subtitle>
+                </v-list-item>
+                <v-divider />
+                <v-list-item prepend-icon="mdi-calculator">
+                  <v-list-item-title>المجموع الفرعي</v-list-item-title>
+                  <v-list-item-subtitle>
+                    <MoneyDisplay :amount="purchase.subtotal" size="sm" />
+                  </v-list-item-subtitle>
+                </v-list-item>
+                <v-list-item prepend-icon="mdi-percent">
+                  <v-list-item-title>الخصم</v-list-item-title>
+                  <v-list-item-subtitle>
+                    <MoneyDisplay :amount="purchase.discount ?? 0" size="sm" />
+                  </v-list-item-subtitle>
+                </v-list-item>
+                <v-list-item prepend-icon="mdi-receipt-text">
+                  <v-list-item-title>الضريبة</v-list-item-title>
+                  <v-list-item-subtitle>
+                    <MoneyDisplay :amount="purchase.tax ?? 0" size="sm" />
+                  </v-list-item-subtitle>
+                </v-list-item>
+              </v-list>
+            </v-window-item>
+          </v-window>
+        </v-card>
+      </div>
     </template>
 
     <v-dialog v-model="showPaymentDialog" max-width="400" persistent class="ds-dialog">
-      <v-card rounded="lg">
-        <v-card-title>تسجيل دفعة</v-card-title>
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-title class="text-subtitle-1 font-weight-bold">تسجيل دفعة</v-card-title>
         <v-card-text>
           <p class="mb-3 text-body-2 text-medium-emphasis">
             المتبقي:
@@ -233,9 +198,9 @@
             rows="2"
           />
         </v-card-text>
-        <v-card-actions>
+        <v-card-actions class="px-4 py-3">
           <v-spacer />
-          <v-btn class="win-ghost-btn" variant="text" @click="showPaymentDialog = false">إلغاء</v-btn>
+          <v-btn variant="text" @click="showPaymentDialog = false">إلغاء</v-btn>
           <v-btn
             class="win-btn"
             color="primary"
@@ -257,6 +222,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { PageShell, PageHeader } from '@/components/layout';
+import { StatCard } from '@/components/common';
 import { formatDate } from '@/utils/formatters';
 import { useRoute, useRouter } from 'vue-router';
 import { usePurchasesStore } from '@/stores/purchasesStore';
@@ -273,6 +239,7 @@ const purchasesStore = usePurchasesStore();
 
 const purchase = computed(() => purchasesStore.currentPurchase);
 
+const activeTab = ref('products');
 const showPaymentDialog = ref(false);
 const paymentAmount = ref(0);
 const paymentNotes = ref('');

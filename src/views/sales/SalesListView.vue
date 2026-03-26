@@ -9,33 +9,30 @@
     </PageHeader>
 
     <FilterBar>
-      <v-row dense>
-        <v-col cols="12" sm="8">
-          <v-text-field
-            v-model="searchQuery"
-            :placeholder="t('sales.search')"
-            variant="outlined"
-            density="comfortable"
-            prepend-inner-icon="mdi-magnify"
-            clearable
-            autofocus
-            hide-details
-          />
-        </v-col>
-        <v-col cols="12" sm="4">
-          <v-select
-            v-model="statusFilter"
-            :items="statusOptions"
-            item-title="title"
-            item-value="value"
-            :label="t('sales.filterByStatus')"
-            variant="outlined"
-            density="comfortable"
-            clearable
-            hide-details
-          />
-        </v-col>
-      </v-row>
+      <v-text-field
+        v-model="searchQuery"
+        :placeholder="t('sales.search')"
+        variant="outlined"
+        density="comfortable"
+        prepend-inner-icon="mdi-magnify"
+        clearable
+        autofocus
+        hide-details
+        class="flex-grow-1"
+        style="min-width: 200px"
+      />
+      <v-select
+        v-model="statusFilter"
+        :items="statusOptions"
+        item-title="title"
+        item-value="value"
+        :label="t('sales.filterByStatus')"
+        variant="outlined"
+        density="comfortable"
+        clearable
+        hide-details
+        style="max-width: 200px"
+      />
     </FilterBar>
 
     <v-card class="border" elevation="0" variant="flat" rounded="lg">
