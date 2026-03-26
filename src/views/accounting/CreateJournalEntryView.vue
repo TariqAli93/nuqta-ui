@@ -7,15 +7,11 @@
       :back-to="{ name: 'AccountingJournal' }"
     />
 
-    <v-card elevation="0" variant="flat" class="border" rounded="lg">
-      <v-toolbar density="compact" color="transparent" class="px-2">
-        <v-icon class="ms-2" size="22" color="primary">mdi-book-plus</v-icon>
-        <v-toolbar-title class="text-subtitle-1 font-weight-bold ms-3">
-          إنشاء قيد يدوي
-        </v-toolbar-title>
-      </v-toolbar>
-
-      <v-divider />
+    <v-card elevation="0" variant="flat" class="border cje-section-card" rounded="lg">
+      <div class="cje-section-header bg-primary">
+        <v-icon size="18" class="me-2">mdi-book-plus</v-icon>
+        إنشاء قيد يدوي
+      </div>
 
       <v-card-text>
         <v-row dense>
@@ -149,20 +145,23 @@
         </v-table>
       </v-card-text>
 
-      <!-- Balance status -->
-      <v-alert
+      <!-- Balance status bar -->
+      <v-card
         v-if="form.lines.length > 0 && (totalDebit > 0 || totalCredit > 0)"
-        :type="isBalanced ? 'success' : 'error'"
-        variant="tonal"
-        density="compact"
-        class="mx-4 mb-4"
+        elevation="0"
+        variant="flat"
+        :color="isBalanced ? 'success' : 'error'"
+        class="cje-eq-bar mx-4 mb-4"
+        rounded="lg"
       >
-        {{
-          isBalanced
-            ? 'القيد متوازن ✓'
-            : `القيد غير متوازن — الفرق: ${formatCurrency(Math.abs(totalDebit - totalCredit))}`
-        }}
-      </v-alert>
+        <v-card-text class="d-flex align-center justify-center ga-2 py-2 text-body-2 flex-wrap">
+          <v-icon size="18">{{ isBalanced ? 'mdi-check-circle' : 'mdi-alert-circle' }}</v-icon>
+          <span v-if="isBalanced">القيد متوازن</span>
+          <span v-else>
+            القيد غير متوازن — الفرق: {{ formatCurrency(Math.abs(totalDebit - totalCredit)) }}
+          </span>
+        </v-card-text>
+      </v-card>
 
       <v-divider />
 
@@ -307,3 +306,21 @@ onMounted(() => {
   void accountingStore.fetchAccountingSettings();
 });
 </script>
+
+<style scoped>
+.cje-section-card {
+  display: flex;
+  flex-direction: column;
+}
+.cje-section-header {
+  padding: 10px 16px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+}
+.cje-eq-bar,
+.cje-eq-bar .v-card-text {
+  color: #fff !important;
+}
+</style>

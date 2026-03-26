@@ -1,106 +1,112 @@
 <template>
   <SubPageShell>
-    <v-toolbar color="transparent" density="compact" class="px-2 mb-4">
-    <v-tabs v-model="activeTab" color="primary" class="me-4">
-      <v-tab value="all">الكل</v-tab>
-      <v-tab value="posted">مرحل</v-tab>
-      <v-tab value="unposted">غير مرحل</v-tab>
-    </v-tabs>
+    <div class="d-flex flex-column ga-4">
+      <!-- ───── Filter toolbar ───── -->
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-text class="d-flex align-center ga-3 flex-wrap py-3">
+          <v-tabs v-model="activeTab" color="primary" class="me-4">
+            <v-tab value="all">الكل</v-tab>
+            <v-tab value="posted">مرحل</v-tab>
+            <v-tab value="unposted">غير مرحل</v-tab>
+          </v-tabs>
 
-    <v-select
-      v-model="filterSource"
-      :items="sourceOptions"
-      clearable
-      label="المصدر"
-      density="comfortable"
-      variant="outlined"
-      hide-details
-      style="max-width: 180px"
-      class="me-3"
-    />
+          <v-select
+            v-model="filterSource"
+            :items="sourceOptions"
+            clearable
+            label="المصدر"
+            density="comfortable"
+            variant="outlined"
+            hide-details
+            style="max-width: 180px"
+            class="me-3"
+          />
 
-    <v-spacer />
+          <v-spacer />
 
-    <v-btn
-      color="primary"
-      variant="flat"
-      class="win-btn"
-      prepend-icon="mdi-plus"
-      :to="{ name: 'JournalEntryCreate' }"
-    >
-      إنشاء قيد
-    </v-btn>
-  </v-toolbar>
-
-  <v-card elevation="0" variant="flat" class="border" rounded="lg">
-    <v-card-text class="pa-0">
-      <v-data-table-server
-        v-model:items-per-page="options.itemsPerPage"
-        v-model:page="options.page"
-        :headers="headers"
-        :items="store.journalEntries"
-        :items-length="store.journalTotal"
-        :loading="loading"
-        density="comfortable"
-        @update:options="onOptionsUpdate"
-      >
-        <template #item.entryNumber="{ item }">
-          <span class="font-weight-medium text-primary">{{ item.entryNumber }}</span>
-        </template>
-
-        <template #item.entryDate="{ item }">
-          {{ formatDate(item.entryDate) }}
-        </template>
-
-        <template #item.totalAmount="{ item }">
-          {{ formatMoney(item.totalAmount, item.currency) }}
-        </template>
-
-        <template #item.isPosted="{ item }">
-          <v-chip size="small" :color="item.isPosted ? 'success' : 'warning'" variant="tonal">
-            {{ item.isPosted ? 'مرحل' : 'غير مرحل' }}
-          </v-chip>
-        </template>
-
-        <template #item.actions="{ item }">
           <v-btn
-            v-if="!item.isPosted"
-            variant="text"
-            color="success"
-            size="small"
-            :loading="actionLoading === item.id"
-            @click="postEntry(item)"
-            class="me-2"
-          >
-            ترحيل
-          </v-btn>
-          <v-btn
-            v-if="item.isPosted"
-            variant="text"
-            color="warning"
-            size="small"
-            :loading="actionLoading === item.id"
-            @click="unpostEntry(item)"
-            class="me-2"
-          >
-            إلغاء الترحيل
-          </v-btn>
-          <v-btn
-            variant="text"
             color="primary"
-            size="small"
-            :to="{ name: 'JournalEntryDetail', params: { id: item.id } }"
+            variant="flat"
+            class="win-btn"
+            prepend-icon="mdi-plus"
+            :to="{ name: 'JournalEntryCreate' }"
           >
-            عرض التفاصيل
+            إنشاء قيد
           </v-btn>
-        </template>
+        </v-card-text>
+      </v-card>
 
-        <template #no-data>
-          <div class="text-center py-6 text-medium-emphasis">لا توجد قيود لعرضها</div>
-        </template>
-      </v-data-table-server>
-    </v-card-text>
-  </v-card>
+      <!-- Data table -->
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-text class="pa-0">
+          <v-data-table-server
+            v-model:items-per-page="options.itemsPerPage"
+            v-model:page="options.page"
+            :headers="headers"
+            :items="store.journalEntries"
+            :items-length="store.journalTotal"
+            :loading="loading"
+            density="comfortable"
+            @update:options="onOptionsUpdate"
+          >
+            <template #item.entryNumber="{ item }">
+              <span class="font-weight-medium text-primary">{{ item.entryNumber }}</span>
+            </template>
+
+            <template #item.entryDate="{ item }">
+              {{ formatDate(item.entryDate) }}
+            </template>
+
+            <template #item.totalAmount="{ item }">
+              {{ formatMoney(item.totalAmount, item.currency) }}
+            </template>
+
+            <template #item.isPosted="{ item }">
+              <v-chip size="small" :color="item.isPosted ? 'success' : 'warning'" variant="tonal">
+                {{ item.isPosted ? 'مرحل' : 'غير مرحل' }}
+              </v-chip>
+            </template>
+
+            <template #item.actions="{ item }">
+              <v-btn
+                v-if="!item.isPosted"
+                variant="text"
+                color="success"
+                size="small"
+                :loading="actionLoading === item.id"
+                @click="postEntry(item)"
+                class="me-2"
+              >
+                ترحيل
+              </v-btn>
+              <v-btn
+                v-if="item.isPosted"
+                variant="text"
+                color="warning"
+                size="small"
+                :loading="actionLoading === item.id"
+                @click="unpostEntry(item)"
+                class="me-2"
+              >
+                إلغاء الترحيل
+              </v-btn>
+              <v-btn
+                variant="text"
+                color="primary"
+                size="small"
+                :to="{ name: 'JournalEntryDetail', params: { id: item.id } }"
+              >
+                عرض التفاصيل
+              </v-btn>
+            </template>
+
+            <template #no-data>
+              <div class="text-center py-6 text-medium-emphasis">لا توجد قيود لعرضها</div>
+            </template>
+          </v-data-table-server>
+        </v-card-text>
+      </v-card>
+    </div>
   </SubPageShell>
 </template>
 

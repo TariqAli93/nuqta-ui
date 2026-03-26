@@ -1,155 +1,145 @@
 <template>
   <SubPageShell>
-    <v-card elevation="0" variant="flat" class="border" rounded="lg">
-    <!-- Toolbar -->
-    <v-toolbar color="transparent" density="compact" class="px-2 my-2">
-      <v-text-field
-        v-model="search"
-        density="comfortable"
-        variant="outlined"
-        hide-details
-        prepend-inner-icon="mdi-magnify"
-        placeholder="بحث بالاسم أو الكود..."
-        clearable
-        class="me-3"
-        style="max-width: 280px"
-      />
+    <div class="d-flex flex-column ga-4">
+      <!-- ───── Filter toolbar ───── -->
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-text class="d-flex align-center ga-3 flex-wrap py-3">
+          <v-text-field
+            v-model="search"
+            density="comfortable"
+            variant="outlined"
+            hide-details
+            prepend-inner-icon="mdi-magnify"
+            placeholder="بحث بالاسم أو الكود..."
+            clearable
+            style="max-width: 280px"
+          />
 
-      <v-select
-        v-model="filterType"
-        :items="accountTypeOptions"
-        density="comfortable"
-        variant="outlined"
-        hide-details
-        clearable
-        placeholder="تصفية حسب النوع"
-        class="me-3"
-        style="max-width: 200px"
-      />
+          <v-select
+            v-model="filterType"
+            :items="accountTypeOptions"
+            density="comfortable"
+            variant="outlined"
+            hide-details
+            clearable
+            placeholder="تصفية حسب النوع"
+            style="max-width: 200px"
+          />
 
-      <v-spacer />
+          <v-chip variant="tonal"> {{ filteredAccounts.length }} حساب </v-chip>
 
-      <v-btn
-        variant="flat"
-        color="primary"
-        class="win-btn me-2"
-        prepend-icon="mdi-plus"
-        @click="accountFormDialog?.open()"
+          <v-spacer />
+
+          <v-btn
+            variant="flat"
+            color="primary"
+            class="win-btn"
+            prepend-icon="mdi-plus"
+            @click="accountFormDialog?.open()"
+          >
+            إضافة حساب
+          </v-btn>
+        </v-card-text>
+      </v-card>
+
+      <!-- Error State -->
+      <v-alert
+        v-if="accountingStore.error && !accountingStore.loading"
+        type="error"
+        variant="tonal"
+        closable
       >
-        إضافة حساب
-      </v-btn>
+        {{ accountingStore.error }}
+        <template #append>
+          <v-btn variant="text" @click="refresh">إعادة المحاولة</v-btn>
+        </template>
+      </v-alert>
 
-      <v-chip variant="tonal" class="me-2">
-        {{ filteredAccounts.length }} حساب
-      </v-chip>
+      <!-- Data Table -->
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-text class="pa-0">
+          <v-data-table
+            v-if="!accountingStore.error || accountingStore.accounts.length > 0"
+            :headers="accountHeaders"
+            :items="filteredAccounts"
+            :loading="accountingStore.loading"
+            :search="search ?? undefined"
+            density="comfortable"
+            :items-per-page="25"
+            :items-per-page-options="[10, 25, 50, 100]"
+            hover
+            class="chart-of-accounts-table ds-table-enhanced ds-table-striped"
+            @click:row="(_e: Event, { item }: { item: Account }) => onRowClick(item)"
+          >
+            <template #item.code="{ item }">
+              <span
+                :style="{ paddingInlineStart: getIndent(item) + 'px' }"
+                class="font-weight-medium text-mono"
+              >
+                {{ item.code }}
+              </span>
+            </template>
 
-      <v-btn
-        icon="mdi-refresh"
-        variant="text"
-        :loading="accountingStore.loading"
-        @click="refresh"
-      />
-    </v-toolbar>
+            <template #item.name="{ item }">
+              <span :class="{ 'font-weight-bold': isParentAccount(item) }">
+                {{ item.name }}
+              </span>
+            </template>
 
-    <v-divider />
+            <template #item.accountType="{ item }">
+              <v-chip size="x-small" variant="tonal" :color="accountTypeColor(item.accountType)">
+                {{ accountTypeLabel(item.accountType) }}
+              </v-chip>
+            </template>
 
-    <!-- Error State -->
-    <v-alert
-      v-if="accountingStore.error && !accountingStore.loading"
-      type="error"
-      variant="tonal"
-      class="ma-4"
-      closable
-    >
-      {{ accountingStore.error }}
-      <template #append>
-        <v-btn variant="text" @click="refresh">إعادة المحاولة</v-btn>
-      </template>
-    </v-alert>
+            <template #item.balance="{ item }">
+              <span :class="balanceClass(item.balance ?? 0)">
+                {{ formatCurrency(item.balance ?? 0) }}
+              </span>
+            </template>
 
-    <!-- Data Table -->
-    <v-card-text class="pa-0">
-      <v-data-table
-        v-if="!accountingStore.error || accountingStore.accounts.length > 0"
-        :headers="accountHeaders"
-        :items="filteredAccounts"
-        :loading="accountingStore.loading"
-        :search="search ?? undefined"
-        density="comfortable"
-        :items-per-page="25"
-        :items-per-page-options="[10, 25, 50, 100]"
-        hover
-        class="chart-of-accounts-table ds-table-enhanced ds-table-striped"
-      @click:row="(_e: Event, { item }: { item: Account }) => onRowClick(item)"
-    >
-      <template #item.code="{ item }">
-        <span
-          :style="{ paddingInlineStart: getIndent(item) + 'px' }"
-          class="font-weight-medium text-mono"
-        >
-          {{ item.code }}
-        </span>
-      </template>
+            <template #item.actions="{ item }">
+              <v-menu location="start">
+                <template #activator="{ props }">
+                  <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" size="x-small" />
+                </template>
+                <v-list density="compact" min-width="160">
+                  <v-list-item
+                    prepend-icon="mdi-eye-outline"
+                    title="عرض التفاصيل"
+                    @click="navigateToAccount(item)"
+                  />
+                  <v-list-item
+                    prepend-icon="mdi-pencil-outline"
+                    title="تعديل"
+                    @click="accountFormDialog?.open(item)"
+                  />
+                  <v-list-item
+                    prepend-icon="mdi-book-open-page-variant-outline"
+                    title="دفتر الأستاذ"
+                    @click="navigateToLedger(item)"
+                  />
+                </v-list>
+              </v-menu>
+            </template>
 
-      <template #item.name="{ item }">
-        <span :class="{ 'font-weight-bold': isParentAccount(item) }">
-          {{ item.name }}
-        </span>
-      </template>
-
-      <template #item.accountType="{ item }">
-        <v-chip size="x-small" variant="tonal" :color="accountTypeColor(item.accountType)">
-          {{ accountTypeLabel(item.accountType) }}
-        </v-chip>
-      </template>
-
-      <template #item.balance="{ item }">
-        <span :class="balanceClass(item.balance ?? 0)">
-          {{ formatCurrency(item.balance ?? 0) }}
-        </span>
-      </template>
-
-      <template #item.actions="{ item }">
-        <v-menu location="start">
-          <template #activator="{ props }">
-            <v-btn v-bind="props" icon="mdi-dots-vertical" variant="text" size="x-small" />
-          </template>
-          <v-list density="compact" min-width="160">
-            <v-list-item
-              prepend-icon="mdi-eye-outline"
-              title="عرض التفاصيل"
-              @click="navigateToAccount(item)"
-            />
-            <v-list-item
-              prepend-icon="mdi-pencil-outline"
-              title="تعديل"
-              @click="accountFormDialog?.open(item)"
-            />
-            <v-list-item
-              prepend-icon="mdi-book-open-page-variant-outline"
-              title="دفتر الأستاذ"
-              @click="navigateToLedger(item)"
-            />
-          </v-list>
-        </v-menu>
-      </template>
-
-      <template #no-data>
-        <empty-state
-          v-if="!accountingStore.loading"
-          icon="mdi-chart-timeline-variant-shimmer"
-          :title="search || filterType ? 'لا توجد نتائج' : 'لا توجد حسابات'"
-          :description="
-            search || filterType
-              ? 'لا توجد حسابات مطابقة لمعايير البحث الحالية'
-              : 'لم يتم تهيئة دليل الحسابات بعد'
-          "
-        />
-      </template>
-    </v-data-table>
-    </v-card-text>
-    <AccountFormDialog ref="accountFormDialog" />
-  </v-card>
+            <template #no-data>
+              <empty-state
+                v-if="!accountingStore.loading"
+                icon="mdi-chart-timeline-variant-shimmer"
+                :title="search || filterType ? 'لا توجد نتائج' : 'لا توجد حسابات'"
+                :description="
+                  search || filterType
+                    ? 'لا توجد حسابات مطابقة لمعايير البحث الحالية'
+                    : 'لم يتم تهيئة دليل الحسابات بعد'
+                "
+              />
+            </template>
+          </v-data-table>
+        </v-card-text>
+        <AccountFormDialog ref="accountFormDialog" />
+      </v-card>
+    </div>
   </SubPageShell>
 </template>
 

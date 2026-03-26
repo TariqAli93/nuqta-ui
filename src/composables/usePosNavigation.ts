@@ -288,7 +288,6 @@ export function usePosNavigation() {
     if (!authStore.isAuthenticated) return [];
 
     return [
-      { to: '/dashboard', icon: 'mdi-view-dashboard', label: 'لوحة المعلومات', visible: true },
       {
         to: '/backup',
         icon: 'mdi-backup-restore',

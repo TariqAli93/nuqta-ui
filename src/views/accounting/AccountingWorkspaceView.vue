@@ -8,16 +8,20 @@
       </template>
     </PageHeader>
 
-    <!-- <v-tabs v-model="activeTab" bg-color="surface" show-arrows class="mb-4">
-      <v-tab
-        v-for="tab in tabs"
-        :key="tab.value"
-        :value="tab.value"
-        @click="navigateToTab(tab.route)"
-      >
-        {{ tab.label }}
-      </v-tab>
-    </v-tabs> -->
+    <!-- <v-card elevation="0" variant="flat" class="border mb-4" rounded="lg">
+      <v-card-text class="pa-0">
+        <v-tabs v-model="activeTab" color="primary" show-arrows>
+          <v-tab
+            v-for="tab in tabs"
+            :key="tab.value"
+            :value="tab.value"
+            @click="navigateToTab(tab.route)"
+          >
+            {{ tab.label }}
+          </v-tab>
+        </v-tabs>
+      </v-card-text>
+    </v-card> -->
 
     <router-view />
   </PageShell>

@@ -7,113 +7,173 @@
       :back-to="{ name: 'AccountingAccounts' }"
     />
 
-    <!-- Account header with date filters -->
-    <v-card elevation="0" variant="flat" class="border py-2 px-4 mb-4" rounded="lg">
-      <div class="d-flex align-center ga-4 flex-wrap">
-        <div v-if="account">
-          <div class="text-h6 font-weight-bold">{{ account.code }} — {{ account.name }}</div>
-          <v-chip
-            size="small"
+    <div class="d-flex flex-column ga-4">
+      <!-- ───── Filter toolbar ───── -->
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-text class="d-flex align-center ga-3 flex-wrap py-3">
+          <div v-if="account">
+            <div class="text-h6 font-weight-bold">{{ account.code }} — {{ account.name }}</div>
+            <v-chip
+              size="small"
+              variant="tonal"
+              :color="accountTypeColor(account.accountType)"
+              class="mt-1"
+            >
+              {{ accountTypeLabel(account.accountType) }}
+            </v-chip>
+          </div>
+          <v-skeleton-loader v-else type="text" width="300" />
+
+          <v-spacer />
+
+          <AppDateInput
+            v-model="dateFrom"
+            label="من تاريخ"
+            density="comfortable"
+            hide-details
+            variant="outlined"
+            style="max-width: 180px"
+            clearable
+          />
+          <AppDateInput
+            v-model="dateTo"
+            label="إلى تاريخ"
+            density="comfortable"
+            hide-details
+            variant="outlined"
+            style="max-width: 180px"
+            clearable
+          />
+          <v-btn
+            color="primary"
             variant="tonal"
-            :color="accountTypeColor(account.accountType)"
-            class="mt-1"
+            class="win-btn"
+            :loading="loading"
+            prepend-icon="mdi-refresh"
+            @click="loadLedger"
           >
-            {{ accountTypeLabel(account.accountType) }}
-          </v-chip>
-        </div>
-        <v-skeleton-loader v-else type="text" width="300" />
+            عرض
+          </v-btn>
+        </v-card-text>
+      </v-card>
 
-        <v-spacer />
+      <!-- Error -->
+      <v-alert v-if="errorMsg" type="error" variant="tonal" closable>
+        {{ errorMsg }}
+      </v-alert>
 
-        <AppDateInput
-          v-model="dateFrom"
-          label="من تاريخ"
-          density="comfortable"
-          hide-details
-          variant="outlined"
-          style="max-width: 180px"
-          clearable
-        />
-        <AppDateInput
-          v-model="dateTo"
-          label="إلى تاريخ"
-          density="comfortable"
-          hide-details
-          variant="outlined"
-          style="max-width: 180px"
-          clearable
-        />
-        <v-btn
-          color="primary"
-          variant="tonal"
-          class="win-btn"
-          :loading="loading"
-          @click="loadLedger"
-        >
-          عرض
-        </v-btn>
-      </div>
-    </v-card>
+      <!-- Loading skeleton -->
+      <template v-if="loading && !entries.length">
+        <v-row dense>
+          <v-col v-for="n in 3" :key="n" cols="12" md="4">
+            <v-skeleton-loader type="card" />
+          </v-col>
+        </v-row>
+        <v-skeleton-loader type="table" />
+      </template>
 
-    <!-- Error -->
-    <v-alert v-if="errorMsg" type="error" variant="tonal" class="mb-4" closable>
-      {{ errorMsg }}
-    </v-alert>
+      <!-- ───── Content ───── -->
+      <template v-if="entries.length">
+        <!-- KPI summary strip -->
+        <v-row dense>
+          <v-col cols="12" md="4">
+            <v-card elevation="0" variant="flat" class="border gl-kpi-card" rounded="lg">
+              <v-card-text class="d-flex align-center ga-3 pa-4">
+                <v-avatar color="error" variant="tonal" size="48" rounded="lg">
+                  <v-icon size="24">mdi-arrow-top-right</v-icon>
+                </v-avatar>
+                <div class="flex-grow-1">
+                  <div class="text-caption text-medium-emphasis">إجمالي المدين</div>
+                  <div class="text-h6 font-weight-bold">{{ formatCurrency(totalDebit) }}</div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="4">
+            <v-card elevation="0" variant="flat" class="border gl-kpi-card" rounded="lg">
+              <v-card-text class="d-flex align-center ga-3 pa-4">
+                <v-avatar color="success" variant="tonal" size="48" rounded="lg">
+                  <v-icon size="24">mdi-arrow-bottom-left</v-icon>
+                </v-avatar>
+                <div class="flex-grow-1">
+                  <div class="text-caption text-medium-emphasis">إجمالي الدائن</div>
+                  <div class="text-h6 font-weight-bold">{{ formatCurrency(totalCredit) }}</div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12" md="4">
+            <v-card elevation="0" variant="flat" class="border gl-kpi-card" rounded="lg">
+              <v-card-text class="d-flex align-center ga-3 pa-4">
+                <v-avatar
+                  :color="closingBalance >= 0 ? 'primary' : 'warning'"
+                  variant="tonal"
+                  size="48"
+                  rounded="lg"
+                >
+                  <v-icon size="24">mdi-cash-register</v-icon>
+                </v-avatar>
+                <div class="flex-grow-1">
+                  <div class="text-caption text-medium-emphasis">الرصيد الختامي</div>
+                  <div class="text-h6 font-weight-bold">{{ formatCurrency(closingBalance) }}</div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
 
-    <!-- Ledger table -->
-    <v-card elevation="0" variant="flat" class="border" rounded="lg">
-      <v-card-text class="pa-0">
-        <v-data-table
-          :headers="headers"
-          :items="entries"
-          :loading="loading"
-          density="comfortable"
-          :items-per-page="25"
-          :items-per-page-options="[10, 25, 50, 100]"
-          class="ds-table-enhanced ds-table-striped"
-        >
-          <template #item.entryDate="{ item }">
-            {{ formatDate(item.entryDate) }}
-          </template>
-          <template #item.entryNumber="{ item }">
-            <a class="text-primary cursor-pointer" @click="goToEntry(item.journalEntryId)">
-              {{ item.entryNumber }}
-            </a>
-          </template>
-          <template #item.debit="{ item }">
-            <span v-if="item.debit" class="text-error">{{ formatCurrency(item.debit) }}</span>
-          </template>
-          <template #item.credit="{ item }">
-            <span v-if="item.credit" class="text-success">{{ formatCurrency(item.credit) }}</span>
-          </template>
-          <template #item.runningBalance="{ item }">
-            <span :class="item.runningBalance >= 0 ? 'text-success' : 'text-error'">
-              {{ formatCurrency(item.runningBalance) }}
-            </span>
-          </template>
-          <template #no-data>
-            <div class="text-center py-8 text-medium-emphasis">
-              لا توجد حركات لهذا الحساب في الفترة المحددة
-            </div>
-          </template>
-
-          <template #bottom>
-            <v-divider />
-            <v-row v-if="entries.length > 0" dense class="px-4 py-3">
-              <v-col class="text-end font-weight-bold">
-                إجمالي المدين: {{ formatCurrency(totalDebit) }}
-              </v-col>
-              <v-col class="text-end font-weight-bold">
-                إجمالي الدائن: {{ formatCurrency(totalCredit) }}
-              </v-col>
-              <v-col class="text-end font-weight-bold">
-                الرصيد الختامي: {{ formatCurrency(closingBalance) }}
-              </v-col>
-            </v-row>
-          </template>
-        </v-data-table>
-      </v-card-text>
-    </v-card>
+        <!-- Ledger table -->
+        <v-card elevation="0" variant="flat" class="border" rounded="lg">
+          <v-card-text class="pa-0">
+            <v-data-table
+              :headers="headers"
+              :items="entries"
+              :loading="loading"
+              density="comfortable"
+              :items-per-page="25"
+              :items-per-page-options="[10, 25, 50, 100]"
+              class="ds-table-enhanced ds-table-striped"
+            >
+              <template #item.entryDate="{ item }">
+                {{ formatDate(item.entryDate) }}
+              </template>
+              <template #item.entryNumber="{ item }">
+                <a class="text-primary cursor-pointer" @click="goToEntry(item.journalEntryId)">
+                  {{ item.entryNumber }}
+                </a>
+              </template>
+              <template #item.debit="{ item }">
+                <span v-if="item.debit" class="text-error">{{ formatCurrency(item.debit) }}</span>
+              </template>
+              <template #item.credit="{ item }">
+                <span v-if="item.credit" class="text-success">{{
+                  formatCurrency(item.credit)
+                }}</span>
+              </template>
+              <template #item.runningBalance="{ item }">
+                <span :class="item.runningBalance >= 0 ? 'text-success' : 'text-error'">
+                  {{ formatCurrency(item.runningBalance) }}
+                </span>
+              </template>
+              <template #no-data>
+                <div class="text-center py-8 text-medium-emphasis">
+                  لا توجد حركات لهذا الحساب في الفترة المحددة
+                </div>
+              </template>
+            </v-data-table>
+          </v-card-text>
+        </v-card>
+      </template>
+      <template v-else-if="!loading && !errorMsg && !entries.length">
+        <v-card elevation="0" variant="flat" class="border" rounded="lg">
+          <EmptyState
+            icon="mdi-book-open-variant"
+            title="لا توجد حركات"
+            description="لا توجد حركات لهذا الحساب في الفترة المحددة"
+          />
+        </v-card>
+      </template>
+    </div>
   </PageShell>
 </template>
 
@@ -128,6 +188,7 @@ import { useCurrency } from '@/composables/useCurrency';
 import { formatDate } from '@/utils/formatters';
 import type { Account } from '@/types/domain';
 import type { LedgerEntry } from '@/api/endpoints/accounting';
+import { EmptyState } from '@/components/common';
 
 const route = useRoute();
 const router = useRouter();
@@ -200,3 +261,12 @@ onMounted(async () => {
   await loadLedger();
 });
 </script>
+
+<style scoped>
+.gl-kpi-card {
+  transition: box-shadow 0.2s ease;
+}
+.gl-kpi-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+</style>

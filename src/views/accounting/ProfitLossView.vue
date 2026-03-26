@@ -1,8 +1,9 @@
 <template>
   <SubPageShell>
     <div class="d-flex flex-column ga-4">
-      <v-card elevation="0" variant="flat" class="border py-2 px-4" rounded="lg">
-        <div class="d-flex align-center ga-3 flex-wrap">
+      <!-- ───── Filter toolbar ───── -->
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-text class="d-flex align-center ga-3 flex-wrap py-3">
           <AppDateInput
             v-model="dateFrom"
             label="من تاريخ"
@@ -26,131 +27,208 @@
             variant="tonal"
             class="win-btn"
             :loading="accountingStore.loading"
+            prepend-icon="mdi-refresh"
             @click="refresh"
           >
             عرض التقرير
           </v-btn>
           <v-spacer />
-          <v-btn variant="text" class="win-ghost-btn" prepend-icon="mdi-download" @click="exportCSV"
-            >تصدير CSV</v-btn
-          >
-          <v-btn variant="text" class="win-ghost-btn" prepend-icon="mdi-printer" @click="printTable"
-            >طباعة</v-btn
-          >
-        </div>
+          <v-btn-group variant="text" density="comfortable">
+            <v-btn prepend-icon="mdi-download" @click="exportCSV">تصدير CSV</v-btn>
+            <v-btn prepend-icon="mdi-printer" @click="printTable">طباعة</v-btn>
+          </v-btn-group>
+        </v-card-text>
       </v-card>
 
+      <!-- Error -->
       <v-alert
         v-if="accountingStore.error && !accountingStore.loading"
         type="error"
         variant="tonal"
-        class="mx-4 mb-4"
         closable
       >
         {{ accountingStore.error }}
       </v-alert>
 
-      <v-skeleton-loader
-        v-if="accountingStore.loading && !accountingStore.profitLoss"
-        type="table"
-        class="mx-4"
-      />
+      <!-- Loading skeleton -->
+      <template v-if="accountingStore.loading && !pl">
+        <v-row dense>
+          <v-col v-for="n in 3" :key="n" cols="12" md="4">
+            <v-skeleton-loader type="card" />
+          </v-col>
+        </v-row>
+        <v-skeleton-loader type="table" />
+      </template>
 
-      <div id="profit-loss-report">
-        <v-row dense class="px-4 mb-4">
+      <!-- ───── Content (only when data loaded) ───── -->
+      <div v-if="pl" id="profit-loss-report" class="d-flex flex-column ga-4">
+        <!-- KPI summary strip -->
+        <v-row dense>
           <v-col cols="12" md="4">
-            <v-card variant="tonal" color="success">
-              <v-card-text class="text-center">
-                <div class="text-caption">إجمالي الإيرادات</div>
-                <div class="text-h6">
-                  {{ formatCurrency(accountingStore.profitLoss?.totalRevenue || 0) }}
+            <v-card elevation="0" variant="flat" class="border pl-kpi-card" rounded="lg">
+              <v-card-text class="d-flex align-center ga-3 pa-4">
+                <v-avatar color="success" variant="tonal" size="48" rounded="lg">
+                  <v-icon size="24">mdi-trending-up</v-icon>
+                </v-avatar>
+                <div class="flex-grow-1">
+                  <div class="text-caption text-medium-emphasis">إجمالي الإيرادات</div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ formatCurrency(pl.totalRevenue || 0) }}
+                  </div>
                 </div>
               </v-card-text>
             </v-card>
           </v-col>
           <v-col cols="12" md="4">
-            <v-card variant="tonal" color="error">
-              <v-card-text class="text-center">
-                <div class="text-caption">إجمالي المصاريف</div>
-                <div class="text-h6">
-                  {{ formatCurrency(accountingStore.profitLoss?.totalExpenses || 0) }}
+            <v-card elevation="0" variant="flat" class="border pl-kpi-card" rounded="lg">
+              <v-card-text class="d-flex align-center ga-3 pa-4">
+                <v-avatar color="error" variant="tonal" size="48" rounded="lg">
+                  <v-icon size="24">mdi-trending-down</v-icon>
+                </v-avatar>
+                <div class="flex-grow-1">
+                  <div class="text-caption text-medium-emphasis">إجمالي المصاريف</div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ formatCurrency(pl.totalExpenses || 0) }}
+                  </div>
                 </div>
               </v-card-text>
             </v-card>
           </v-col>
           <v-col cols="12" md="4">
-            <v-card
-              variant="tonal"
-              :color="(accountingStore.profitLoss?.netIncome || 0) >= 0 ? 'primary' : 'warning'"
-            >
-              <v-card-text class="text-center">
-                <div class="text-caption">صافي الدخل</div>
-                <div class="text-h6">
-                  {{ formatCurrency(accountingStore.profitLoss?.netIncome || 0) }}
+            <v-card elevation="0" variant="flat" class="border pl-kpi-card" rounded="lg">
+              <v-card-text class="d-flex align-center ga-3 pa-4">
+                <v-avatar
+                  :color="(pl.netIncome || 0) >= 0 ? 'primary' : 'warning'"
+                  variant="tonal"
+                  size="48"
+                  rounded="lg"
+                >
+                  <v-icon size="24">mdi-cash-multiple</v-icon>
+                </v-avatar>
+                <div class="flex-grow-1">
+                  <div class="text-caption text-medium-emphasis">صافي الدخل</div>
+                  <div class="text-h6 font-weight-bold">
+                    {{ formatCurrency(pl.netIncome || 0) }}
+                  </div>
                 </div>
               </v-card-text>
             </v-card>
           </v-col>
         </v-row>
 
-        <!-- Detailed breakdown -->
-        <v-card-text v-if="accountingStore.profitLoss">
-          <v-row dense>
-            <v-col cols="12" md="6">
-              <v-card class="mb-3">
-                <v-card-title class="text-subtitle-2 font-weight-bold bg-success-lighten-4">
-                  الإيرادات
-                </v-card-title>
-                <v-list density="compact">
+        <!-- Net income equation bar -->
+        <v-card
+          elevation="0"
+          variant="flat"
+          :color="(pl.netIncome || 0) >= 0 ? 'success' : 'error'"
+          class="pl-eq-bar"
+          rounded="lg"
+        >
+          <v-card-text class="d-flex align-center justify-center ga-2 py-2 text-body-2 flex-wrap">
+            <v-icon size="18">{{
+              (pl.netIncome || 0) >= 0 ? 'mdi-check-circle' : 'mdi-alert-circle'
+            }}</v-icon>
+            <span>
+              <strong>الإيرادات</strong> {{ formatCurrency(pl.totalRevenue || 0) }}
+              <span class="mx-1 font-weight-bold">−</span>
+              <strong>المصاريف</strong> {{ formatCurrency(pl.totalExpenses || 0) }}
+              <span class="mx-1 font-weight-bold">=</span>
+              <strong>صافي الدخل</strong> {{ formatCurrency(pl.netIncome || 0) }}
+            </span>
+          </v-card-text>
+        </v-card>
+
+        <!-- ───── Detail columns ───── -->
+        <v-row dense>
+          <!-- Revenue column -->
+          <v-col cols="12" md="6">
+            <v-card elevation="0" variant="flat" class="border pl-section-card" rounded="lg">
+              <div class="pl-section-header bg-success">
+                <v-icon size="18" class="me-2">mdi-trending-up</v-icon>
+                الإيرادات
+              </div>
+              <v-list density="compact" class="py-0">
+                <template v-if="(pl.revenue || []).length">
                   <v-list-item
-                    v-for="item in accountingStore.profitLoss.revenue || []"
+                    v-for="item in pl.revenue"
                     :key="item.accountId"
+                    class="pl-account-row"
                   >
-                    <v-list-item-title>{{ item.name }}</v-list-item-title>
+                    <v-list-item-title class="text-body-2">{{ item.name }}</v-list-item-title>
                     <template #append>
-                      <span class="font-weight-medium">{{ formatCurrency(item.amount || 0) }}</span>
+                      <span class="text-body-2 font-weight-medium text-no-wrap">
+                        {{ formatCurrency(item.amount || 0) }}
+                      </span>
                     </template>
                   </v-list-item>
-                  <v-list-item v-if="!(accountingStore.profitLoss.revenue || []).length">
-                    <v-list-item-title class="text-medium-emphasis"
-                      >لا توجد إيرادات</v-list-item-title
-                    >
-                  </v-list-item>
-                </v-list>
-              </v-card>
-            </v-col>
-            <v-col cols="12" md="6">
-              <v-card class="mb-3">
-                <v-card-title class="text-subtitle-2 font-weight-bold bg-error-lighten-4">
-                  المصاريف
-                </v-card-title>
-                <v-list density="compact">
+                </template>
+                <v-list-item v-else>
+                  <div class="text-center text-medium-emphasis py-4 w-100">
+                    <v-icon size="32" class="mb-1 opacity-40">mdi-cash-off</v-icon>
+                    <div class="text-caption">لا توجد إيرادات</div>
+                  </div>
+                </v-list-item>
+              </v-list>
+              <v-divider />
+              <div
+                class="d-flex align-center justify-space-between pa-3 bg-success pl-section-footer"
+              >
+                <span class="text-body-2 font-weight-bold">الإجمالي</span>
+                <span class="text-body-2 font-weight-bold">
+                  {{ formatCurrency(pl.totalRevenue || 0) }}
+                </span>
+              </div>
+            </v-card>
+          </v-col>
+
+          <!-- Expenses column -->
+          <v-col cols="12" md="6">
+            <v-card elevation="0" variant="flat" class="border pl-section-card" rounded="lg">
+              <div class="pl-section-header bg-error">
+                <v-icon size="18" class="me-2">mdi-trending-down</v-icon>
+                المصاريف
+              </div>
+              <v-list density="compact" class="py-0">
+                <template v-if="(pl.expenses || []).length">
                   <v-list-item
-                    v-for="item in accountingStore.profitLoss.expenses || []"
+                    v-for="item in pl.expenses"
                     :key="item.accountId"
+                    class="pl-account-row"
                   >
-                    <v-list-item-title>{{ item.name }}</v-list-item-title>
+                    <v-list-item-title class="text-body-2">{{ item.name }}</v-list-item-title>
                     <template #append>
-                      <span class="font-weight-medium">{{ formatCurrency(item.amount || 0) }}</span>
+                      <span class="text-body-2 font-weight-medium text-no-wrap">
+                        {{ formatCurrency(item.amount || 0) }}
+                      </span>
                     </template>
                   </v-list-item>
-                  <v-list-item v-if="!(accountingStore.profitLoss.expenses || []).length">
-                    <v-list-item-title class="text-medium-emphasis"
-                      >لا توجد مصاريف</v-list-item-title
-                    >
-                  </v-list-item>
-                </v-list>
-              </v-card>
-            </v-col>
-          </v-row>
-        </v-card-text>
+                </template>
+                <v-list-item v-else>
+                  <div class="text-center text-medium-emphasis py-4 w-100">
+                    <v-icon size="32" class="mb-1 opacity-40">mdi-cash-off</v-icon>
+                    <div class="text-caption">لا توجد مصاريف</div>
+                  </div>
+                </v-list-item>
+              </v-list>
+              <v-divider />
+              <div
+                class="d-flex align-center justify-space-between pa-3 bg-error pl-section-footer"
+              >
+                <span class="text-body-2 font-weight-bold">الإجمالي</span>
+                <span class="text-body-2 font-weight-bold">
+                  {{ formatCurrency(pl.totalExpenses || 0) }}
+                </span>
+              </div>
+            </v-card>
+          </v-col>
+        </v-row>
       </div>
     </div>
   </SubPageShell>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { SubPageShell } from '@/components/layout';
 import AppDateInput from '@/components/shared/AppDateInput.vue';
 import { useCurrency } from '@/composables/useCurrency';
@@ -161,19 +239,20 @@ const { formatCurrency } = useCurrency();
 const { exportToCSV, printReport } = useExportReport();
 const accountingStore = useAccountingStore();
 
+const pl = computed(() => accountingStore.profitLoss);
+
 const dateFrom = ref<string | null>(null);
 const dateTo = ref<string | null>(null);
 
 function exportCSV(): void {
-  const pl = accountingStore.profitLoss;
-  if (!pl) return;
+  if (!pl.value) return;
   const rows = [
-    ...((pl.revenue || []) as Array<{ name: string; amount: number }>).map((r) => ({
+    ...((pl.value.revenue || []) as Array<{ name: string; amount: number }>).map((r) => ({
       section: 'إيرادات',
       name: r.name,
       amount: r.amount,
     })),
-    ...((pl.expenses || []) as Array<{ name: string; amount: number }>).map((r) => ({
+    ...((pl.value.expenses || []) as Array<{ name: string; amount: number }>).map((r) => ({
       section: 'مصاريف',
       name: r.name,
       amount: r.amount,
@@ -197,3 +276,34 @@ onMounted(async () => {
   await accountingStore.fetchProfitLoss();
 });
 </script>
+
+<style scoped>
+.pl-kpi-card {
+  transition: box-shadow 0.2s ease;
+}
+.pl-kpi-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+.pl-eq-bar,
+.pl-eq-bar .v-card-text {
+  color: #fff !important;
+}
+.pl-section-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.pl-section-header {
+  padding: 10px 16px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+}
+.pl-section-footer {
+  color: #fff;
+}
+.pl-account-row + .pl-account-row {
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+}
+</style>

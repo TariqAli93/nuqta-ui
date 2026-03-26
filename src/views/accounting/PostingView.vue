@@ -1,245 +1,301 @@
 <template>
   <SubPageShell>
-    <!-- Post New Batch Card -->
-    <v-card elevation="0" variant="flat" class="border mb-6" rounded="lg">
-      <v-card-title class="d-flex align-center ga-2">
-        <v-icon color="primary">mdi-send-check</v-icon>
-        ترحيل فترة جديدة
-      </v-card-title>
-      <v-card-text>
-        <v-row dense>
-          <v-col cols="12" md="3">
-            <v-select
-              v-model="postForm.periodType"
-              :items="periodTypeItems"
-              label="نوع الفترة"
-              variant="outlined"
-              density="comfortable"
-            />
-          </v-col>
-          <v-col cols="12" md="3">
-            <AppDateInput
-              v-model="postForm.periodStart"
-              label="بداية الفترة"
-              variant="outlined"
-              density="comfortable"
-            />
-          </v-col>
-          <v-col cols="12" md="3">
-            <AppDateInput
-              v-model="postForm.periodEnd"
-              label="نهاية الفترة"
-              variant="outlined"
-              density="comfortable"
-            />
-          </v-col>
-          <v-col cols="12" md="3" class="d-flex align-center">
-            <v-btn
-              color="primary"
-              class="win-btn"
-              :loading="posting"
-              :disabled="!postForm.periodStart || !postForm.periodEnd"
-              prepend-icon="mdi-send-check"
-              @click="postPeriod"
-            >
-              ترحيل
-            </v-btn>
-          </v-col>
-        </v-row>
-        <v-text-field
-          v-model="postForm.notes"
-          label="ملاحظات (اختياري)"
-          variant="outlined"
-          density="comfortable"
-          class="mt-2"
-        />
-      </v-card-text>
-    </v-card>
-
-    <!-- Batches Table -->
-    <v-card elevation="0" variant="flat" class="border" rounded="lg">
-      <v-card-title class="d-flex align-center ga-2">
-        <v-icon color="primary">mdi-history</v-icon>
-        سجل الدفعات المرحّلة
-        <v-spacer />
-        <v-btn variant="text" icon :loading="loadingBatches" @click="loadBatches">
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
-      </v-card-title>
-
-      <!-- Batch filter row -->
-      <v-card-text class="pb-4">
-        <v-row dense>
-          <v-col cols="12" sm="3">
-            <v-select
-              v-model="filterPeriodType"
-              :items="[{ title: 'الكل', value: '' }, ...periodTypeItems]"
-              label="نوع الفترة"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              @update:model-value="loadBatches"
-            />
-          </v-col>
-          <v-col cols="12" sm="3">
-            <AppDateInput
-              v-model="filterDateFrom"
-              label="من تاريخ"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              clearable
-              @update:model-value="loadBatches"
-            />
-          </v-col>
-          <v-col cols="12" sm="3">
-            <AppDateInput
-              v-model="filterDateTo"
-              label="إلى تاريخ"
-              variant="outlined"
-              density="comfortable"
-              hide-details
-              clearable
-              @update:model-value="loadBatches"
-            />
-          </v-col>
-        </v-row>
-      </v-card-text>
-
-      <v-card-text class="pa-0">
-        <v-data-table
-          :headers="batchHeaders"
-          :items="batches"
-          :loading="loadingBatches"
-          :items-per-page="20"
-          density="comfortable"
-          class="ds-table-enhanced ds-table-striped"
-          no-data-text="لا توجد دفعات مرحّلة"
-        >
-          <template #item.periodType="{ item }">
-            <v-chip size="small" variant="tonal" :color="periodColor(item.periodType)">
-              {{ periodLabel(item.periodType) }}
-            </v-chip>
-          </template>
-
-          <template #item.postedAt="{ item }">
-            {{ formatDate(item.postedAt) }}
-          </template>
-
-          <template #item.status="{ item }">
-            <v-chip size="small" variant="tonal" :color="batchStatusColor(item.status)">
-              {{ batchStatusLabel(item.status) }}
-            </v-chip>
-          </template>
-
-          <template #item.totalAmount="{ item }">
-            {{ formatMoney(item.totalAmount) }}
-          </template>
-
-          <template #item.actions="{ item }">
-            <div class="d-flex ga-1">
-              <v-tooltip v-if="item.status === 'locked'" location="top">
-                <template #activator="{ props: tp }">
-                  <v-btn
-                    v-bind="tp"
-                    variant="text"
-                    size="small"
-                    color="grey"
-                    icon
-                    :loading="unlockingId === item.id"
-                    @click="confirmUnlock(item)"
-                  >
-                    <v-icon size="18">mdi-lock-open-outline</v-icon>
-                  </v-btn>
-                </template>
-                <span>فتح القفل</span>
-              </v-tooltip>
-              <v-tooltip v-else location="top">
-                <template #activator="{ props: tp }">
-                  <v-btn
-                    v-bind="tp"
-                    variant="text"
-                    size="small"
-                    color="warning"
-                    icon
-                    :loading="lockingId === item.id"
-                    @click="confirmLock(item)"
-                  >
-                    <v-icon size="18">mdi-lock-outline</v-icon>
-                  </v-btn>
-                </template>
-                <span>قفل الدفعة</span>
-              </v-tooltip>
-
-              <v-tooltip location="top">
-                <template #activator="{ props: tp }">
-                  <v-btn
-                    v-bind="tp"
-                    variant="text"
-                    size="small"
-                    color="error"
-                    icon
-                    :loading="reversingId === item.id"
-                    :disabled="item.status === 'locked'"
-                    @click="confirmReverse(item)"
-                  >
-                    <v-icon size="18">mdi-undo</v-icon>
-                  </v-btn>
-                </template>
-                <span>عكس الدفعة</span>
-              </v-tooltip>
-            </div>
-          </template>
-        </v-data-table>
-      </v-card-text>
-    </v-card>
-
-    <!-- Reverse confirmation dialog -->
-    <v-dialog v-model="reverseDialog" max-width="420">
-      <v-card>
-        <v-card-title>تأكيد العكس</v-card-title>
+    <div class="d-flex flex-column ga-4">
+      <!-- Post New Batch Card -->
+      <v-card elevation="0" variant="flat" class="border pv-section-card" rounded="lg">
+        <div class="pv-section-header bg-primary">
+          <v-icon size="18" class="me-2">mdi-send-check</v-icon>
+          ترحيل فترة جديدة
+        </div>
         <v-card-text>
-          هل أنت متأكد من عكس هذه الدفعة؟ سيتم إنشاء قيود عكسية لجميع القيود في هذه الدفعة.
+          <v-row dense>
+            <v-col cols="12" md="3">
+              <v-select
+                v-model="postForm.periodType"
+                :items="periodTypeItems"
+                label="نوع الفترة"
+                variant="outlined"
+                density="comfortable"
+              />
+            </v-col>
+            <v-col cols="12" md="3">
+              <AppDateInput
+                v-model="postForm.periodStart"
+                label="بداية الفترة"
+                variant="outlined"
+                density="comfortable"
+              />
+            </v-col>
+            <v-col cols="12" md="3">
+              <AppDateInput
+                v-model="postForm.periodEnd"
+                label="نهاية الفترة"
+                variant="outlined"
+                density="comfortable"
+              />
+            </v-col>
+            <v-col cols="12" md="3" class="d-flex align-center">
+              <v-btn
+                color="primary"
+                class="win-btn"
+                :loading="posting"
+                :disabled="!postForm.periodStart || !postForm.periodEnd"
+                prepend-icon="mdi-send-check"
+                @click="postPeriod"
+              >
+                ترحيل
+              </v-btn>
+            </v-col>
+          </v-row>
+          <v-text-field
+            v-model="postForm.notes"
+            label="ملاحظات (اختياري)"
+            variant="outlined"
+            density="comfortable"
+            class="mt-2"
+          />
         </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="reverseDialog = false">إلغاء</v-btn>
-          <v-btn color="error" @click="executeReverse" :loading="reversingId !== null">عكس</v-btn>
-        </v-card-actions>
       </v-card>
-    </v-dialog>
 
-    <!-- Lock confirmation dialog -->
-    <v-dialog v-model="lockDialog" max-width="420">
-      <v-card>
-        <v-card-title>تأكيد القفل</v-card-title>
-        <v-card-text>
-          هل أنت متأكد من قفل هذه الدفعة؟ بعد القفل لن يمكن عكس أو تعديل أي قيد فيها.
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn variant="text" @click="lockDialog = false">إلغاء</v-btn>
-          <v-btn color="warning" @click="executeLock" :loading="lockingId !== null">قفل</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+      <!-- KPI summary strip -->
+      <v-row v-if="batches.length" dense>
+        <v-col cols="12" md="4">
+          <v-card elevation="0" variant="flat" class="border pv-kpi-card" rounded="lg">
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar color="primary" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">mdi-package-variant-closed</v-icon>
+              </v-avatar>
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">إجمالي الدفعات</div>
+                <div class="text-h6 font-weight-bold">{{ batches.length }}</div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" md="4">
+          <v-card elevation="0" variant="flat" class="border pv-kpi-card" rounded="lg">
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar color="success" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">mdi-check-decagram</v-icon>
+              </v-avatar>
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">مرحّلة</div>
+                <div class="text-h6 font-weight-bold">
+                  {{ batches.filter((b) => b.status === 'posted').length }}
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+        <v-col cols="12" md="4">
+          <v-card elevation="0" variant="flat" class="border pv-kpi-card" rounded="lg">
+            <v-card-text class="d-flex align-center ga-3 pa-4">
+              <v-avatar color="error" variant="tonal" size="48" rounded="lg">
+                <v-icon size="24">mdi-lock</v-icon>
+              </v-avatar>
+              <div class="flex-grow-1">
+                <div class="text-caption text-medium-emphasis">مقفلة</div>
+                <div class="text-h6 font-weight-bold">
+                  {{ batches.filter((b) => b.status === 'locked').length }}
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
-    <!-- Unlock confirmation dialog -->
-    <v-dialog v-model="unlockDialog" max-width="420">
-      <v-card>
-        <v-card-title>تأكيد فتح القفل</v-card-title>
-        <v-card-text>
-          هل أنت متأكد من فتح قفل هذه الدفعة؟ سيسمح ذلك بعكس القيود المنتمية لها.
-        </v-card-text>
-        <v-card-actions>
+      <!-- Batches Table -->
+      <v-card elevation="0" variant="flat" class="border pv-section-card" rounded="lg">
+        <div class="pv-section-header bg-info">
+          <v-icon size="18" class="me-2">mdi-history</v-icon>
+          سجل الدفعات المرحّلة
           <v-spacer />
-          <v-btn variant="text" @click="unlockDialog = false">إلغاء</v-btn>
-          <v-btn color="primary" @click="executeUnlock" :loading="unlockingId !== null">
-            فتح القفل
+          <v-btn
+            variant="text"
+            icon
+            size="small"
+            :loading="loadingBatches"
+            @click="loadBatches"
+            style="color: #fff"
+          >
+            <v-icon>mdi-refresh</v-icon>
           </v-btn>
-        </v-card-actions>
+        </div>
+
+        <!-- Batch filter row -->
+        <v-card-text class="pb-4">
+          <v-row dense>
+            <v-col cols="12" sm="3">
+              <v-select
+                v-model="filterPeriodType"
+                :items="[{ title: 'الكل', value: '' }, ...periodTypeItems]"
+                label="نوع الفترة"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+                @update:model-value="loadBatches"
+              />
+            </v-col>
+            <v-col cols="12" sm="3">
+              <AppDateInput
+                v-model="filterDateFrom"
+                label="من تاريخ"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+                clearable
+                @update:model-value="loadBatches"
+              />
+            </v-col>
+            <v-col cols="12" sm="3">
+              <AppDateInput
+                v-model="filterDateTo"
+                label="إلى تاريخ"
+                variant="outlined"
+                density="comfortable"
+                hide-details
+                clearable
+                @update:model-value="loadBatches"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <v-card-text class="pa-0">
+          <v-data-table
+            :headers="batchHeaders"
+            :items="batches"
+            :loading="loadingBatches"
+            :items-per-page="20"
+            density="comfortable"
+            class="ds-table-enhanced ds-table-striped"
+            no-data-text="لا توجد دفعات مرحّلة"
+          >
+            <template #item.periodType="{ item }">
+              <v-chip size="small" variant="tonal" :color="periodColor(item.periodType)">
+                {{ periodLabel(item.periodType) }}
+              </v-chip>
+            </template>
+
+            <template #item.postedAt="{ item }">
+              {{ formatDate(item.postedAt) }}
+            </template>
+
+            <template #item.status="{ item }">
+              <v-chip size="small" variant="tonal" :color="batchStatusColor(item.status)">
+                {{ batchStatusLabel(item.status) }}
+              </v-chip>
+            </template>
+
+            <template #item.totalAmount="{ item }">
+              {{ formatMoney(item.totalAmount) }}
+            </template>
+
+            <template #item.actions="{ item }">
+              <div class="d-flex ga-1">
+                <v-tooltip v-if="item.status === 'locked'" location="top">
+                  <template #activator="{ props: tp }">
+                    <v-btn
+                      v-bind="tp"
+                      variant="text"
+                      size="small"
+                      color="grey"
+                      icon
+                      :loading="unlockingId === item.id"
+                      @click="confirmUnlock(item)"
+                    >
+                      <v-icon size="18">mdi-lock-open-outline</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>فتح القفل</span>
+                </v-tooltip>
+                <v-tooltip v-else location="top">
+                  <template #activator="{ props: tp }">
+                    <v-btn
+                      v-bind="tp"
+                      variant="text"
+                      size="small"
+                      color="warning"
+                      icon
+                      :loading="lockingId === item.id"
+                      @click="confirmLock(item)"
+                    >
+                      <v-icon size="18">mdi-lock-outline</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>قفل الدفعة</span>
+                </v-tooltip>
+
+                <v-tooltip location="top">
+                  <template #activator="{ props: tp }">
+                    <v-btn
+                      v-bind="tp"
+                      variant="text"
+                      size="small"
+                      color="error"
+                      icon
+                      :loading="reversingId === item.id"
+                      :disabled="item.status === 'locked'"
+                      @click="confirmReverse(item)"
+                    >
+                      <v-icon size="18">mdi-undo</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>عكس الدفعة</span>
+                </v-tooltip>
+              </div>
+            </template>
+          </v-data-table>
+        </v-card-text>
       </v-card>
-    </v-dialog>
+
+      <!-- Reverse confirmation dialog -->
+      <v-dialog v-model="reverseDialog" max-width="420">
+        <v-card>
+          <v-card-title>تأكيد العكس</v-card-title>
+          <v-card-text>
+            هل أنت متأكد من عكس هذه الدفعة؟ سيتم إنشاء قيود عكسية لجميع القيود في هذه الدفعة.
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="reverseDialog = false">إلغاء</v-btn>
+            <v-btn color="error" @click="executeReverse" :loading="reversingId !== null">عكس</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Lock confirmation dialog -->
+      <v-dialog v-model="lockDialog" max-width="420">
+        <v-card>
+          <v-card-title>تأكيد القفل</v-card-title>
+          <v-card-text>
+            هل أنت متأكد من قفل هذه الدفعة؟ بعد القفل لن يمكن عكس أو تعديل أي قيد فيها.
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="lockDialog = false">إلغاء</v-btn>
+            <v-btn color="warning" @click="executeLock" :loading="lockingId !== null">قفل</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
+      <!-- Unlock confirmation dialog -->
+      <v-dialog v-model="unlockDialog" max-width="420">
+        <v-card>
+          <v-card-title>تأكيد فتح القفل</v-card-title>
+          <v-card-text>
+            هل أنت متأكد من فتح قفل هذه الدفعة؟ سيسمح ذلك بعكس القيود المنتمية لها.
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="unlockDialog = false">إلغاء</v-btn>
+            <v-btn color="primary" @click="executeUnlock" :loading="unlockingId !== null">
+              فتح القفل
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
   </SubPageShell>
 </template>
 
@@ -475,3 +531,23 @@ onMounted(() => {
   void loadBatches();
 });
 </script>
+
+<style scoped>
+.pv-kpi-card {
+  transition: box-shadow 0.2s ease;
+}
+.pv-kpi-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+.pv-section-card {
+  display: flex;
+  flex-direction: column;
+}
+.pv-section-header {
+  padding: 10px 16px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+}
+</style>

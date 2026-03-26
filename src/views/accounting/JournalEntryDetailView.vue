@@ -7,13 +7,19 @@
       :back-to="{ name: 'AccountingJournal' }"
     />
 
-    <v-skeleton-loader v-if="accountingStore.loading" type="card" />
+    <div class="d-flex flex-column ga-4">
+      <v-skeleton-loader v-if="accountingStore.loading" type="card" />
 
-    <v-alert v-else-if="!entryDisplay" type="warning" variant="tonal">
-      لم يتم العثور على القيد المطلوب
-    </v-alert>
+      <v-alert v-else-if="!entryDisplay" type="warning" variant="tonal">
+        لم يتم العثور على القيد المطلوب
+      </v-alert>
 
-    <JournalEntryViewer v-else :entry="entryDisplay" />
+      <v-card v-else elevation="0" variant="flat" class="border" rounded="lg">
+        <v-card-text>
+          <JournalEntryViewer :entry="entryDisplay" />
+        </v-card-text>
+      </v-card>
+    </div>
   </PageShell>
 </template>
 
