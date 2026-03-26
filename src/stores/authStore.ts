@@ -73,6 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
         throw new Error(result.error.message);
       }
       setupStatus.value = result.data;
+      console.log('Initial setup status:', result.data);
       return result;
     } catch (err: any) {
       error.value = err.message || 'Failed to check setup status';

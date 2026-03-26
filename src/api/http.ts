@@ -26,7 +26,7 @@ export const http: AxiosInstance = axios.create({
   baseURL,
   timeout: 30_000,
   headers: { 'Content-Type': 'application/json' },
-  withCredentials: true, // FIX #1: Send cookies (refresh token) with every request
+  withCredentials: false,
 });
 
 // ---------------------------------------------------------------------------
@@ -101,7 +101,7 @@ function drainRefreshSubscribers(err: unknown): void {
 
 function addRefreshSubscriber(
   resolve: (token: string) => void,
-  reject: (err: unknown) => void,
+  reject: (err: unknown) => void
 ): void {
   refreshSubscribers.push({ resolve, reject });
 }
