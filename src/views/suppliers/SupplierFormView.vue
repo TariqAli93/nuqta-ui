@@ -3,22 +3,22 @@
     <PageHeader :title="isEdit ? 'تعديل مورد' : 'إضافة مورد'" show-back :back-to="{ name: 'Suppliers' }" />
 
 
-    <v-card max-width="600">
+    <v-card max-width="600" class="border" elevation="0" variant="flat" rounded="lg">
       <v-card-text>
-        <v-form ref="formRef" @submit.prevent="onSubmit">
+        <v-form class="win-form" ref="formRef" @submit.prevent="onSubmit">
           <v-text-field
             v-model="form.name"
             label="اسم المورد"
             :rules="[(v) => !!v || 'مطلوب']"
             variant="outlined"
-            density="compact"
+            density="comfortable"
             class="mb-3"
           />
           <v-text-field
             v-model="form.phone"
             label="الهاتف"
             variant="outlined"
-            density="compact"
+            density="comfortable"
             class="mb-3"
             dir="ltr"
           />
@@ -26,7 +26,7 @@
             v-model="form.phone2"
             label="هاتف إضافي"
             variant="outlined"
-            density="compact"
+            density="comfortable"
             class="mb-3"
             dir="ltr"
           />
@@ -34,30 +34,30 @@
             v-model="form.address"
             label="العنوان"
             variant="outlined"
-            density="compact"
+            density="comfortable"
             class="mb-3"
           />
           <v-text-field
             v-model="form.city"
             label="المدينة"
             variant="outlined"
-            density="compact"
+            density="comfortable"
             class="mb-3"
           />
           <v-textarea
             v-model="form.notes"
             label="ملاحظات"
             variant="outlined"
-            density="compact"
+            density="comfortable"
             rows="3"
             class="mb-3"
           />
 
-          <div class="d-flex ga-3">
-            <v-btn type="submit" color="primary" :loading="suppliersStore.loading">
+          <div class="d-flex ga-3 mt-4">
+            <v-btn class="win-btn" type="submit" color="primary" :loading="suppliersStore.loading">
               {{ isEdit ? 'تحديث' : 'حفظ' }}
             </v-btn>
-            <v-btn variant="text" :to="{ name: 'Suppliers' }">إلغاء</v-btn>
+            <v-btn class="win-ghost-btn" variant="text" :to="{ name: 'Suppliers' }">إلغاء</v-btn>
           </div>
         </v-form>
       </v-card-text>

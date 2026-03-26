@@ -1,10 +1,11 @@
 <template>
-  <v-card>
+  <v-card class="border" elevation="0" variant="flat" rounded="lg">
     <v-card-title
       v-if="title || $slots.actions"
-      class="d-flex align-center justify-space-between pa-4"
+      class="d-flex align-center justify-space-between"
+      style="padding: var(--ds-card-py) var(--ds-card-px) var(--ds-space-2)"
     >
-      <span v-if="title" class="text-subtitle-1 font-weight-bold">{{ title }}</span>
+      <span v-if="title" class="win-title">{{ title }}</span>
       <v-spacer />
       <slot name="actions" />
     </v-card-title>

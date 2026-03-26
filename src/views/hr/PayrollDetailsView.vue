@@ -64,7 +64,7 @@
 
     <v-progress-linear v-if="store.loading" indeterminate color="primary" />
 
-    <v-card v-if="payrollRun" flat>
+    <v-card v-if="payrollRun" elevation="0" variant="flat" class="border mb-4" rounded="lg">
       <v-card-text>
         <v-row dense>
           <v-col cols="12" md="6">
@@ -104,7 +104,7 @@
     </v-card>
 
     <!-- Payroll entries table -->
-    <v-card v-if="payrollRun?.entries?.length" class="win-card" flat>
+    <v-card v-if="payrollRun?.entries?.length" elevation="0" variant="flat" class="border" rounded="lg">
       <v-card-title class="pa-4">{{ t('hr.payroll.entries') }}</v-card-title>
       <v-card-text class="pa-0">
         <v-data-table
@@ -141,10 +141,10 @@
     />
 
     <v-dialog v-model="confirmCancel" max-width="400" class="ds-dialog">
-      <v-card rounded="lg">
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
         <v-card-title>{{ t('hr.payroll.cancelConfirm') }}</v-card-title>
         <v-card-text>{{ t('hr.payroll.cancelHint') }}</v-card-text>
-        <v-card-actions>
+        <v-card-actions class="px-4 py-3">
           <v-spacer />
           <v-btn variant="text" @click="confirmCancel = false">{{ t('common.cancel') }}</v-btn>
           <v-btn color="error" variant="flat" :loading="store.loading" @click="handleCancel">

@@ -9,7 +9,7 @@
           item-value="value"
           label="نوع الحركة"
           variant="outlined"
-          density="compact"
+          density="comfortable"
           clearable
           hide-details
         />
@@ -22,34 +22,32 @@
           item-value="value"
           label="المصدر"
           variant="outlined"
-          density="compact"
+          density="comfortable"
           clearable
           hide-details
         />
       </v-col>
       <v-col cols="12" md="2">
-        <v-text-field
+        <AppDateInput
           v-model="dateFrom"
           label="من تاريخ"
-          type="date"
           variant="outlined"
-          density="compact"
+          density="comfortable"
           hide-details
         />
       </v-col>
       <v-col cols="12" md="2">
-        <v-text-field
+        <AppDateInput
           v-model="dateTo"
           label="إلى تاريخ"
-          type="date"
           variant="outlined"
-          density="compact"
+          density="comfortable"
           hide-details
         />
       </v-col>
       <v-col cols="12" md="2" class="d-flex ga-2">
-        <v-btn color="primary" variant="tonal" @click="reload">تطبيق</v-btn>
-        <v-btn variant="text" @click="resetFilters">مسح</v-btn>
+        <v-btn class="win-btn" color="primary" variant="tonal" @click="reload">تطبيق</v-btn>
+        <v-btn class="win-ghost-btn" variant="text" @click="resetFilters">مسح</v-btn>
       </v-col>
     </v-row>
 
@@ -57,7 +55,8 @@
       :headers="headers"
       :items="movements"
       :loading="loading"
-      density="compact"
+      density="comfortable"
+      class="ds-table-enhanced ds-table-striped"
       :items-per-page="15"
     >
       <template #item.createdAt="{ item }">
@@ -87,6 +86,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import { formatDate } from '@/utils/formatters';
 import type { InventoryMovement } from '@/types/domain';
 

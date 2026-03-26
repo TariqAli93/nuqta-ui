@@ -1,6 +1,6 @@
 <template>
-  <v-card flat>
-    <v-card-title v-if="title" class="text-subtitle-1 font-weight-bold">
+  <v-card elevation="0" variant="flat" class="border" rounded="lg">
+    <v-card-title v-if="title" class="win-title px-4 pt-4 pb-2">
       {{ title }}
     </v-card-title>
     <v-data-table
@@ -9,7 +9,7 @@
       :loading="loading"
       density="compact"
       :items-per-page="itemsPerPage"
-      class="ledger-table"
+      class="ledger-table ds-table-enhanced ds-table-striped"
     >
       <template #item.createdAt="{ item }">
         {{ formatDate(item.createdAt) }}

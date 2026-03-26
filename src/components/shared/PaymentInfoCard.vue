@@ -1,6 +1,6 @@
 <template>
-  <v-card class="win-card" flat>
-    <v-card-title class="pa-4 text-body-1 font-weight-bold">
+  <v-card elevation="0" variant="flat" class="border" rounded="lg">
+    <v-card-title class="win-title px-4 pt-4 pb-2">
       {{ t('sales.paymentDetails') }}
     </v-card-title>
     <v-card-text class="pa-0">

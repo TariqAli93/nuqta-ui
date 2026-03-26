@@ -1,8 +1,9 @@
 <template>
   <v-card
-    :flat="flat"
-    :elevation="flat ? 0 : undefined"
-    class="ds-table-wrapper"
+    :flat="true"
+    elevation="0"
+    variant="flat"
+    :class="['ds-table-wrapper', { 'border': !flat }]"
     :rounded="flat ? 0 : 'lg'"
   >
     <v-card-title
@@ -10,7 +11,7 @@
       class="d-flex align-center justify-space-between"
       style="padding: var(--ds-card-py) var(--ds-card-px) var(--ds-space-2)"
     >
-      <span v-if="title" class="text-subtitle-1 font-weight-bold">{{ title }}</span>
+      <span v-if="title" class="win-title">{{ title }}</span>
       <slot name="actions" />
     </v-card-title>
 

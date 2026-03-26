@@ -6,13 +6,14 @@
       <PageHeader :title="supplier.name" show-back :back-to="{ name: 'Suppliers' }">
         <template #actions>
           <v-btn
+            class="win-btn"
             variant="tonal"
             prepend-icon="mdi-pencil"
             :to="{ name: 'SupplierEdit', params: { id: supplier.id } }"
           >
             تعديل
           </v-btn>
-          <v-btn color="primary" prepend-icon="mdi-cash-minus" @click="showPaymentDialog = true">
+          <v-btn class="win-btn" color="primary" prepend-icon="mdi-cash-minus" @click="showPaymentDialog = true">
             تسجيل دفعة
           </v-btn>
         </template>
@@ -78,7 +79,8 @@
             :headers="purchaseHeaders"
             :items="filteredPurchases"
             :loading="purchasesLoading"
-            density="compact"
+            density="comfortable"
+            class="ds-table-enhanced ds-table-striped"
             :items-per-page="20"
             @click:row="
               (_: Event, { item }: { item: any }) =>
@@ -115,7 +117,7 @@
         </v-window-item>
 
         <v-window-item value="info">
-          <v-card max-width="500">
+          <v-card max-width="500" class="border" elevation="0" variant="flat" rounded="lg">
             <v-card-text>
               <div class="mb-2"><strong>الاسم:</strong> {{ supplier.name }}</div>
               <div class="mb-2"><strong>الهاتف:</strong> {{ supplier.phone || '—' }}</div>
@@ -152,8 +154,9 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="showPaymentDialog = false">إلغاء</v-btn>
+          <v-btn class="win-ghost-btn" variant="text" @click="showPaymentDialog = false">إلغاء</v-btn>
           <v-btn
+            class="win-btn"
             color="primary"
             :loading="paymentLoading"
             :disabled="paymentAmount <= 0"

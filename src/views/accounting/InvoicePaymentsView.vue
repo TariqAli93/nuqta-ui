@@ -1,13 +1,13 @@
-﻿<template>
+<template>
   <SubPageShell>
-    <v-tabs v-model="activeTab" color="primary" bg-color="surface" class="mb-4">
+    <v-tabs v-model="activeTab" color="primary" bg-color="transparent" class="mb-4">
     <v-tab value="all">الكل</v-tab>
     <v-tab value="posted">مرحل</v-tab>
     <v-tab value="unposted">غير مرحل</v-tab>
   </v-tabs>
 
-  <v-card>
-    <v-card-text>
+  <v-card elevation="0" variant="flat" class="border" rounded="lg">
+    <v-card-text class="pa-0">
       <v-data-table-server
         v-model:items-per-page="options.itemsPerPage"
         v-model:page="options.page"
@@ -16,6 +16,7 @@
         :items-length="store.journalTotal"
         :loading="loading"
         density="comfortable"
+        class="ds-table-enhanced ds-table-striped"
         @update:options="onOptionsUpdate"
       >
         <template #item.entryNumber="{ item }">

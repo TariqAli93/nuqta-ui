@@ -21,6 +21,7 @@
 
         <div class="d-flex ga-2 flex-wrap">
           <v-btn
+            class="win-btn"
             size="small"
             variant="tonal"
             color="primary"
@@ -30,6 +31,7 @@
             {{ t('about.copyDiagnostics') }}
           </v-btn>
           <v-btn
+            class="win-ghost-btn"
             size="small"
             variant="outlined"
             prepend-icon="mdi-text-box-outline"
@@ -45,7 +47,7 @@
       <!-- ─── Left Column ─── -->
       <v-col cols="12" md="6" class="d-flex flex-column ga-4">
         <!-- ─── 2) License Information ─── -->
-        <v-card>
+        <v-card class="border mb-4" elevation="0" variant="flat" rounded="lg">
           <v-card-title class="d-flex align-center ga-2">
             <v-icon size="20" icon="mdi-license" color="primary" />
             {{ t('about.licenseTitle') }}
@@ -103,7 +105,7 @@
         </v-card>
 
         <!-- ─── 3) Company / Developer Info ─── -->
-        <v-card>
+        <v-card class="border mb-4" elevation="0" variant="flat" rounded="lg">
           <v-card-title class="d-flex align-center ga-2">
             <v-icon size="20" icon="mdi-domain" color="primary" />
             {{ t('about.companyTitle') }}
@@ -190,7 +192,7 @@
       <!-- ─── Right Column ─── -->
       <v-col cols="12" md="6" class="d-flex flex-column ga-4">
         <!-- ─── 4) System Info (Diagnostics) ─── -->
-        <v-card>
+        <v-card class="border mb-4" elevation="0" variant="flat" rounded="lg">
           <v-expansion-panels variant="accordion" flat>
             <v-expansion-panel>
               <v-expansion-panel-title>
@@ -224,7 +226,7 @@
         </v-card>
 
         <!-- ─── 5) Maintenance & Local Data ─── -->
-        <v-card>
+        <v-card class="border mb-4" elevation="0" variant="flat" rounded="lg">
           <v-card-title class="d-flex align-center ga-2">
             <v-icon size="20" icon="mdi-database-cog-outline" color="primary" />
             {{ t('about.maintenanceTitle') }}
@@ -280,7 +282,7 @@
         </v-card>
 
         <!-- ─── 6) Legal Section ─── -->
-        <v-card>
+        <v-card class="border mb-4" elevation="0" variant="flat" rounded="lg">
           <v-expansion-panels variant="accordion" flat>
             <v-expansion-panel>
               <v-expansion-panel-title>
@@ -329,8 +331,8 @@
     </v-sheet>
 
     <!-- ─── Changelog Dialog ─── -->
-    <v-dialog v-model="showChangelog" max-width="560" scrollable>
-      <v-card>
+    <v-dialog v-model="showChangelog" max-width="560" scrollable class="ds-dialog">
+      <v-card rounded="lg">
         <v-card-title class="d-flex align-center ga-2">
           <v-icon icon="mdi-text-box-outline" />
           {{ t('about.whatsNew') }}
@@ -352,14 +354,14 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="showChangelog = false">{{ t('common.close') }}</v-btn>
+          <v-btn class="win-ghost-btn" variant="text" @click="showChangelog = false">{{ t('common.close') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- ─── Open Source Licenses Dialog ─── -->
-    <v-dialog v-model="showOpenSourceLicenses" max-width="560" scrollable>
-      <v-card>
+    <v-dialog v-model="showOpenSourceLicenses" max-width="560" scrollable class="ds-dialog">
+      <v-card rounded="lg">
         <v-card-title class="d-flex align-center ga-2">
           <v-icon icon="mdi-open-source-initiative" />
           {{ t('about.viewOpenSource') }}
@@ -373,7 +375,7 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="showOpenSourceLicenses = false">
+          <v-btn class="win-ghost-btn" variant="text" @click="showOpenSourceLicenses = false">
             {{ t('common.close') }}
           </v-btn>
         </v-card-actions>

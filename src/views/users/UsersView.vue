@@ -4,6 +4,7 @@
     <PageHeader v-if="!props.embedded" :title="t('users.title')" :subtitle="t('users.subtitle')">
       <template #actions>
         <v-btn
+          class="win-btn"
           color="primary"
           prepend-icon="mdi-plus"
           :disabled="!canCreate"
@@ -18,6 +19,7 @@
     <div v-else class="d-flex justify-space-between align-center mb-4">
       <div class="text-subtitle-1 font-weight-bold">{{ t('users.title') }}</div>
       <v-btn
+        class="win-btn"
         color="primary"
         prepend-icon="mdi-plus"
         :disabled="!canCreate"
@@ -27,7 +29,7 @@
       </v-btn>
     </div>
 
-    <v-card flat>
+    <v-card class="border" elevation="0" variant="flat" rounded="lg">
       <v-card-text class="pa-0">
         <v-skeleton-loader v-if="loading" type="table" />
         <v-data-table
@@ -79,9 +81,9 @@
         </v-card-title>
         <v-card-text>
           <v-form class="d-flex flex-column ga-4" @submit.prevent="saveUser">
-            <v-text-field v-model="form.username" :label="t('users.username')" required />
-            <v-text-field v-model="form.fullName" :label="t('users.fullName')" required />
-            <v-text-field v-model="form.phone" :label="t('common.phone')" />
+            <v-text-field v-model="form.username" :label="t('users.username')" required variant="outlined" density="comfortable" />
+            <v-text-field v-model="form.fullName" :label="t('users.fullName')" required variant="outlined" density="comfortable" />
+            <v-text-field v-model="form.phone" :label="t('common.phone')" variant="outlined" density="comfortable" />
             <v-select
               v-model="form.role"
               :label="t('users.role')"
@@ -89,6 +91,7 @@
               item-title="title"
               item-value="value"
               required
+              variant="outlined" density="comfortable"
             />
             <v-text-field
               v-model="form.password"
@@ -97,14 +100,15 @@
               :hint="isEditMode ? t('users.passwordHint') : undefined"
               persistent-hint
               :required="!isEditMode"
+              variant="outlined" density="comfortable"
             />
-            <v-switch v-model="form.isActive" :label="t('users.active')" inset color="primary" />
+            <v-switch v-model="form.isActive" :label="t('users.active')" inset color="primary" hide-details />
           </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="closeDialog">{{ t('common.cancel') }}</v-btn>
-          <v-btn color="primary" variant="flat" :loading="saving" @click="saveUser">
+          <v-btn class="win-ghost-btn" variant="text" @click="closeDialog">{{ t('common.cancel') }}</v-btn>
+          <v-btn class="win-btn" color="primary" variant="flat" :loading="saving" @click="saveUser">
             {{ t('common.save') }}
           </v-btn>
         </v-card-actions>

@@ -3,6 +3,7 @@
     <PageHeader title="تفاصيل فاتورة المشتريات" show-back :back-to="{ name: 'Purchases' }">
       <template v-if="purchase && purchase.paymentStatus !== 'paid'" #actions>
         <v-btn
+          class="win-btn"
           color="primary"
           size="small"
           prepend-icon="mdi-cash-minus"
@@ -16,7 +17,7 @@
     <v-skeleton-loader v-if="purchasesStore.loading" type="card" />
 
     <template v-else-if="purchase">
-      <v-card class="mb-4">
+      <v-card class="mb-4 border" elevation="0" variant="flat" rounded="lg">
         <v-card-text>
           <v-row dense>
             <v-col cols="6" sm="3"
@@ -45,7 +46,7 @@
       <!-- Payment summary cards — values come directly from backend, no manual calculation -->
       <v-row dense class="mb-4">
         <v-col cols="6" sm="3">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <v-card-text class="text-center">
               <div class="text-caption text-medium-emphasis">الإجمالي</div>
               <div class="text-h6 font-weight-bold">
@@ -55,7 +56,7 @@
           </v-card>
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <v-card-text class="text-center">
               <div class="text-caption text-medium-emphasis">المدفوع</div>
               <div class="text-h6 font-weight-bold text-success">
@@ -65,7 +66,7 @@
           </v-card>
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <v-card-text class="text-center">
               <!-- Label is "Remaining Due" — maps directly to remainingAmount from backend -->
               <div class="text-caption text-medium-emphasis">المتبقي</div>
@@ -79,29 +80,29 @@
           </v-card>
         </v-col>
         <v-col cols="6" sm="3">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <v-card-text class="text-center">
               <div class="text-caption text-medium-emphasis">حالة الدفع</div>
               <!-- paymentStatus is backend-authoritative — never override -->
               <v-chip
-                :color="paymentStatusColor(purchase.paymentStatus)"
+                :color="paymentStatusColor(purchase.paymentStatus as NonNullable<Purchase['paymentStatus']>)"
                 size="small"
                 variant="tonal"
                 label
               >
-                {{ paymentStatusLabel(purchase.paymentStatus) }}
+                {{ paymentStatusLabel(purchase.paymentStatus as NonNullable<Purchase['paymentStatus']>) }}
               </v-chip>
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
 
-      <v-card flat class="ds-table-wrapper">
+      <v-card class="border ds-table-wrapper" elevation="0" variant="flat" rounded="lg">
         <v-card-title class="text-subtitle-1 font-weight-bold">المنتجات</v-card-title>
         <v-data-table
           :headers="itemHeaders"
           :items="purchase.items ?? []"
-          density="compact"
+          density="comfortable"
           class="ds-table-enhanced ds-table-striped"
           :items-per-page="-1"
           hide-default-footer
@@ -120,12 +121,13 @@
 
       <v-row class="mb-4" dense>
         <v-col cols="12" md="6">
-          <v-card>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <v-card-title class="text-subtitle-1 font-weight-bold">الدفعات</v-card-title>
             <v-data-table
               :headers="paymentHeaders"
               :items="purchase.payments ?? []"
-              density="compact"
+              density="comfortable"
+              class="ds-table-enhanced ds-table-striped"
               :items-per-page="10"
             >
               <template #item.amount="{ item }">
@@ -142,12 +144,13 @@
         </v-col>
 
         <v-col cols="12" md="6">
-          <v-card>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <v-card-title class="text-subtitle-1 font-weight-bold">حركات المخزون</v-card-title>
             <v-data-table
               :headers="movementHeaders"
               :items="purchase.movements ?? []"
-              density="compact"
+              density="comfortable"
+              class="ds-table-enhanced ds-table-striped"
               :items-per-page="10"
             >
               <template #item.movementType="{ item }">
@@ -170,7 +173,7 @@
         </v-col>
       </v-row>
 
-      <v-card>
+      <v-card class="border" elevation="0" variant="flat" rounded="lg">
         <v-card-text>
           <v-row dense>
             <v-col cols="6" sm="3">
@@ -219,22 +222,24 @@
             item-value="value"
             label="طريقة الدفع"
             variant="outlined"
-            density="compact"
+            density="comfortable"
             class="mb-3"
           />
           <v-textarea
             v-model="paymentNotes"
             label="ملاحظات"
             variant="outlined"
-            density="compact"
+            density="comfortable"
             rows="2"
           />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="showPaymentDialog = false">إلغاء</v-btn>
+          <v-btn class="win-ghost-btn" variant="text" @click="showPaymentDialog = false">إلغاء</v-btn>
           <v-btn
+            class="win-btn"
             color="primary"
+            variant="flat"
             :loading="purchasesStore.loading"
             :disabled="
               paymentAmount <= 0 || paymentAmount > (purchase?.remainingAmount ?? 0)

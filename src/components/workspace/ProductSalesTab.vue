@@ -3,7 +3,8 @@
     :headers="headers"
     :items="items"
     :loading="loading"
-    density="compact"
+    density="comfortable"
+    class="ds-table-enhanced ds-table-striped"
     :items-per-page="20"
   >
     <template #item.createdAt="{ item }">

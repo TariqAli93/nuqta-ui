@@ -1,11 +1,9 @@
 <template>
-  <v-card class="d-flex flex-column">
+  <v-card class="d-flex flex-column border" elevation="0" variant="flat" rounded="lg">
     <v-card-title class="d-flex align-center">
       <span class="text-subtitle-1 font-weight-bold">ملخص المنتج</span>
       <v-spacer />
       <template v-if="product">
-        <v-btn icon="mdi-barcode" variant="text" size="small" @click="$emit('openBarcode')" />
-        <v-btn icon="mdi-pencil" variant="text" size="small" @click="$emit('editProduct')" />
         <v-btn
           icon="mdi-delete"
           variant="text"
@@ -84,11 +82,24 @@
 
     <v-divider />
     <v-card-actions>
-      <v-btn color="primary" variant="tonal" :disabled="!product" @click="$emit('openAdjustStock')">
+      <v-btn
+        class="win-btn"
+        color="primary"
+        variant="tonal"
+        :disabled="!product"
+        @click="$emit('openAdjustStock')"
+      >
         تعديل المخزون
       </v-btn>
       <v-spacer />
-      <v-btn color="primary" :disabled="!product" @click="$emit('editProduct')">تعديل المنتج</v-btn>
+      <v-btn
+        class="win-btn"
+        color="primary"
+        variant="flat"
+        :disabled="!product"
+        @click="$emit('editProduct')"
+        >تعديل المنتج</v-btn
+      >
     </v-card-actions>
   </v-card>
 </template>

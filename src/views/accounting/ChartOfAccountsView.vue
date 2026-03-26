@@ -1,11 +1,11 @@
 <template>
   <SubPageShell>
-    <v-card flat>
+    <v-card elevation="0" variant="flat" class="border" rounded="lg">
     <!-- Toolbar -->
-    <v-toolbar flat density="compact" color="transparent" class="px-2">
+    <v-toolbar color="transparent" density="compact" class="px-2 my-2">
       <v-text-field
         v-model="search"
-        density="compact"
+        density="comfortable"
         variant="outlined"
         hide-details
         prepend-inner-icon="mdi-magnify"
@@ -18,7 +18,7 @@
       <v-select
         v-model="filterType"
         :items="accountTypeOptions"
-        density="compact"
+        density="comfortable"
         variant="outlined"
         hide-details
         clearable
@@ -30,24 +30,22 @@
       <v-spacer />
 
       <v-btn
-        size="small"
         variant="flat"
         color="primary"
+        class="win-btn me-2"
         prepend-icon="mdi-plus"
-        class="me-2"
         @click="accountFormDialog?.open()"
       >
         إضافة حساب
       </v-btn>
 
-      <v-chip variant="tonal" size="small" class="me-2">
+      <v-chip variant="tonal" class="me-2">
         {{ filteredAccounts.length }} حساب
       </v-chip>
 
       <v-btn
         icon="mdi-refresh"
         variant="text"
-        size="small"
         :loading="accountingStore.loading"
         @click="refresh"
       />
@@ -65,22 +63,23 @@
     >
       {{ accountingStore.error }}
       <template #append>
-        <v-btn variant="text" size="small" @click="refresh">إعادة المحاولة</v-btn>
+        <v-btn variant="text" @click="refresh">إعادة المحاولة</v-btn>
       </template>
     </v-alert>
 
     <!-- Data Table -->
-    <v-data-table
-      v-if="!accountingStore.error || accountingStore.accounts.length > 0"
-      :headers="accountHeaders"
-      :items="filteredAccounts"
-      :loading="accountingStore.loading"
-      :search="search ?? undefined"
-      density="compact"
-      :items-per-page="25"
-      :items-per-page-options="[10, 25, 50, 100]"
-      hover
-      class="chart-of-accounts-table"
+    <v-card-text class="pa-0">
+      <v-data-table
+        v-if="!accountingStore.error || accountingStore.accounts.length > 0"
+        :headers="accountHeaders"
+        :items="filteredAccounts"
+        :loading="accountingStore.loading"
+        :search="search ?? undefined"
+        density="comfortable"
+        :items-per-page="25"
+        :items-per-page-options="[10, 25, 50, 100]"
+        hover
+        class="chart-of-accounts-table ds-table-enhanced ds-table-striped"
       @click:row="(_e: Event, { item }: { item: Account }) => onRowClick(item)"
     >
       <template #item.code="{ item }">
@@ -148,6 +147,7 @@
         />
       </template>
     </v-data-table>
+    </v-card-text>
     <AccountFormDialog ref="accountFormDialog" />
   </v-card>
   </SubPageShell>

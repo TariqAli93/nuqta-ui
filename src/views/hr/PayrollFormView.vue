@@ -1,26 +1,44 @@
 <template>
   <PageShell>
-    <PageHeader :title="isEdit ? t('hr.payroll.edit') : t('hr.payroll.new')" :subtitle="t('hr.payroll.formHint')" show-back back-to="/hr/payroll" />
+    <PageHeader
+      :title="isEdit ? t('hr.payroll.edit') : t('hr.payroll.new')"
+      :subtitle="t('hr.payroll.formHint')"
+      show-back
+      back-to="/hr/payroll"
+    />
 
-
-    <v-card flat>
+    <v-card elevation="0" variant="flat" class="border pa-4" rounded="lg">
       <v-form class="win-form" @submit.prevent="submit">
-        <v-text-field v-model="form.title" :label="t('hr.payroll.runTitle')" required />
+        <v-text-field
+          v-model="form.title"
+          :label="t('hr.payroll.runTitle')"
+          variant="outlined"
+          density="comfortable"
+          required
+        />
         <div class="d-flex flex-wrap ga-2">
-          <v-text-field
+          <AppDateInput
             v-model="form.periodStart"
             :label="t('hr.payroll.periodStart')"
-            type="date"
+            variant="outlined"
+            density="comfortable"
             required
           />
-          <v-text-field
+          <AppDateInput
             v-model="form.periodEnd"
             :label="t('hr.payroll.periodEnd')"
-            type="date"
+            variant="outlined"
+            density="comfortable"
             required
           />
         </div>
-        <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" />
+        <v-textarea
+          v-model="form.notes"
+          :label="t('common.notes')"
+          variant="outlined"
+          density="comfortable"
+          rows="3"
+        />
 
         <div class="d-flex ga-2">
           <v-btn
@@ -45,6 +63,7 @@
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { usePayrollStore } from '@/stores/payrollStore';
 import type { PayrollRunInput } from '@/types/domain';

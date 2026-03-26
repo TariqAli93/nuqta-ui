@@ -23,7 +23,7 @@
       </template>
     </PageHeader>
 
-    <v-card flat>
+    <v-card class="border" elevation="0" variant="flat" rounded="lg">
       <v-divider />
       <div style="padding: var(--ds-card-py) var(--ds-card-px)">
         <router-view />

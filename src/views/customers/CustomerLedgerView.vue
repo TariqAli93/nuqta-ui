@@ -3,6 +3,7 @@
     <PageHeader title="دفتر العملاء (حسابات القبض)" subtitle="كشف حسابات العملاء والمطابقة المالية">
       <template #actions>
         <v-btn
+          class="win-btn"
           variant="tonal"
           color="warning"
           :loading="ledgerStore.loading.reconciliation"
@@ -39,7 +40,7 @@
             :headers="customerHeaders"
             :items="ledgerStore.customers"
             :loading="ledgerStore.loading.customers"
-            density="compact"
+            density="comfortable"
             class="ds-table-enhanced ds-table-striped"
             :items-per-page="15"
             @click:row="onSelectCustomer"
@@ -91,9 +92,8 @@
           <!-- Filters -->
           <AppCard class="mb-3">
             <v-card-text class="flex flex-wrap gap-3">
-              <v-text-field
+              <AppDateInput
                 v-model="ledgerDateFrom"
-                type="date"
                 label="من تاريخ"
                 density="compact"
                 hide-details
@@ -101,9 +101,8 @@
                 clearable
                 class="grow"
               />
-              <v-text-field
+              <AppDateInput
                 v-model="ledgerDateTo"
-                type="date"
                 label="إلى تاريخ"
                 density="compact"
                 hide-details
@@ -112,6 +111,7 @@
                 class="grow"
               />
               <v-btn
+                class="win-btn"
                 color="primary"
                 variant="tonal"
                 :loading="ledgerStore.loading.customerLedger"
@@ -152,6 +152,7 @@ import { AppCard, StatCard } from '@/components/common';
 import { formatMoney } from '@/utils/formatters';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import LedgerTable from '@/components/shared/LedgerTable.vue';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import type { LedgerEntry } from '@/components/shared/LedgerTable.vue';
 
 const route = useRoute();

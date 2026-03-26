@@ -11,8 +11,8 @@
         class="opacity-85"
       />
     </div>
-    <h3 v-if="title" class="text-h6 font-weight-medium mb-2">{{ title }}</h3>
-    <p v-if="description" class="text-body-2 text-medium-emphasis mb-6 max-width">
+    <h3 v-if="title" class="win-title mb-2">{{ title }}</h3>
+    <p v-if="description" class="win-subtitle mb-6 max-width">
       {{ description }}
     </p>
     <slot>

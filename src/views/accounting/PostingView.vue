@@ -1,7 +1,7 @@
-﻿<template>
+<template>
   <SubPageShell>
     <!-- Post New Batch Card -->
-    <v-card class="mb-6">
+    <v-card elevation="0" variant="flat" class="border mb-6" rounded="lg">
       <v-card-title class="d-flex align-center ga-2">
         <v-icon color="primary">mdi-send-check</v-icon>
         ترحيل فترة جديدة
@@ -18,19 +18,17 @@
             />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field
+            <AppDateInput
               v-model="postForm.periodStart"
               label="بداية الفترة"
-              type="date"
               variant="outlined"
               density="comfortable"
             />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field
+            <AppDateInput
               v-model="postForm.periodEnd"
               label="نهاية الفترة"
-              type="date"
               variant="outlined"
               density="comfortable"
             />
@@ -38,6 +36,7 @@
           <v-col cols="12" md="3" class="d-flex align-center">
             <v-btn
               color="primary"
+              class="win-btn"
               :loading="posting"
               :disabled="!postForm.periodStart || !postForm.periodEnd"
               prepend-icon="mdi-send-check"
@@ -58,18 +57,18 @@
     </v-card>
 
     <!-- Batches Table -->
-    <v-card>
+    <v-card elevation="0" variant="flat" class="border" rounded="lg">
       <v-card-title class="d-flex align-center ga-2">
         <v-icon color="primary">mdi-history</v-icon>
         سجل الدفعات المرحّلة
         <v-spacer />
-        <v-btn variant="text" icon size="small" :loading="loadingBatches" @click="loadBatches">
+        <v-btn variant="text" icon :loading="loadingBatches" @click="loadBatches">
           <v-icon>mdi-refresh</v-icon>
         </v-btn>
       </v-card-title>
 
       <!-- Batch filter row -->
-      <v-card-text class="pb-0">
+      <v-card-text class="pb-4">
         <v-row dense>
           <v-col cols="12" sm="3">
             <v-select
@@ -77,30 +76,28 @@
               :items="[{ title: 'الكل', value: '' }, ...periodTypeItems]"
               label="نوع الفترة"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               hide-details
               @update:model-value="loadBatches"
             />
           </v-col>
           <v-col cols="12" sm="3">
-            <v-text-field
+            <AppDateInput
               v-model="filterDateFrom"
               label="من تاريخ"
-              type="date"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               hide-details
               clearable
               @update:model-value="loadBatches"
             />
           </v-col>
           <v-col cols="12" sm="3">
-            <v-text-field
+            <AppDateInput
               v-model="filterDateTo"
               label="إلى تاريخ"
-              type="date"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               hide-details
               clearable
               @update:model-value="loadBatches"
@@ -109,90 +106,92 @@
         </v-row>
       </v-card-text>
 
-      <v-data-table
-        :headers="batchHeaders"
-        :items="batches"
-        :loading="loadingBatches"
-        :items-per-page="20"
-        density="comfortable"
-        class="elevation-0"
-        no-data-text="لا توجد دفعات مرحّلة"
-      >
-        <template #item.periodType="{ item }">
-          <v-chip size="small" variant="tonal" :color="periodColor(item.periodType)">
-            {{ periodLabel(item.periodType) }}
-          </v-chip>
-        </template>
+      <v-card-text class="pa-0">
+        <v-data-table
+          :headers="batchHeaders"
+          :items="batches"
+          :loading="loadingBatches"
+          :items-per-page="20"
+          density="comfortable"
+          class="ds-table-enhanced ds-table-striped"
+          no-data-text="لا توجد دفعات مرحّلة"
+        >
+          <template #item.periodType="{ item }">
+            <v-chip size="small" variant="tonal" :color="periodColor(item.periodType)">
+              {{ periodLabel(item.periodType) }}
+            </v-chip>
+          </template>
 
-        <template #item.postedAt="{ item }">
-          {{ formatDate(item.postedAt) }}
-        </template>
+          <template #item.postedAt="{ item }">
+            {{ formatDate(item.postedAt) }}
+          </template>
 
-        <template #item.status="{ item }">
-          <v-chip size="small" variant="tonal" :color="batchStatusColor(item.status)">
-            {{ batchStatusLabel(item.status) }}
-          </v-chip>
-        </template>
+          <template #item.status="{ item }">
+            <v-chip size="small" variant="tonal" :color="batchStatusColor(item.status)">
+              {{ batchStatusLabel(item.status) }}
+            </v-chip>
+          </template>
 
-        <template #item.totalAmount="{ item }">
-          {{ formatMoney(item.totalAmount) }}
-        </template>
+          <template #item.totalAmount="{ item }">
+            {{ formatMoney(item.totalAmount) }}
+          </template>
 
-        <template #item.actions="{ item }">
-          <div class="d-flex ga-1">
-            <v-tooltip v-if="item.status === 'locked'" location="top">
-              <template #activator="{ props: tp }">
-                <v-btn
-                  v-bind="tp"
-                  variant="text"
-                  size="small"
-                  color="grey"
-                  icon
-                  :loading="unlockingId === item.id"
-                  @click="confirmUnlock(item)"
-                >
-                  <v-icon size="18">mdi-lock-open-outline</v-icon>
-                </v-btn>
-              </template>
-              <span>فتح القفل</span>
-            </v-tooltip>
-            <v-tooltip v-else location="top">
-              <template #activator="{ props: tp }">
-                <v-btn
-                  v-bind="tp"
-                  variant="text"
-                  size="small"
-                  color="warning"
-                  icon
-                  :loading="lockingId === item.id"
-                  @click="confirmLock(item)"
-                >
-                  <v-icon size="18">mdi-lock-outline</v-icon>
-                </v-btn>
-              </template>
-              <span>قفل الدفعة</span>
-            </v-tooltip>
+          <template #item.actions="{ item }">
+            <div class="d-flex ga-1">
+              <v-tooltip v-if="item.status === 'locked'" location="top">
+                <template #activator="{ props: tp }">
+                  <v-btn
+                    v-bind="tp"
+                    variant="text"
+                    size="small"
+                    color="grey"
+                    icon
+                    :loading="unlockingId === item.id"
+                    @click="confirmUnlock(item)"
+                  >
+                    <v-icon size="18">mdi-lock-open-outline</v-icon>
+                  </v-btn>
+                </template>
+                <span>فتح القفل</span>
+              </v-tooltip>
+              <v-tooltip v-else location="top">
+                <template #activator="{ props: tp }">
+                  <v-btn
+                    v-bind="tp"
+                    variant="text"
+                    size="small"
+                    color="warning"
+                    icon
+                    :loading="lockingId === item.id"
+                    @click="confirmLock(item)"
+                  >
+                    <v-icon size="18">mdi-lock-outline</v-icon>
+                  </v-btn>
+                </template>
+                <span>قفل الدفعة</span>
+              </v-tooltip>
 
-            <v-tooltip location="top">
-              <template #activator="{ props: tp }">
-                <v-btn
-                  v-bind="tp"
-                  variant="text"
-                  size="small"
-                  color="error"
-                  icon
-                  :loading="reversingId === item.id"
-                  :disabled="item.status === 'locked'"
-                  @click="confirmReverse(item)"
-                >
-                  <v-icon size="18">mdi-undo</v-icon>
-                </v-btn>
-              </template>
-              <span>عكس الدفعة</span>
-            </v-tooltip>
-          </div>
-        </template>
-      </v-data-table>
+              <v-tooltip location="top">
+                <template #activator="{ props: tp }">
+                  <v-btn
+                    v-bind="tp"
+                    variant="text"
+                    size="small"
+                    color="error"
+                    icon
+                    :loading="reversingId === item.id"
+                    :disabled="item.status === 'locked'"
+                    @click="confirmReverse(item)"
+                  >
+                    <v-icon size="18">mdi-undo</v-icon>
+                  </v-btn>
+                </template>
+                <span>عكس الدفعة</span>
+              </v-tooltip>
+            </div>
+          </template>
+        </v-data-table>
+      </v-card-text>
     </v-card>
 
     <!-- Reverse confirmation dialog -->
@@ -248,6 +247,7 @@
 import { onMounted, reactive, ref } from 'vue';
 import { SubPageShell, PageHeader } from '@/components/layout';
 import { postingClient, type PostingBatch } from '@/api/endpoints/posting';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
 import {
   formatDate as sharedFormatDate,

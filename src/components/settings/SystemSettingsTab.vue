@@ -2,6 +2,7 @@
   <div>
     <div class="d-flex justify-end mb-4">
       <v-btn
+        class="win-btn"
         color="primary"
         variant="tonal"
         prepend-icon="mdi-refresh"
@@ -11,8 +12,8 @@
       </v-btn>
     </div>
 
-    <v-card class="win-card win-card--padded mb-4" flat>
-      <v-card class="pa-4">
+    <v-card class="win-card win-card--padded mb-4 border" elevation="0" variant="flat" rounded="lg">
+      <v-card-text class="pa-4">
         <v-card-title class="flex items-center justify-between mb-4">
           <span>{{ t('settings.companyInfo') }}</span>
         </v-card-title>
@@ -128,7 +129,7 @@
             {{ t('common.save') }}
           </v-btn>
         </v-form>
-      </v-card>
+      </v-card-text>
     </v-card>
   </div>
 </template>

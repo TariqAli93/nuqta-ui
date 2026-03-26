@@ -3,6 +3,7 @@
     <PageHeader title="مساحة عمل النسخ الاحتياطي" subtitle="إدارة النسخ الاحتياطية لقاعدة البيانات: إنشاء، استعادة، وحذف النسخ الاحتياطية.">
       <template #actions>
         <v-btn
+          class="win-btn"
           color="primary"
           prepend-icon="mdi-backup-restore"
           :loading="creating"
@@ -16,7 +17,7 @@
     <!-- Stats Cards -->
     <v-row v-if="stats" dense>
       <v-col cols="6" sm="3">
-        <v-card flat>
+        <v-card class="border" elevation="0" variant="flat" rounded="lg">
           <div class="ds-stat-card">
             <div class="ds-stat-card__info">
               <div class="ds-stat-card__label">عدد النسخ</div>
@@ -26,7 +27,7 @@
         </v-card>
       </v-col>
       <v-col cols="6" sm="3">
-        <v-card flat>
+        <v-card class="border" elevation="0" variant="flat" rounded="lg">
           <div class="ds-stat-card">
             <div class="ds-stat-card__info">
               <div class="ds-stat-card__label">الحجم الإجمالي</div>
@@ -36,7 +37,7 @@
         </v-card>
       </v-col>
       <v-col cols="6" sm="3">
-        <v-card flat>
+        <v-card class="border" elevation="0" variant="flat" rounded="lg">
           <div class="ds-stat-card">
             <div class="ds-stat-card__info">
               <div class="ds-stat-card__label">أقدم نسخة</div>
@@ -48,7 +49,7 @@
         </v-card>
       </v-col>
       <v-col cols="6" sm="3">
-        <v-card flat>
+        <v-card class="border" elevation="0" variant="flat" rounded="lg">
           <div class="ds-stat-card">
             <div class="ds-stat-card__info">
               <div class="ds-stat-card__label">أحدث نسخة</div>
@@ -62,7 +63,7 @@
     </v-row>
 
     <!-- Backup list -->
-    <v-card flat>
+    <v-card class="border mt-4" elevation="0" variant="flat" rounded="lg">
       <v-card-title
         class="d-flex align-center ga-2"
         style="padding: var(--ds-card-py) var(--ds-card-px) var(--ds-space-2)"
@@ -150,8 +151,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="restoreDialog = false">إلغاء</v-btn>
-          <v-btn color="error" :loading="restoringName !== null" @click="executeRestore">
+          <v-btn class="win-ghost-btn" variant="text" @click="restoreDialog = false">إلغاء</v-btn>
+          <v-btn class="win-btn" color="error" :loading="restoringName !== null" @click="executeRestore">
             استعادة
           </v-btn>
         </v-card-actions>
@@ -167,8 +168,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="deleteDialog = false">إلغاء</v-btn>
-          <v-btn color="error" :loading="deletingName !== null" @click="executeDelete">حذف</v-btn>
+          <v-btn class="win-ghost-btn" variant="text" @click="deleteDialog = false">إلغاء</v-btn>
+          <v-btn class="win-btn" color="error" :loading="deletingName !== null" @click="executeDelete">حذف</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

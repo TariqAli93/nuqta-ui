@@ -2,10 +2,11 @@
   <PageShell>
     <PageHeader :title="t('dashboard.title')" :subtitle="t('dashboard.subtitle')">
       <template #actions>
-        <v-btn variant="outlined" size="small" :loading="isDownloadingSales" @click="exportSales">
+        <v-btn class="win-ghost-btn" variant="outlined" size="small" :loading="isDownloadingSales" @click="exportSales">
           تصدير المبيعات CSV
         </v-btn>
         <v-btn
+          class="win-ghost-btn"
           variant="outlined"
           size="small"
           :loading="isDownloadingInventory"
@@ -22,21 +23,21 @@
     <CardSkeleton :loading="loading" :count="4" :cols="3">
       <v-row dense>
         <v-col cols="12" sm="6" md="3">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <div class="ds-stat-card">
               <v-avatar color="success" variant="tonal" size="44">
                 <v-icon>mdi-cash-register</v-icon>
               </v-avatar>
               <div class="ds-stat-card__info">
                 <div class="ds-stat-card__label">مبيعات اليوم</div>
-                <div class="ds-stat-card__value">{{ stats?.salesToday?.totalSales ?? 0 }}</div>
+                <div class="ds-stat-card__value">{{ stats?.salesToday?.count ?? 0 }}</div>
               </div>
             </div>
           </v-card>
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <div class="ds-stat-card">
               <v-avatar color="primary" variant="tonal" size="44">
                 <v-icon>mdi-currency-usd</v-icon>
@@ -44,7 +45,7 @@
               <div class="ds-stat-card__info">
                 <div class="ds-stat-card__label">إيرادات اليوم</div>
                 <div class="ds-stat-card__value">
-                  {{ formatMoney(stats?.salesToday?.totalRevenue ?? 0) }}
+                  {{ formatMoney(stats?.salesToday?.revenue ?? 0) }}
                 </div>
               </div>
             </div>
@@ -52,7 +53,7 @@
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <div class="ds-stat-card">
               <v-avatar color="info" variant="tonal" size="44">
                 <v-icon>mdi-calculator</v-icon>
@@ -60,7 +61,7 @@
               <div class="ds-stat-card__info">
                 <div class="ds-stat-card__label">متوسط الفاتورة</div>
                 <div class="ds-stat-card__value">
-                  {{ formatMoney(stats?.salesToday?.averageSaleAmount ?? 0) }}
+                  {{ formatMoney(stats?.salesToday?.count ? (stats.salesToday.revenue / stats.salesToday.count) : 0) }}
                 </div>
               </div>
             </div>
@@ -68,7 +69,7 @@
         </v-col>
 
         <v-col cols="12" sm="6" md="3">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <div class="ds-stat-card">
               <v-avatar
                 :color="(stats?.lowStockCount ?? 0) > 0 ? 'error' : 'grey'"
@@ -87,7 +88,7 @@
       </v-row>
     </CardSkeleton>
 
-    <v-card flat>
+    <v-card class="border mt-4" elevation="0" variant="flat" rounded="lg">
       <v-card-title
         class="d-flex align-center ga-2"
         style="padding: var(--ds-card-py) var(--ds-card-px) var(--ds-space-2)"

@@ -5,7 +5,13 @@
       subtitle="إدارة المنتج في شاشة واحدة: معلومات، حركات، مبيعات، مشتريات، وحدات، دفعات، وتعديل مخزون."
     >
       <template #actions>
-        <v-btn color="primary" size="small" prepend-icon="mdi-plus" @click="openCreateDialog">
+        <v-btn
+          class="win-btn"
+          color="primary"
+          size="small"
+          prepend-icon="mdi-plus"
+          @click="openCreateDialog"
+        >
           إضافة منتج
         </v-btn>
       </template>
@@ -38,7 +44,7 @@
           @open-adjust-stock="openAdjustDrawer"
         />
 
-        <v-card class="mt-4">
+        <v-card class="mt-4 border" elevation="0" variant="flat" rounded="lg">
           <v-tabs v-model="activeTab" color="primary" density="comfortable" show-arrows>
             <v-tab value="movements">المخزون والحركات</v-tab>
             <v-tab value="purchases">سجل المشتريات</v-tab>
@@ -111,7 +117,12 @@
 
             <v-window-item v-if="showAdjustTab" value="adjust">
               <v-card-text>
-                <v-btn color="primary" :disabled="!selectedProductId" @click="openAdjustDrawer">
+                <v-btn
+                  class="win-btn"
+                  color="primary"
+                  :disabled="!selectedProductId"
+                  @click="openAdjustDrawer"
+                >
                   فتح نموذج التعديل
                 </v-btn>
               </v-card-text>
@@ -137,13 +148,29 @@
             <v-form @submit.prevent="submitProduct">
               <v-row dense>
                 <v-col cols="12" md="6">
-                  <v-text-field v-model="productForm.name" label="الاسم" required />
+                  <v-text-field
+                    v-model="productForm.name"
+                    label="الاسم"
+                    required
+                    variant="outlined"
+                    density="comfortable"
+                  />
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-text-field v-model="productForm.sku" label="SKU" />
+                  <v-text-field
+                    v-model="productForm.sku"
+                    label="SKU"
+                    variant="outlined"
+                    density="comfortable"
+                  />
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-text-field v-model="productForm.barcode" label="الباركود" />
+                  <v-text-field
+                    v-model="productForm.barcode"
+                    label="الباركود"
+                    variant="outlined"
+                    density="comfortable"
+                  />
                 </v-col>
                 <v-col cols="12" md="6">
                   <v-select
@@ -153,6 +180,8 @@
                     item-value="id"
                     label="الفئة"
                     clearable
+                    variant="outlined"
+                    density="comfortable"
                   />
                 </v-col>
                 <v-col cols="12" md="4">
@@ -161,6 +190,8 @@
                     label="سعر التكلفة"
                     type="number"
                     min="0"
+                    variant="outlined"
+                    density="comfortable"
                   />
                 </v-col>
                 <v-col cols="12" md="4">
@@ -169,10 +200,17 @@
                     label="سعر البيع"
                     type="number"
                     min="0"
+                    variant="outlined"
+                    density="comfortable"
                   />
                 </v-col>
                 <v-col cols="12" md="4">
-                  <v-text-field v-model="productForm.unit" label="الوحدة" />
+                  <v-text-field
+                    v-model="productForm.unit"
+                    label="الوحدة"
+                    variant="outlined"
+                    density="comfortable"
+                  />
                 </v-col>
                 <v-col cols="12" md="4">
                   <v-text-field
@@ -180,6 +218,8 @@
                     label="حد التنبيه"
                     type="number"
                     min="0"
+                    variant="outlined"
+                    density="comfortable"
                   />
                 </v-col>
                 <v-col cols="12" md="4">
@@ -190,6 +230,8 @@
                     item-value="id"
                     label="المورد"
                     clearable
+                    variant="outlined"
+                    density="comfortable"
                   />
                 </v-col>
                 <v-col cols="12" md="4">
@@ -199,6 +241,8 @@
                     item-title="title"
                     item-value="value"
                     label="الحالة"
+                    variant="outlined"
+                    density="comfortable"
                   />
                 </v-col>
                 <v-col cols="12" md="4">
@@ -208,14 +252,21 @@
                   <v-switch v-model="productForm.isExpire" label="يتتبع الصلاحية" color="primary" />
                 </v-col>
                 <v-col v-if="productForm.isExpire" cols="12" md="8">
-                  <v-text-field
+                  <AppDateInput
                     v-model="productForm.expireDate"
                     label="تاريخ الانتهاء الافتراضي"
-                    type="date"
+                    variant="outlined"
+                    density="comfortable"
                   />
                 </v-col>
                 <v-col cols="12">
-                  <v-textarea v-model="productForm.description" label="الوصف" rows="2" />
+                  <v-textarea
+                    v-model="productForm.description"
+                    label="الوصف"
+                    rows="2"
+                    variant="outlined"
+                    density="comfortable"
+                  />
                 </v-col>
               </v-row>
             </v-form>
@@ -223,8 +274,14 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="productDialog = false">إلغاء</v-btn>
-          <v-btn color="primary" :loading="workspaceStore.loading.save" @click="submitProduct">
+          <v-btn variant="text" class="win-ghost-btn" @click="productDialog = false">إلغاء</v-btn>
+          <v-btn
+            class="win-btn"
+            color="primary"
+            variant="flat"
+            :loading="workspaceStore.loading.save"
+            @click="submitProduct"
+          >
             حفظ
           </v-btn>
         </v-card-actions>
@@ -237,8 +294,14 @@
         <v-card-text>سيتم حذف المنتج المحدد. هل تريد المتابعة؟</v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="deleteDialog = false">إلغاء</v-btn>
-          <v-btn color="error" :loading="workspaceStore.loading.save" @click="confirmDelete">
+          <v-btn variant="text" class="win-ghost-btn" @click="deleteDialog = false">إلغاء</v-btn>
+          <v-btn
+            class="win-btn"
+            color="error"
+            variant="flat"
+            :loading="workspaceStore.loading.save"
+            @click="confirmDelete"
+          >
             حذف
           </v-btn>
         </v-card-actions>
@@ -272,6 +335,7 @@ import ProductUnitsBarcodesTab from '@/components/workspace/ProductUnitsBarcodes
 import ProductBatchesTab from '@/components/workspace/ProductBatchesTab.vue';
 import StockAdjustDrawer from '@/components/workspace/StockAdjustDrawer.vue';
 import FormSkeleton from '@/components/shared/FormSkeleton.vue';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import { useSystemSettingsStore } from '@/stores/settings';
 
 const route = useRoute();

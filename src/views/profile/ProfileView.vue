@@ -2,7 +2,7 @@
   <PageShell>
     <PageHeader :title="t('profile.title')" :subtitle="t('profile.subtitle')" />
 
-    <v-card flat class="win-card--padded">
+    <v-card class="win-card--padded border" elevation="0" variant="flat" rounded="lg">
       <v-list>
         <v-list-item
           :title="t('common.fullName')"
@@ -23,10 +23,11 @@
       </v-list>
 
       <div class="d-flex ga-2 mt-4">
-        <v-btn color="error" variant="flat" @click="logout">
+        <v-btn class="win-btn" color="error" variant="flat" @click="logout">
           {{ t('profile.logout') }}
         </v-btn>
         <v-btn
+          class="win-ghost-btn"
           variant="outlined"
           :disabled="!authStore.user?.username"
           @click="openPasswordDialog"
@@ -46,19 +47,21 @@
               :label="t('profile.currentPassword')"
               type="password"
               required
+              variant="outlined" density="comfortable"
             />
             <v-text-field
               v-model="newPassword"
               :label="t('profile.newPassword')"
               type="password"
               required
+              variant="outlined" density="comfortable"
             />
           </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="passwordDialog = false">{{ t('common.cancel') }}</v-btn>
-          <v-btn color="primary" variant="flat" :loading="saving" @click="changePassword">
+          <v-btn class="win-ghost-btn" variant="text" @click="passwordDialog = false">{{ t('common.cancel') }}</v-btn>
+          <v-btn class="win-btn" color="primary" variant="flat" :loading="saving" @click="changePassword">
             {{ t('common.save') }}
           </v-btn>
         </v-card-actions>
@@ -122,7 +125,6 @@ async function changePassword() {
   saving.value = true;
   try {
     const result = await authClient.changePassword({
-      username: authStore.user.username,
       currentPassword: currentPassword.value,
       newPassword: newPassword.value,
     });

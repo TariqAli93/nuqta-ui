@@ -32,7 +32,7 @@
     </v-row>
 
     <!-- Expiry Alerts Table -->
-    <v-card class="mb-4">
+    <v-card elevation="0" variant="flat" class="border mb-4" rounded="lg">
       <v-card-title class="text-subtitle-1 font-weight-bold d-flex align-center">
         <v-icon start color="error" size="20">mdi-clock-alert-outline</v-icon>
         تنبيهات الصلاحية
@@ -41,7 +41,7 @@
           v-model.number="daysAhead"
           type="number"
           label="أيام للأمام"
-          density="compact"
+          density="comfortable"
           hide-details
           variant="outlined"
           style="max-width: 140px"
@@ -53,7 +53,8 @@
         :headers="expiryHeaders"
         :items="inventoryStore.expiryAlerts"
         :loading="inventoryStore.loadingAlerts"
-        density="compact"
+        density="comfortable"
+        class="ds-table-enhanced ds-table-striped"
         :items-per-page="15"
       >
         <template #item.expiryDate="{ item }">

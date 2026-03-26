@@ -1,14 +1,34 @@
 <template>
   <PageShell>
-    <PageHeader :title="isEdit ? t('hr.employees.edit') : t('hr.employees.new')" :subtitle="t('hr.employees.formHint')" show-back back-to="/hr/employees" />
+    <PageHeader
+      :title="isEdit ? t('hr.employees.edit') : t('hr.employees.new')"
+      :subtitle="t('hr.employees.formHint')"
+      show-back
+      back-to="/hr/employees"
+    />
 
-
-    <v-card flat>
+    <v-card elevation="0" variant="flat" class="border pa-4" rounded="lg">
       <v-form class="win-form" @submit.prevent="submit">
-        <v-text-field v-model="form.fullName" :label="t('common.fullName')" required />
+        <v-text-field
+          v-model="form.fullName"
+          :label="t('common.fullName')"
+          variant="outlined"
+          density="comfortable"
+          required
+        />
         <div class="d-flex flex-wrap ga-2">
-          <v-text-field v-model="form.phone" :label="t('common.phone')" />
-          <v-text-field v-model="form.email" :label="t('hr.employees.email')" />
+          <v-text-field
+            v-model="form.phone"
+            :label="t('common.phone')"
+            variant="outlined"
+            density="comfortable"
+          />
+          <v-text-field
+            v-model="form.email"
+            :label="t('hr.employees.email')"
+            variant="outlined"
+            density="comfortable"
+          />
         </div>
         <div class="d-flex flex-wrap ga-2">
           <v-select
@@ -21,18 +41,25 @@
             variant="outlined"
             density="comfortable"
           />
-          <v-text-field v-model="form.designation" :label="t('hr.employees.designation')" />
+          <v-text-field
+            v-model="form.designation"
+            :label="t('hr.employees.designation')"
+            variant="outlined"
+            density="comfortable"
+          />
         </div>
         <div class="d-flex flex-wrap ga-2">
-          <v-text-field
+          <AppDateInput
             v-model="form.dateOfJoining"
             :label="t('hr.employees.dateOfJoining')"
-            type="date"
+            variant="outlined"
+            density="comfortable"
           />
-          <v-text-field
+          <AppDateInput
             v-model="form.dateOfBirth"
             :label="t('hr.employees.dateOfBirth')"
-            type="date"
+            variant="outlined"
+            density="comfortable"
           />
         </div>
         <div class="d-flex flex-wrap ga-2">
@@ -40,6 +67,8 @@
             v-model.number="form.salary"
             :label="t('hr.employees.salary')"
             type="number"
+            variant="outlined"
+            density="comfortable"
           />
           <v-select
             v-model="form.status"
@@ -49,8 +78,19 @@
             density="comfortable"
           />
         </div>
-        <v-text-field v-model="form.address" :label="t('hr.employees.address')" />
-        <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" />
+        <v-text-field
+          v-model="form.address"
+          :label="t('hr.employees.address')"
+          variant="outlined"
+          density="comfortable"
+        />
+        <v-textarea
+          v-model="form.notes"
+          :label="t('common.notes')"
+          variant="outlined"
+          density="comfortable"
+          rows="3"
+        />
 
         <div class="d-flex ga-2">
           <v-btn
@@ -75,6 +115,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import { mapErrorToArabic, t } from '@/i18n/t';
 import { useEmployeesStore } from '@/stores/employeesStore';
 import { useDepartmentsStore } from '@/stores/departmentsStore';

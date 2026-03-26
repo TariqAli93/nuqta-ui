@@ -1,10 +1,15 @@
 <template>
   <PageShell>
-    <PageHeader :title="account ? account.name : ''" :subtitle="ledgerSubtitle" show-back :back-to="{ name: 'AccountingAccounts' }" />
+    <PageHeader
+      :title="account ? account.name : ''"
+      :subtitle="ledgerSubtitle"
+      show-back
+      :back-to="{ name: 'AccountingAccounts' }"
+    />
 
     <!-- Account header with date filters -->
-    <v-card class="mb-4">
-      <v-card-text class="d-flex align-center ga-4 flex-wrap">
+    <v-card elevation="0" variant="flat" class="border py-2 px-4 mb-4" rounded="lg">
+      <div class="d-flex align-center ga-4 flex-wrap">
         <div v-if="account">
           <div class="text-h6 font-weight-bold">{{ account.code }} — {{ account.name }}</div>
           <v-chip
@@ -20,28 +25,34 @@
 
         <v-spacer />
 
-        <v-text-field
+        <AppDateInput
           v-model="dateFrom"
-          type="date"
           label="من تاريخ"
-          density="compact"
+          density="comfortable"
           hide-details
           variant="outlined"
           style="max-width: 180px"
           clearable
         />
-        <v-text-field
+        <AppDateInput
           v-model="dateTo"
-          type="date"
           label="إلى تاريخ"
-          density="compact"
+          density="comfortable"
           hide-details
           variant="outlined"
           style="max-width: 180px"
           clearable
         />
-        <v-btn color="primary" variant="tonal" :loading="loading" @click="loadLedger"> عرض </v-btn>
-      </v-card-text>
+        <v-btn
+          color="primary"
+          variant="tonal"
+          class="win-btn"
+          :loading="loading"
+          @click="loadLedger"
+        >
+          عرض
+        </v-btn>
+      </div>
     </v-card>
 
     <!-- Error -->
@@ -50,55 +61,58 @@
     </v-alert>
 
     <!-- Ledger table -->
-    <v-card>
-      <v-data-table
-        :headers="headers"
-        :items="entries"
-        :loading="loading"
-        density="compact"
-        :items-per-page="25"
-        :items-per-page-options="[10, 25, 50, 100]"
-      >
-        <template #item.entryDate="{ item }">
-          {{ formatDate(item.entryDate) }}
-        </template>
-        <template #item.entryNumber="{ item }">
-          <a class="text-primary cursor-pointer" @click="goToEntry(item.journalEntryId)">
-            {{ item.entryNumber }}
-          </a>
-        </template>
-        <template #item.debit="{ item }">
-          <span v-if="item.debit" class="text-error">{{ formatCurrency(item.debit) }}</span>
-        </template>
-        <template #item.credit="{ item }">
-          <span v-if="item.credit" class="text-success">{{ formatCurrency(item.credit) }}</span>
-        </template>
-        <template #item.runningBalance="{ item }">
-          <span :class="item.runningBalance >= 0 ? 'text-success' : 'text-error'">
-            {{ formatCurrency(item.runningBalance) }}
-          </span>
-        </template>
-        <template #no-data>
-          <div class="text-center py-8 text-medium-emphasis">
-            لا توجد حركات لهذا الحساب في الفترة المحددة
-          </div>
-        </template>
+    <v-card elevation="0" variant="flat" class="border" rounded="lg">
+      <v-card-text class="pa-0">
+        <v-data-table
+          :headers="headers"
+          :items="entries"
+          :loading="loading"
+          density="comfortable"
+          :items-per-page="25"
+          :items-per-page-options="[10, 25, 50, 100]"
+          class="ds-table-enhanced ds-table-striped"
+        >
+          <template #item.entryDate="{ item }">
+            {{ formatDate(item.entryDate) }}
+          </template>
+          <template #item.entryNumber="{ item }">
+            <a class="text-primary cursor-pointer" @click="goToEntry(item.journalEntryId)">
+              {{ item.entryNumber }}
+            </a>
+          </template>
+          <template #item.debit="{ item }">
+            <span v-if="item.debit" class="text-error">{{ formatCurrency(item.debit) }}</span>
+          </template>
+          <template #item.credit="{ item }">
+            <span v-if="item.credit" class="text-success">{{ formatCurrency(item.credit) }}</span>
+          </template>
+          <template #item.runningBalance="{ item }">
+            <span :class="item.runningBalance >= 0 ? 'text-success' : 'text-error'">
+              {{ formatCurrency(item.runningBalance) }}
+            </span>
+          </template>
+          <template #no-data>
+            <div class="text-center py-8 text-medium-emphasis">
+              لا توجد حركات لهذا الحساب في الفترة المحددة
+            </div>
+          </template>
 
-        <template #bottom>
-          <v-divider />
-          <v-row v-if="entries.length > 0" dense class="px-4 py-3">
-            <v-col class="text-end font-weight-bold">
-              إجمالي المدين: {{ formatCurrency(totalDebit) }}
-            </v-col>
-            <v-col class="text-end font-weight-bold">
-              إجمالي الدائن: {{ formatCurrency(totalCredit) }}
-            </v-col>
-            <v-col class="text-end font-weight-bold">
-              الرصيد الختامي: {{ formatCurrency(closingBalance) }}
-            </v-col>
-          </v-row>
-        </template>
-      </v-data-table>
+          <template #bottom>
+            <v-divider />
+            <v-row v-if="entries.length > 0" dense class="px-4 py-3">
+              <v-col class="text-end font-weight-bold">
+                إجمالي المدين: {{ formatCurrency(totalDebit) }}
+              </v-col>
+              <v-col class="text-end font-weight-bold">
+                إجمالي الدائن: {{ formatCurrency(totalCredit) }}
+              </v-col>
+              <v-col class="text-end font-weight-bold">
+                الرصيد الختامي: {{ formatCurrency(closingBalance) }}
+              </v-col>
+            </v-row>
+          </template>
+        </v-data-table>
+      </v-card-text>
     </v-card>
   </PageShell>
 </template>
@@ -107,6 +121,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { useAccountingHelpers } from '@/composables/useAccountingHelpers';
 import { useCurrency } from '@/composables/useCurrency';

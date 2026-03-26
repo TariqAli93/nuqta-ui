@@ -3,7 +3,7 @@
     <PageHeader title="فاتورة مشتريات جديدة" />
 
     <v-form ref="formRef" @submit.prevent="onSubmit">
-      <v-card class="mb-4">
+      <v-card class="mb-4 border" elevation="0" variant="flat" rounded="lg">
         <v-card-text>
           <v-row dense>
             <v-col cols="12" sm="6">
@@ -15,7 +15,7 @@
                 label="المورد"
                 :rules="[(v) => !!v || 'مطلوب']"
                 variant="outlined"
-                density="compact"
+                density="comfortable"
                 @focus="suppliersStore.fetchSuppliers()"
               />
             </v-col>
@@ -24,7 +24,7 @@
                 v-model="form.invoiceNumber"
                 label="رقم الفاتورة"
                 variant="outlined"
-                density="compact"
+                density="comfortable"
               />
             </v-col>
           </v-row>
@@ -32,11 +32,12 @@
       </v-card>
 
       <!-- Line Items -->
-      <v-card class="mb-4">
+      <v-card class="mb-4 border" elevation="0" variant="flat" rounded="lg">
         <v-card-title class="d-flex align-center">
           <span class="text-subtitle-1 font-weight-bold">المنتجات</span>
           <v-spacer />
           <v-btn
+            class="win-btn"
             size="small"
             color="primary"
             variant="tonal"
@@ -47,7 +48,7 @@
           </v-btn>
         </v-card-title>
         <v-card-text>
-          <v-table density="compact">
+          <v-table density="comfortable">
             <thead>
               <tr>
                 <th>المنتج</th>
@@ -69,7 +70,7 @@
                     item-title="name"
                     item-value="id"
                     variant="plain"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                     @update:model-value="onProductSelected(line)"
                   />
@@ -78,7 +79,7 @@
                   <v-text-field
                     v-model="line.unitName"
                     variant="plain"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                   />
                 </td>
@@ -88,7 +89,7 @@
                     type="number"
                     step="1"
                     variant="plain"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                     min="1"
                   />
@@ -96,7 +97,7 @@
                 <td>
                   <MoneyInput
                     v-model="line.unitCost"
-                    density="compact"
+                    density="comfortable"
                     variant="plain"
                     hide-details
                   />
@@ -105,17 +106,16 @@
                   <v-text-field
                     v-model="line.batchNumber"
                     variant="plain"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                     placeholder="B001"
                   />
                 </td>
                 <td>
-                  <v-text-field
+                  <AppDateInput
                     v-model="line.expiryDate"
-                    type="date"
                     variant="plain"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                     :rules="
                       line.requiresExpiry ? [(v: string) => !!v || 'تاريخ الانتهاء مطلوب'] : []
@@ -150,7 +150,7 @@
       </v-card>
 
       <!-- Totals & Payment -->
-      <v-card class="mb-4">
+      <v-card class="mb-4 border" elevation="0" variant="flat" rounded="lg">
         <v-card-text>
           <v-row dense class="mb-2">
             <v-col cols="12" sm="4">
@@ -159,7 +159,7 @@
                 :items="paymentModeOptions"
                 label="طريقة الدفع"
                 variant="outlined"
-                density="compact"
+                density="comfortable"
               />
             </v-col>
           </v-row>
@@ -186,14 +186,16 @@
         v-model="form.notes"
         label="ملاحظات"
         variant="outlined"
-        density="compact"
+        density="comfortable"
         rows="2"
         class="mb-4"
       />
 
       <div class="d-flex ga-3">
-        <v-btn type="submit" color="primary" :loading="purchasesStore.loading">حفظ</v-btn>
-        <v-btn variant="text" :to="{ name: 'Purchases' }">إلغاء</v-btn>
+        <v-btn class="win-btn" type="submit" color="primary" :loading="purchasesStore.loading"
+          >حفظ</v-btn
+        >
+        <v-btn class="win-ghost-btn" variant="text" :to="{ name: 'Purchases' }">إلغاء</v-btn>
       </div>
     </v-form>
   </PageShell>
@@ -207,6 +209,7 @@ import { usePurchasesStore } from '@/stores/purchasesStore';
 import { useSuppliersStore } from '@/stores/suppliersStore';
 import { productsClient } from '@/api';
 import MoneyInput from '@/components/shared/MoneyInput.vue';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import { generateIdempotencyKey } from '@/utils/idempotency';
 import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
 import { notifyError, notifySuccess, notifyWarn } from '@/utils/notify';
@@ -264,7 +267,7 @@ watch(
     if (mode !== 'partial') {
       form.paidAmount = 0;
     }
-  },
+  }
 );
 
 // Lines that require expiry date but don't have one

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-card class="pa-4 mb-4" flat>
+    <v-card class="pa-4 mb-4 border" elevation="0" variant="flat" rounded="lg">
       <v-card-title class="d-flex align-center ga-2 mb-4">
         <v-icon color="primary">mdi-point-of-sale</v-icon>
         <span>إعدادات نقطة البيع</span>
@@ -34,7 +34,7 @@
               min="0"
               max="100"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
           <v-col cols="12" md="6">
@@ -43,12 +43,12 @@
               :items="paymentTypes"
               label="طريقة الدفع الافتراضية"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
         </v-row>
 
-        <v-btn type="submit" color="primary" variant="flat" class="mt-4" :loading="saving">
+        <v-btn class="win-btn mt-4" type="submit" color="primary" variant="flat" :loading="saving">
           حفظ
         </v-btn>
       </v-form>

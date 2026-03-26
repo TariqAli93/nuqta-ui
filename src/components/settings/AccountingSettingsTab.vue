@@ -1,6 +1,6 @@
 <template>
   <div>
-    <v-card class="pa-4 mb-4" flat>
+    <v-card class="pa-4 mb-4 border" elevation="0" variant="flat" rounded="lg">
       <v-card-title class="d-flex align-center ga-2 mb-4">
         <v-icon color="primary">mdi-calculator-variant</v-icon>
         <span>إعدادات المحاسبة</span>
@@ -43,7 +43,7 @@
               :items="costMethods"
               label="طريقة حساب التكلفة"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               hint="FIFO: الوارد أولاً صادر أولاً"
               persistent-hint
             />
@@ -54,12 +54,12 @@
               :items="months"
               label="بداية السنة المالية"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
         </v-row>
 
-        <v-btn type="submit" color="primary" variant="flat" class="mt-4" :loading="saving">
+        <v-btn class="win-btn mt-4" type="submit" color="primary" variant="flat" :loading="saving">
           حفظ
         </v-btn>
       </v-form>

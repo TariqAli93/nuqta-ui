@@ -2,7 +2,7 @@
   <PageShell>
     <PageHeader :title="t('suppliers.title')" :subtitle="t('suppliers.subtitle')">
       <template #actions>
-        <v-btn color="primary" prepend-icon="mdi-plus" :to="{ name: 'SupplierCreate' }">
+        <v-btn class="win-btn" color="primary" prepend-icon="mdi-plus" :to="{ name: 'SupplierCreate' }">
           {{ t('suppliers.new') }}
         </v-btn>
       </template>
@@ -20,13 +20,14 @@
       />
     </FilterBar>
 
-    <v-card flat>
+    <v-card class="border" elevation="0" variant="flat" rounded="lg">
       <v-card-text class="pa-0">
         <v-data-table
           :headers="headers"
           :items="suppliersStore.items"
           :loading="suppliersStore.loading"
           :items-per-page="20"
+          density="comfortable"
           class="ds-table-enhanced ds-table-striped"
           @click:row="
             (_: Event, { item }: { item: any }) =>

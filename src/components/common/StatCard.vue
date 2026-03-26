@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card elevation="0" variant="flat" class="border ds-card-hover" rounded="lg">
     <div class="ds-stat-card">
       <v-avatar :color="color" variant="tonal" :size="avatarSize">
         <v-icon :size="iconSize">{{ icon }}</v-icon>

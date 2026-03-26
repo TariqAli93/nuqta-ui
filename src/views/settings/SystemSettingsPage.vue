@@ -1,12 +1,12 @@
 <template>
   <SubPageShell>
     <div class="d-flex justify-end mb-4">
-      <v-btn color="primary" variant="tonal" prepend-icon="mdi-refresh" @click="load">
+      <v-btn class="win-btn" color="primary" variant="tonal" prepend-icon="mdi-refresh" @click="load">
         {{ t('common.refresh') }}
       </v-btn>
     </div>
 
-    <v-card class="pa-4 mb-4" flat>
+    <v-card class="pa-4 mb-4 border" elevation="0" variant="flat" rounded="lg">
       <v-card-title class="d-flex align-center ga-2 mb-4">
         <v-icon color="primary">mdi-cog</v-icon>
         <span>{{ t('settings.companyInfo') }}</span>

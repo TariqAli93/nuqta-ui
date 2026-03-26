@@ -1,13 +1,15 @@
-﻿<template>
+<template>
   <PageShell>
     <PageHeader :title="t('sales.new')" :subtitle="t('sales.formHint')" />
-    <v-card flat>
-      <v-form class="win-form" @submit.prevent="submit">
+    <v-card class="border" elevation="0" variant="flat" rounded="lg">
+      <v-card-text>
+        <v-form class="win-form" @submit.prevent="submit">
         <div class="d-flex flex-wrap ga-2">
           <v-text-field
             v-model.number="form.customerId"
             :label="t('sales.customerId')"
             type="number"
+            variant="outlined" density="comfortable"
           />
           <v-select
             v-model="form.paymentType"
@@ -15,11 +17,12 @@
             :label="t('sales.paymentType')"
             item-title="title"
             item-value="value"
+            variant="outlined" density="comfortable"
           />
-          <v-text-field v-model="form.currency" :label="t('products.currency')" />
-          <MoneyInput v-model="form.discount" :label="t('sales.discount')" />
-          <MoneyInput v-model="form.tax" :label="t('sales.tax')" />
-          <MoneyInput v-model="form.paidAmount" :label="t('sales.paidAmount')" />
+          <v-text-field v-model="form.currency" :label="t('products.currency')" variant="outlined" density="comfortable" />
+          <MoneyInput v-model="form.discount" :label="t('sales.discount')" variant="outlined" density="comfortable" />
+          <MoneyInput v-model="form.tax" :label="t('sales.tax')" variant="outlined" density="comfortable" />
+          <MoneyInput v-model="form.paidAmount" :label="t('sales.paidAmount')" variant="outlined" density="comfortable" />
         </div>
 
         <v-divider class="my-4" />
@@ -38,7 +41,7 @@
           :hide-default-footer="true"
         >
           <template #item.productName="{ item }">
-            <v-text-field v-model="item.productName" density="compact" hide-details />
+            <v-text-field v-model="item.productName" variant="plain" density="comfortable" hide-details />
           </template>
           <template #item.quantity="{ item }">
             <v-text-field
@@ -46,16 +49,17 @@
               type="number"
               step="1"
               min="1"
-              density="compact"
+              variant="plain"
+              density="comfortable"
               hide-details
               @update:model-value="checkStockForItem(item)"
             />
           </template>
           <template #item.unitPrice="{ item }">
-            <MoneyInput v-model="item.unitPrice" density="compact" hide-details />
+            <MoneyInput v-model="item.unitPrice" variant="plain" density="comfortable" hide-details />
           </template>
           <template #item.discount="{ item }">
-            <MoneyInput v-model="item.discount" density="compact" hide-details />
+            <MoneyInput v-model="item.discount" variant="plain" density="comfortable" hide-details />
           </template>
           <template #item.subtotal="{ item }">
             {{ formatCurrency(itemSubtotal(item)) }}
@@ -78,7 +82,7 @@
           <div>{{ t('sales.total') }}: {{ formatCurrency(displayTotal) }}</div>
         </div>
 
-        <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" class="mt-4" />
+        <v-textarea v-model="form.notes" :label="t('common.notes')" rows="3" class="mt-4" variant="outlined" density="comfortable" />
 
         <div class="d-flex ga-2 mt-4">
           <v-btn
@@ -94,6 +98,7 @@
           <v-btn variant="text" class="win-ghost-btn" to="/sales">{{ t('common.cancel') }}</v-btn>
         </div>
       </v-form>
+      </v-card-text>
     </v-card>
   </PageShell>
 </template>

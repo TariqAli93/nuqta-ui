@@ -2,27 +2,29 @@
   <PageShell>
     <PageHeader :title="isEdit ? t('products.edit') : t('products.new')" :subtitle="t('products.formHint')" show-back :back-to="props.redirectTo" />
 
-    <v-card class="win-card win-card--padded" flat>
+    <v-card class="border pa-4" elevation="0" variant="flat" rounded="lg">
       <v-form class="win-form" @submit.prevent="submit">
-        <v-text-field v-model="form.name" :label="t('products.name')" required />
+        <v-text-field v-model="form.name" :label="t('products.name')" required variant="outlined" density="comfortable" />
         <div class="d-flex flex-wrap ga-2">
-          <v-text-field v-model="form.sku" :label="t('products.sku')" />
+          <v-text-field v-model="form.sku" :label="t('products.sku')" variant="outlined" density="comfortable" />
           <v-text-field
             v-model="form.barcode"
             :label="t('products.barcode')"
             data-barcode-field
+            variant="outlined" density="comfortable"
           />
-          <MoneyInput v-model="form.costPrice" :label="t('products.costPrice')" />
-          <MoneyInput v-model="form.sellingPrice" :label="t('products.sellingPrice')" required />
+          <MoneyInput v-model="form.costPrice" :label="t('products.costPrice')" variant="outlined" density="comfortable" />
+          <MoneyInput v-model="form.sellingPrice" :label="t('products.sellingPrice')" required variant="outlined" density="comfortable" />
 
-          <v-text-field v-model.number="form.stock" :label="t('products.stock')" type="number" />
+          <v-text-field v-model.number="form.stock" :label="t('products.stock')" type="number" variant="outlined" density="comfortable" />
           <v-text-field
             v-model.number="form.minStock"
             :label="t('products.minStock')"
             type="number"
+            variant="outlined" density="comfortable"
           />
-          <v-text-field v-model="form.unit" :label="t('products.unit')" />
-          <v-text-field v-model="form.supplier" :label="t('products.supplier')" />
+          <v-text-field v-model="form.unit" :label="t('products.unit')" variant="outlined" density="comfortable" />
+          <v-text-field v-model="form.supplier" :label="t('products.supplier')" variant="outlined" density="comfortable" />
         </div>
         <v-select
           v-model="form.status"
@@ -30,9 +32,10 @@
           item-title="title"
           item-value="value"
           :label="t('products.status')"
+          variant="outlined" density="comfortable"
         />
         <v-switch v-model="form.isActive" :label="t('common.active')" />
-        <v-textarea v-model="form.description" :label="t('products.description')" rows="3" />
+        <v-textarea v-model="form.description" :label="t('products.description')" rows="3" variant="outlined" density="comfortable" />
         <div class="d-flex ga-2">
           <v-btn
             type="submit"
@@ -51,13 +54,14 @@
     </v-card>
 
     <!-- ── Units & Pricing (edit mode only) ── -->
-    <v-card v-if="isEdit" class="win-card win-card--padded mt-6" flat>
+    <v-card v-if="isEdit" class="border pa-4 mt-6" elevation="0" variant="flat" rounded="lg">
       <v-card-title class="d-flex align-center justify-space-between px-0 pt-0">
         <div class="d-flex align-center ga-2">
           <v-icon size="20">mdi-package-variant</v-icon>
           <span class="text-h6">{{ t('products.unitsAndPricing') }}</span>
         </div>
         <v-btn
+          class="win-btn"
           size="small"
           variant="tonal"
           color="primary"
@@ -68,7 +72,7 @@
         </v-btn>
       </v-card-title>
 
-      <v-table v-if="units.length > 0" density="comfortable" class="mt-2">
+      <v-table v-if="units.length > 0" density="comfortable" class="mt-2 ds-table-enhanced ds-table-striped">
         <thead>
           <tr>
             <th>{{ t('products.unitName') }}</th>
@@ -144,6 +148,7 @@
             :label="t('products.unitName')"
             required
             class="mb-2"
+            variant="outlined" density="comfortable"
           />
           <v-text-field
             v-model.number="unitForm.factorToBase"
@@ -157,13 +162,15 @@
             "
             persistent-hint
             class="mb-2"
+            variant="outlined" density="comfortable"
           />
           <MoneyInput
             v-model="unitForm.sellingPrice"
             :label="t('products.sellingPrice')"
             class="mb-2"
+            variant="outlined" density="comfortable"
           />
-          <v-text-field v-model="unitForm.barcode" :label="t('products.barcode')" class="mb-2" />
+          <v-text-field v-model="unitForm.barcode" :label="t('products.barcode')" class="mb-2" variant="outlined" density="comfortable" />
           <div class="d-flex ga-4">
             <v-switch
               v-model="unitForm.isDefault"

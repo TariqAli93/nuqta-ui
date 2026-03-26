@@ -2,7 +2,7 @@
   <PageShell>
     <PageHeader :title="t('purchases.title')" :subtitle="t('purchases.subtitle')">
       <template #actions>
-        <v-btn color="primary" prepend-icon="mdi-plus" :to="{ name: 'PurchaseCreate' }">
+        <v-btn class="win-btn" color="primary" prepend-icon="mdi-plus" :to="{ name: 'PurchaseCreate' }">
           {{ t('purchases.new') }}
         </v-btn>
       </template>
@@ -36,13 +36,14 @@
       </v-row>
     </FilterBar>
 
-    <v-card flat>
+    <v-card class="border" elevation="0" variant="flat" rounded="lg">
       <v-card-text class="pa-0">
         <v-data-table
           :headers="headers"
           :items="purchasesStore.items"
           :loading="purchasesStore.loading"
           :items-per-page="20"
+          density="comfortable"
           class="ds-table-enhanced ds-table-striped"
           @click:row="
             (_: Event, { item }: { item: any }) =>
@@ -64,9 +65,9 @@
               v-if="item.paymentStatus"
               size="small"
               variant="tonal"
-              :color="paymentStatusColor(item.paymentStatus as Purchase['paymentStatus'])"
+              :color="paymentStatusColor(item.paymentStatus as NonNullable<Purchase['paymentStatus']>)"
             >
-              {{ paymentStatusLabel(item.paymentStatus as Purchase['paymentStatus']) }}
+              {{ paymentStatusLabel(item.paymentStatus as NonNullable<Purchase['paymentStatus']>) }}
             </v-chip>
             <span v-else class="text-disabled">—</span>
           </template>

@@ -24,7 +24,7 @@
               item-title="title"
               item-value="value"
               label="السبب"
-              variant="outlined"
+              variant="outlined" density="comfortable"
             />
           </v-col>
 
@@ -33,19 +33,19 @@
               v-model.number="quantityBase"
               label="الكمية (+ زيادة / - نقصان)"
               type="number"
-              variant="outlined"
+              variant="outlined" density="comfortable"
             />
           </v-col>
         </v-row>
 
         <UnitSelector :units="units" v-model="selectedUnitId" class="my-2" />
 
-        <v-textarea v-model="notes" label="ملاحظات" rows="2" variant="outlined" />
+        <v-textarea v-model="notes" label="ملاحظات" rows="2" variant="outlined" density="comfortable" />
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn variant="text" @click="close(false)">إلغاء</v-btn>
-        <v-btn color="primary" :loading="loading" @click="submit">حفظ</v-btn>
+        <v-btn class="win-ghost-btn" variant="text" @click="close(false)">إلغاء</v-btn>
+        <v-btn class="win-btn" color="primary" variant="flat" :loading="loading" @click="submit">حفظ</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

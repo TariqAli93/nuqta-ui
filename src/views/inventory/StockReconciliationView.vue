@@ -1,8 +1,9 @@
 <template>
   <SubPageShell>
-    <v-card class="mb-3">
+    <v-card class="mb-3 border" elevation="0" variant="flat" rounded="lg">
       <v-card-text class="d-flex ga-2">
         <v-btn
+          class="win-btn"
           color="primary"
           variant="tonal"
           :loading="inventoryStore.loadingReconciliation"
@@ -10,7 +11,7 @@
         >
           فحص فقط
         </v-btn>
-        <v-btn color="warning" :loading="inventoryStore.loadingReconciliation" @click="runRepair">
+        <v-btn class="win-btn" color="warning" :loading="inventoryStore.loadingReconciliation" @click="runRepair">
           إصلاح الفروقات
         </v-btn>
       </v-card-text>
@@ -53,13 +54,16 @@
       </v-col>
     </v-row>
 
-    <v-data-table
-      :headers="reconciliationHeaders"
-      :items="inventoryStore.reconciliation?.items ?? []"
-      :loading="inventoryStore.loadingReconciliation"
-      density="compact"
-      :items-per-page="25"
-    >
+    <v-card elevation="0" variant="flat" class="border mt-3" rounded="lg">
+      <v-card-text class="pa-0">
+      <v-data-table
+        :headers="reconciliationHeaders"
+        :items="inventoryStore.reconciliation?.items ?? []"
+        :loading="inventoryStore.loadingReconciliation"
+        density="comfortable"
+        class="ds-table-enhanced ds-table-striped"
+        :items-per-page="25"
+      >
       <template #item.drift="{ item }">
         <v-chip size="x-small" :color="item.drift === 0 ? 'success' : 'error'" variant="tonal">
           {{ item.drift }}
@@ -68,7 +72,9 @@
       <template #no-data>
         <div class="text-center py-8 text-medium-emphasis">لا توجد فروقات حالياً</div>
       </template>
-    </v-data-table>
+      </v-data-table>
+      </v-card-text>
+    </v-card>
   </SubPageShell>
 </template>
 

@@ -3,7 +3,7 @@
     <v-row dense>
       <v-card class="w-full">
         <v-col cols="12">
-          <v-card>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <v-card-title class="text-subtitle-2 font-weight-bold">الوحدات</v-card-title>
             <v-card-text>
               <v-row dense>
@@ -12,7 +12,7 @@
                     v-model="unitForm.unitName"
                     label="اسم الوحدة"
                     variant="outlined"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                   />
                 </v-col>
@@ -23,7 +23,7 @@
                     type="number"
                     min="1"
                     variant="outlined"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                   />
                 </v-col>
@@ -34,7 +34,7 @@
                     type="number"
                     min="0"
                     variant="outlined"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                   />
                 </v-col>
@@ -46,7 +46,7 @@
                     v-model="unitForm.barcode"
                     label="باركود الوحدة (اختياري)"
                     variant="outlined"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                   />
                 </v-col>
@@ -54,17 +54,17 @@
                   <v-checkbox
                     v-model="unitForm.isDefault"
                     label="افتراضية"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                   />
                 </v-col>
               </v-row>
 
               <div class="mt-3 d-flex ga-2">
-                <v-btn color="primary" size="small" @click="saveUnit">
+                <v-btn class="win-btn" color="primary" size="small" @click="saveUnit">
                   {{ unitForm.id ? 'تحديث' : 'إضافة' }}
                 </v-btn>
-                <v-btn v-if="unitForm.id" variant="text" size="small" @click="resetUnitForm">
+                <v-btn v-if="unitForm.id" class="win-ghost-btn" variant="text" size="small" @click="resetUnitForm">
                   إلغاء
                 </v-btn>
               </div>
@@ -77,7 +77,8 @@
             :headers="unitHeaders"
             :items="units"
             :loading="loading"
-            density="compact"
+            density="comfortable"
+            class="ds-table-enhanced ds-table-striped"
             :items-per-page="10"
           >
             <template #item.isDefault="{ item }">

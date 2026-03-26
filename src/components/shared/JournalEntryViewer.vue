@@ -1,10 +1,10 @@
 <template>
-  <v-card>
+  <v-card elevation="0" variant="flat" class="border" rounded="lg">
     <!-- Header toolbar -->
     <v-toolbar density="compact" color="transparent" class="px-2">
       <v-icon class="ms-2" size="22" color="primary">mdi-book-open-page-variant</v-icon>
 
-      <v-toolbar-title class="text-subtitle-1 font-weight-bold ms-3">
+      <v-toolbar-title class="win-title ms-3">
         {{ entry.entryNumber }}
       </v-toolbar-title>
 
@@ -91,7 +91,7 @@
         density="compact"
         :items-per-page="-1"
         hide-default-footer
-        hover
+        class="ds-table-enhanced ds-table-striped"
       >
         <template #item.account="{ item }">
           <span class="font-weight-medium">{{ item.account }}</span>

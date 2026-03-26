@@ -1,6 +1,6 @@
 <template>
   <SubPageShell>
-    <v-toolbar flat density="compact" class="px-2 mb-2">
+    <v-toolbar color="transparent" density="compact" class="px-2 mb-4">
     <v-tabs v-model="activeTab" color="primary" class="me-4">
       <v-tab value="all">الكل</v-tab>
       <v-tab value="posted">مرحل</v-tab>
@@ -12,7 +12,7 @@
       :items="sourceOptions"
       clearable
       label="المصدر"
-      density="compact"
+      density="comfortable"
       variant="outlined"
       hide-details
       style="max-width: 180px"
@@ -24,7 +24,7 @@
     <v-btn
       color="primary"
       variant="flat"
-      size="small"
+      class="win-btn"
       prepend-icon="mdi-plus"
       :to="{ name: 'JournalEntryCreate' }"
     >
@@ -32,8 +32,8 @@
     </v-btn>
   </v-toolbar>
 
-  <v-card>
-    <v-card-text>
+  <v-card elevation="0" variant="flat" class="border" rounded="lg">
+    <v-card-text class="pa-0">
       <v-data-table-server
         v-model:items-per-page="options.itemsPerPage"
         v-model:page="options.page"

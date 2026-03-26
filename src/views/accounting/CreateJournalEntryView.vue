@@ -1,8 +1,13 @@
 <template>
   <PageShell>
-    <PageHeader title="إنشاء قيد يومي جديد" subtitle="قم بإنشاء قيد يومي يدوي لتسجيل المعاملات غير التلقائية أو لتعديل قيود سابقة" show-back :back-to="{ name: 'AccountingJournal' }" />
+    <PageHeader
+      title="إنشاء قيد يومي جديد"
+      subtitle="قم بإنشاء قيد يومي يدوي لتسجيل المعاملات غير التلقائية أو لتعديل قيود سابقة"
+      show-back
+      :back-to="{ name: 'AccountingJournal' }"
+    />
 
-    <v-card>
+    <v-card elevation="0" variant="flat" class="border" rounded="lg">
       <v-toolbar density="compact" color="transparent" class="px-2">
         <v-icon class="ms-2" size="22" color="primary">mdi-book-plus</v-icon>
         <v-toolbar-title class="text-subtitle-1 font-weight-bold ms-3">
@@ -15,9 +20,8 @@
       <v-card-text>
         <v-row dense>
           <v-col cols="12" md="4">
-            <v-text-field
+            <AppDateInput
               v-model="form.entryDate"
-              type="date"
               label="تاريخ القيد"
               variant="outlined"
               density="comfortable"
@@ -53,7 +57,7 @@
         سطور القيد
         <v-spacer />
         <v-btn
-          size="small"
+          class="win-btn"
           variant="tonal"
           color="primary"
           prepend-icon="mdi-plus"
@@ -63,8 +67,8 @@
         </v-btn>
       </v-card-title>
 
-      <v-card-text>
-        <v-table density="compact">
+      <v-card-text class="pa-0">
+        <v-table density="comfortable" class="ds-table-enhanced ds-table-striped">
           <thead>
             <tr>
               <th style="min-width: 250px">الحساب</th>
@@ -184,6 +188,7 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { PageShell, PageHeader } from '@/components/layout';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import { useAccountingStore } from '@/stores/accountingStore';
 import { useCurrency } from '@/composables/useCurrency';
 import { notifyError, notifySuccess } from '@/utils/notify';
@@ -193,6 +198,10 @@ const accountingStore = useAccountingStore();
 const { formatCurrency } = useCurrency();
 
 const saving = ref(false);
+
+function goBack() {
+  router.back();
+}
 
 const rules = {
   required: (v: unknown) => !!v || 'حقل مطلوب',

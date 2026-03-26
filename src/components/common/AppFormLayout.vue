@@ -1,14 +1,14 @@
 <template>
-  <v-card flat rounded="xl" elevation="1">
-    <v-card-text class="pa-6">
-      <v-form @submit.prevent="emit('submit')">
+  <v-card elevation="0" variant="flat" rounded="lg" class="border">
+    <v-card-text class="win-card--padded">
+      <v-form @submit.prevent="emit('submit')" class="win-form">
         <slot />
-        <div class="d-flex justify-end ga-3 mt-6">
+        <div class="d-flex justify-end ga-3 mt-4">
           <slot name="actions">
-            <v-btn variant="text" @click="emit('cancel')">
+            <v-btn variant="text" class="win-ghost-btn" @click="emit('cancel')">
               {{ cancelLabel }}
             </v-btn>
-            <v-btn type="submit" color="primary" :loading="loading">
+            <v-btn type="submit" color="primary" class="win-btn" :loading="loading">
               {{ submitLabel }}
             </v-btn>
           </slot>

@@ -2,7 +2,7 @@
   <PageShell>
     <PageHeader :title="t('settings.title')" :subtitle="t('settings.subtitle')" />
 
-    <v-card flat>
+    <v-card class="border" elevation="0" variant="flat" rounded="lg">
       <v-tabs v-model="activeTab" color="primary" show-arrows>
         <v-tab value="system">إعدادات النظام</v-tab>
         <v-tab value="pos">نقطة البيع</v-tab>

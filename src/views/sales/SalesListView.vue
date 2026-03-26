@@ -2,7 +2,7 @@
   <PageShell>
     <PageHeader :title="t('sales.title')" :subtitle="t('sales.subtitle')">
       <template #actions>
-        <v-btn color="primary" :to="'/sales/new'" prepend-icon="mdi-plus">
+        <v-btn class="win-btn" color="primary" :to="'/sales/new'" prepend-icon="mdi-plus">
           {{ t('sales.new') }}
         </v-btn>
       </template>
@@ -38,7 +38,7 @@
       </v-row>
     </FilterBar>
 
-    <v-card flat>
+    <v-card class="border" elevation="0" variant="flat" rounded="lg">
       <v-card-text class="pa-0">
         <v-data-table
           :headers="tableHeaders"
@@ -69,9 +69,9 @@
               v-if="item.paymentStatus"
               size="small"
               variant="tonal"
-              :color="paymentStatusColor(item.paymentStatus as Sale['paymentStatus'])"
+              :color="paymentStatusColor(item.paymentStatus as NonNullable<Sale['paymentStatus']>)"
             >
-              {{ paymentStatusLabel(item.paymentStatus as Sale['paymentStatus']) }}
+              {{ paymentStatusLabel(item.paymentStatus as NonNullable<Sale['paymentStatus']>) }}
             </v-chip>
             <span v-else class="text-disabled">—</span>
           </template>

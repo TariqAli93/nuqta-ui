@@ -1,5 +1,5 @@
 <template>
-  <v-card v-bind="$attrs">
+  <v-card v-bind="$attrs" :elevation="elevation" variant="flat" class="border" rounded="lg">
     <slot />
   </v-card>
 </template>
@@ -9,6 +9,6 @@ withDefaults(
   defineProps<{
     elevation?: number;
   }>(),
-  { elevation: 1 }
+  { elevation: 0 }
 );
 </script>

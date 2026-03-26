@@ -2,7 +2,7 @@
   <PageShell>
     <PageHeader :title="t('nav.accounting')" subtitle="إدارة الحسابات والتقارير المالية">
       <template #actions>
-        <v-btn variant="tonal" prepend-icon="mdi-refresh" @click="refreshAll">
+        <v-btn variant="tonal" class="win-btn" prepend-icon="mdi-refresh" @click="refreshAll">
           {{ t('common.refresh') }}
         </v-btn>
       </template>

@@ -1,6 +1,6 @@
 <template>
   <SubPageShell>
-    <v-card class="pa-4 mb-4" flat>
+    <v-card class="pa-4 mb-4 border" elevation="0" variant="flat" rounded="lg">
       <v-card-title class="d-flex align-center ga-2 mb-4">
         <v-icon color="primary">mdi-calculator-variant</v-icon>
         <span>إعدادات المحاسبة</span>
@@ -26,7 +26,7 @@
               min="0"
               max="100"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               :disabled="!form.taxEnabled"
             />
           </v-col>
@@ -36,7 +36,7 @@
               v-model="form.taxRegistrationNumber"
               label="الرقم الضريبي"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               :disabled="!form.taxEnabled"
             />
           </v-col>
@@ -49,7 +49,7 @@
               :items="costMethods"
               label="طريقة حساب التكلفة"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
 
@@ -61,7 +61,7 @@
               min="1"
               max="12"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
 
@@ -73,7 +73,7 @@
               min="1"
               max="31"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
 
@@ -83,7 +83,7 @@
               :items="currencies"
               label="العملة"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
 
@@ -94,7 +94,7 @@
               type="number"
               min="0"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
 
@@ -104,7 +104,7 @@
               :items="roundingMethods"
               label="طريقة التقريب"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
 
@@ -120,10 +120,10 @@
         </v-row>
 
         <v-btn
+          class="win-btn mt-4"
           type="submit"
           color="primary"
           variant="flat"
-          class="mt-4"
           :loading="saving"
           :disabled="!isDirty"
         >

@@ -1,6 +1,6 @@
 <template>
   <SubPageShell>
-    <v-card class="pa-4 mb-4" flat>
+    <v-card class="pa-4 mb-4 border" elevation="0" variant="flat" rounded="lg">
       <v-card-title class="d-flex align-center ga-2 mb-4">
         <v-icon color="primary">mdi-point-of-sale</v-icon>
         <span>إعدادات نقاط البيع</span>
@@ -32,7 +32,7 @@
               :items="paperSizes"
               label="حجم الورق"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
           <v-col cols="12" md="6">
@@ -41,7 +41,7 @@
               :items="layoutDirections"
               label="اتجاه التخطيط"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
 
@@ -54,7 +54,7 @@
               v-model="form.receiptHeader"
               label="رأس الإيصال"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
           <v-col cols="12" md="6">
@@ -62,16 +62,16 @@
               v-model="form.receiptFooter"
               label="تذييل الإيصال"
               variant="outlined"
-              density="compact"
+              density="comfortable"
             />
           </v-col>
         </v-row>
 
         <v-btn
+          class="win-btn mt-4"
           type="submit"
           color="primary"
           variant="flat"
-          class="mt-4"
           :loading="saving"
           :disabled="!isDirty"
         >

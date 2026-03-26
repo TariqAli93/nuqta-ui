@@ -17,7 +17,7 @@
           </div> -->
 
           <div id="refresh">
-            <v-btn variant="tonal" prepend-icon="mdi-refresh" @click="refreshAll">
+            <v-btn class="win-btn" color="primary" variant="tonal" prepend-icon="mdi-refresh" @click="refreshAll">
               {{ t('common.refresh') }}
             </v-btn>
           </div>

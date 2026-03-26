@@ -8,6 +8,7 @@
     >
       <template #actions>
         <v-btn
+          class="win-btn"
           v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"
           color="warning"
           prepend-icon="mdi-cash-refund"
@@ -17,6 +18,7 @@
           استرجاع مالي
         </v-btn>
         <v-btn
+          class="win-btn"
           v-if="sale?.status === 'completed' || sale?.status === 'partial_refund'"
           color="deep-orange"
           prepend-icon="mdi-package-variant-closed-remove"
@@ -27,6 +29,7 @@
         </v-btn>
         <!-- تسوية الفاتورة: عندما يكون الدفع غير مكتمل -->
         <v-btn
+          class="win-btn"
           v-if="sale?.paymentStatus === 'unpaid' || sale?.paymentStatus === 'partial'"
           color="success"
           prepend-icon="mdi-cash-check"
@@ -36,6 +39,7 @@
         </v-btn>
         <!-- تحصيل دفعة جزئية: عندما يكون الدفع غير مكتمل -->
         <v-btn
+          class="win-btn"
           v-if="sale?.paymentStatus === 'unpaid' || sale?.paymentStatus === 'partial'"
           color="primary"
           prepend-icon="mdi-cash-plus"
@@ -47,6 +51,7 @@
              Backend blocks cancellation if a refund payment is present
              (partial_refund status) to prevent double inventory reversal. -->
         <v-btn
+          class="win-btn"
           v-if="sale?.status === 'completed' || sale?.status === 'pending'"
           color="error"
           prepend-icon="mdi-close-circle-outline"
@@ -64,7 +69,7 @@
       <!-- Summary cards -->
       <v-row dense>
         <v-col cols="12" sm="4">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <div class="ds-stat-card">
               <v-avatar color="primary" variant="tonal" size="40">
                 <v-icon>mdi-receipt-text-outline</v-icon>
@@ -80,7 +85,7 @@
         </v-col>
 
         <v-col cols="12" sm="4">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <div class="ds-stat-card">
               <v-avatar :color="statusColor(sale.status)" variant="tonal" size="40">
                 <v-icon>{{ statusIcon(sale.status) }}</v-icon>
@@ -96,7 +101,7 @@
         </v-col>
 
         <v-col cols="12" sm="4">
-          <v-card flat>
+          <v-card class="border" elevation="0" variant="flat" rounded="lg">
             <div class="ds-stat-card">
               <v-avatar color="success" variant="tonal" size="40">
                 <v-icon>mdi-cash-multiple</v-icon>
@@ -116,7 +121,7 @@
       <PaymentInfoCard :sale="sale" class="mb-4" />
 
       <!-- Payment history -->
-      <v-card v-if="sale.payments?.length" class="ds-table-wrapper mb-4" flat>
+      <v-card v-if="sale.payments?.length" class="border ds-table-wrapper mb-4" elevation="0" variant="flat" rounded="lg">
         <v-card-title class="text-body-1 font-weight-bold d-flex align-center">
           سجل الدفعات
           <v-spacer />
@@ -128,7 +133,7 @@
           <v-data-table
             :headers="paymentHistoryHeaders"
             :items="sale.payments"
-            density="compact"
+            density="comfortable"
             class="ds-table-enhanced ds-table-striped"
             :hide-default-footer="sale.payments.length <= 10"
           >
@@ -151,7 +156,7 @@
       </v-card>
 
       <!-- Line items -->
-      <v-card class="ds-table-wrapper" flat>
+      <v-card class="border ds-table-wrapper" elevation="0" variant="flat" rounded="lg">
         <v-card-title class="text-body-1 font-weight-bold">
           {{ t('sales.lineItems') }}
         </v-card-title>
@@ -181,7 +186,7 @@
             <template v-if="paymentsOnInvoicesEnabled" #expanded-row="{ columns, item }">
               <td :colspan="columns.length" class="pa-4">
                 <div class="text-caption font-weight-bold mb-2">تفاصيل الدفعات</div>
-                <v-table v-if="item.depletions?.length" density="compact">
+                <v-table v-if="item.depletions?.length" density="comfortable">
                   <thead>
                     <tr>
                       <th>رقم الدفعة</th>
@@ -236,7 +241,7 @@
       </v-card>
 
       <!-- COGS Summary (server-computed) -->
-      <v-card v-if="sale.cogs != null" flat>
+      <v-card v-if="sale.cogs != null" class="border mt-4" elevation="0" variant="flat" rounded="lg">
         <v-card-title class="text-body-1 font-weight-bold"> ملخص التكلفة </v-card-title>
         <v-card-text>
           <v-row dense>
@@ -293,8 +298,9 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="refundDialog = false">إلغاء</v-btn>
+          <v-btn class="win-ghost-btn" variant="text" @click="refundDialog = false">إلغاء</v-btn>
           <v-btn
+            class="win-btn"
             :color="refundReturnToStock ? 'deep-orange' : 'warning'"
             :loading="refunding"
             :disabled="!refundAmount || refundAmount <= 0 || refundAmount > refundableBalance"
@@ -315,8 +321,8 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="cancelDialog = false">إلغاء</v-btn>
-          <v-btn color="error" :loading="cancelling" @click="executeCancel">تأكيد الإلغاء</v-btn>
+          <v-btn class="win-ghost-btn" variant="text" @click="cancelDialog = false">إلغاء</v-btn>
+          <v-btn class="win-btn" color="error" :loading="cancelling" @click="executeCancel">تأكيد الإلغاء</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -367,8 +373,9 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="settleDialog = false">إلغاء</v-btn>
+          <v-btn class="win-ghost-btn" variant="text" @click="settleDialog = false">إلغاء</v-btn>
           <v-btn
+            class="win-btn"
             color="success"
             :loading="settling"
             :disabled="settleRefRequired && !settleForm.referenceNumber.trim()"
@@ -430,8 +437,9 @@
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn variant="text" @click="collectPaymentDialog = false">إلغاء</v-btn>
+          <v-btn class="win-ghost-btn" variant="text" @click="collectPaymentDialog = false">إلغاء</v-btn>
           <v-btn
+            class="win-btn"
             color="primary"
             :loading="collectingPayment"
             :disabled="

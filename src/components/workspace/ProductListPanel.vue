@@ -1,5 +1,5 @@
 <template>
-  <v-card class="d-flex flex-column h-fit">
+  <v-card class="d-flex flex-column h-fit border" elevation="0" variant="flat" rounded="lg">
     <v-card-title class="d-flex align-center">
       <span class="text-subtitle-1 font-weight-bold">المنتجات</span>
     </v-card-title>
@@ -25,7 +25,7 @@
             label="الفئة"
             clearable
             variant="outlined"
-            density="compact"
+            density="comfortable"
             hide-details
             @update:model-value="emitFilters"
           />
@@ -39,7 +39,7 @@
             label="المورد"
             clearable
             variant="outlined"
-            density="compact"
+            density="comfortable"
             hide-details
             @update:model-value="emitFilters"
           />
@@ -55,7 +55,7 @@
             label="الحالة"
             clearable
             variant="outlined"
-            density="compact"
+            density="comfortable"
             hide-details
             @update:model-value="emitFilters"
           />
@@ -64,14 +64,14 @@
           <v-checkbox
             v-model="lowStockOnly"
             label="منخفض المخزون"
-            density="compact"
+            density="comfortable"
             hide-details
             @update:model-value="emitFilters"
           />
           <v-checkbox
             v-model="expiringSoonOnly"
             label="قريب الانتهاء"
-            density="compact"
+            density="comfortable"
             hide-details
             @update:model-value="emitFilters"
           />
@@ -80,7 +80,7 @@
     </v-card-text>
 
     <v-data-table-server
-      class="grow"
+      class="grow ds-table-enhanced ds-table-striped"
       :headers="headers"
       :items="products"
       :items-length="total"
@@ -88,7 +88,7 @@
       :items-per-page="itemsPerPage"
       :page="page"
       item-value="id"
-      density="compact"
+      density="comfortable"
       fixed-header
       height="520"
       @update:options="onOptionsChange"

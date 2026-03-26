@@ -3,14 +3,17 @@
     <PageHeader :title="isEdit ? t('hr.departments.edit') : t('hr.departments.new')" :subtitle="t('hr.departments.formHint')" show-back back-to="/hr/departments" />
 
 
-    <v-card flat>
+    <v-card elevation="0" variant="flat" class="border pa-4" rounded="lg">
       <v-form class="win-form" @submit.prevent="submit">
-        <v-text-field v-model="form.name" :label="t('common.name')" required />
-        <v-textarea v-model="form.description" :label="t('common.description')" rows="3" />
+        <v-text-field v-model="form.name" :label="t('common.name')" variant="outlined" density="comfortable" required />
+        <v-textarea v-model="form.description" :label="t('common.description')" variant="outlined" density="comfortable" rows="3" />
         <v-switch
           v-model="form.isActive"
           :label="form.isActive ? t('common.active') : t('common.inactive')"
           color="primary"
+          inset
+          hide-details
+          class="mb-4"
         />
 
         <div class="d-flex ga-2">

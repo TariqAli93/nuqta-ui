@@ -24,7 +24,7 @@
 
     <v-progress-linear v-if="store.loading" indeterminate color="primary" />
 
-    <v-card v-if="employee" flat>
+    <v-card v-if="employee" elevation="0" variant="flat" class="border" rounded="lg">
       <v-card-text>
         <v-row dense>
           <v-col cols="12" md="6">
@@ -96,10 +96,10 @@
     />
 
     <v-dialog v-model="confirmDelete" max-width="400" class="ds-dialog">
-      <v-card rounded="lg">
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
         <v-card-title>{{ t('hr.employees.deleteConfirm') }}</v-card-title>
         <v-card-text>{{ t('hr.employees.deleteHint') }}</v-card-text>
-        <v-card-actions>
+        <v-card-actions class="px-4 py-3">
           <v-spacer />
           <v-btn variant="text" @click="confirmDelete = false">{{ t('common.cancel') }}</v-btn>
           <v-btn color="error" variant="flat" :loading="store.loading" @click="handleDelete">

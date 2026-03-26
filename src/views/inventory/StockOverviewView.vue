@@ -37,13 +37,15 @@
       </v-col>
     </v-row>
 
-    <v-card>
+    <v-card elevation="0" variant="flat" class="border" rounded="lg">
       <v-card-title class="text-subtitle-1 font-weight-bold">آخر حركات المخزون</v-card-title>
+      <v-card-text class="pa-0">
       <v-data-table
         :headers="movementHeaders"
         :items="inventoryStore.movements"
         :loading="inventoryStore.loadingMovements || inventoryStore.loadingDashboard"
-        density="compact"
+        density="comfortable"
+        class="ds-table-enhanced ds-table-striped"
         :items-per-page="10"
       >
         <template #item.createdAt="{ item }">
@@ -76,6 +78,7 @@
           </div>
         </template>
       </v-data-table>
+      </v-card-text>
     </v-card>
   </SubPageShell>
 </template>

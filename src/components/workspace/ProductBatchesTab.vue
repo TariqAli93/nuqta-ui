@@ -9,7 +9,7 @@
               v-model="batchForm.batchNumber"
               label="رقم الدفعة"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               hide-details
             />
           </v-col>
@@ -20,7 +20,7 @@
               type="number"
               min="1"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               hide-details
             />
           </v-col>
@@ -31,22 +31,21 @@
               type="number"
               min="0"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               hide-details
             />
           </v-col>
           <v-col cols="12" md="3">
-            <v-text-field
+            <AppDateInput
               v-model="batchForm.expiryDate"
               label="تاريخ الانتهاء"
-              type="date"
               variant="outlined"
-              density="compact"
+              density="comfortable"
               hide-details
             />
           </v-col>
           <v-col cols="12" md="2" class="d-flex align-center">
-            <v-btn color="primary" @click="saveBatch">إضافة</v-btn>
+            <v-btn class="win-btn" color="primary" @click="saveBatch">إضافة</v-btn>
           </v-col>
         </v-row>
       </v-card-text>
@@ -56,7 +55,8 @@
       :headers="headers"
       :items="batches"
       :loading="loading"
-      density="compact"
+      density="comfortable"
+      class="ds-table-enhanced ds-table-striped"
       :items-per-page="20"
     >
       <template #item.expiryDate="{ item }">
@@ -87,6 +87,7 @@
 
 <script setup lang="ts">
 import { reactive, watch } from 'vue';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import { formatDate, formatMoney } from '@/utils/formatters';
 import type { Product, ProductBatch } from '@/types/domain';
 import type { ProductBatchInput } from '@/types/workspace';

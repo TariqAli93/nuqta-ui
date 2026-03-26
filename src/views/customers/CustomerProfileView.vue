@@ -7,6 +7,7 @@
       <PageHeader :title="customer.name" show-back :back-to="{ name: 'Customers' }">
         <template #actions>
           <v-btn
+            class="win-ghost-btn"
             variant="tonal"
             size="small"
             prepend-icon="mdi-pencil"
@@ -69,6 +70,7 @@
                 <v-col cols="auto" class="d-flex ga-2">
                   <v-btn
                     color="primary"
+                    class="win-btn"
                     prepend-icon="mdi-cash-plus"
                     @click="showPaymentDialog = true"
                     >تسجيل دفعة</v-btn
@@ -76,6 +78,7 @@
                   <v-btn
                     variant="tonal"
                     color="warning"
+                    class="win-btn"
                     prepend-icon="mdi-scale-balance"
                     @click="showAdjustmentDialog = true"
                     >تعديل رصيد</v-btn
@@ -112,7 +115,7 @@
                 :headers="saleHeaders"
                 :items="filteredSales"
                 :loading="salesLoading"
-                density="compact"
+                density="comfortable"
                 class="ds-table-enhanced ds-table-striped"
                 :items-per-page="20"
                 @click:row="
@@ -238,7 +241,7 @@
 
     <!-- Payment Dialog -->
     <v-dialog v-model="showPaymentDialog" max-width="400" persistent class="ds-dialog">
-      <v-card rounded="lg">
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
         <v-card-title>تسجيل دفعة</v-card-title>
         <v-card-text>
           <p class="mb-3 text-body-2 text-medium-emphasis">
@@ -263,11 +266,13 @@
             rows="2"
           />
         </v-card-text>
-        <v-card-actions>
+        <v-card-actions class="px-4 py-3">
           <v-spacer />
           <v-btn variant="text" @click="showPaymentDialog = false">إلغاء</v-btn>
           <v-btn
             color="primary"
+            class="win-btn"
+            variant="flat"
             :loading="paymentLoading"
             :disabled="paymentAmount <= 0"
             @click="onRecordPayment"
@@ -280,7 +285,7 @@
 
     <!-- Adjustment Dialog -->
     <v-dialog v-model="showAdjustmentDialog" max-width="400" persistent class="ds-dialog">
-      <v-card rounded="lg">
+      <v-card elevation="0" variant="flat" class="border" rounded="lg">
         <v-card-title>تعديل رصيد يدوي</v-card-title>
         <v-card-text>
           <v-text-field
@@ -300,10 +305,10 @@
             rows="2"
           />
         </v-card-text>
-        <v-card-actions>
+        <v-card-actions class="px-4 py-3">
           <v-spacer />
           <v-btn variant="text" @click="showAdjustmentDialog = false">إلغاء</v-btn>
-          <v-btn color="primary" :loading="adjustmentLoading" @click="onAddAdjustment">حفظ</v-btn>
+          <v-btn color="primary" class="win-btn" variant="flat" :loading="adjustmentLoading" @click="onAddAdjustment">حفظ</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>

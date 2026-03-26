@@ -1,8 +1,12 @@
 <template>
   <PageShell>
-    <PageHeader title="دفتر الموردين (حسابات الدفع)" subtitle="كشف حسابات الموردين والمطابقة المالية">
+    <PageHeader
+      title="دفتر الموردين (حسابات الدفع)"
+      subtitle="كشف حسابات الموردين والمطابقة المالية"
+    >
       <template #actions>
         <v-btn
+          class="win-btn"
           variant="tonal"
           color="warning"
           :loading="ledgerStore.loading.reconciliation"
@@ -17,14 +21,14 @@
     <v-row dense>
       <!-- Supplier selector -->
       <v-col cols="12" md="4">
-        <v-card>
+        <v-card class="border" elevation="0" variant="flat" rounded="lg">
           <v-card-title class="text-subtitle-1 font-weight-bold">الموردون</v-card-title>
           <v-card-text class="pb-0">
             <v-text-field
               v-model="supplierSearch"
               prepend-inner-icon="mdi-magnify"
               label="بحث عن مورد..."
-              density="compact"
+              density="comfortable"
               hide-details
               variant="outlined"
               clearable
@@ -36,7 +40,8 @@
             :headers="supplierHeaders"
             :items="ledgerStore.suppliers"
             :loading="ledgerStore.loading.suppliers"
-            density="compact"
+            density="comfortable"
+            class="ds-table-enhanced ds-table-striped"
             :items-per-page="15"
             @click:row="onSelectSupplier"
           >
@@ -61,29 +66,28 @@
 
       <!-- Ledger detail -->
       <v-col cols="12" md="8">
-        <v-card class="mb-2">
+        <v-card class="mb-2 border" elevation="0" variant="flat" rounded="lg">
           <v-card-text class="d-flex align-center ga-3 flex-wrap">
-            <v-text-field
+            <AppDateInput
               v-model="ledgerDateFrom"
-              type="date"
               label="من تاريخ"
-              density="compact"
+              density="comfortable"
               hide-details
               variant="outlined"
               style="max-width: 180px"
               clearable
             />
-            <v-text-field
+            <AppDateInput
               v-model="ledgerDateTo"
-              type="date"
               label="إلى تاريخ"
-              density="compact"
+              density="comfortable"
               hide-details
               variant="outlined"
               style="max-width: 180px"
               clearable
             />
             <v-btn
+              class="win-ghost-btn"
               variant="text"
               :disabled="!ledgerStore.selectedSupplierId"
               :loading="ledgerStore.loading.supplierLedger"
@@ -120,6 +124,7 @@ import { formatMoney } from '@/utils/formatters';
 import { PageShell, PageHeader } from '@/components/layout';
 import { useLedgerStore } from '@/stores/ledgerStore';
 import LedgerTable from '@/components/shared/LedgerTable.vue';
+import AppDateInput from '@/components/shared/AppDateInput.vue';
 import type { LedgerEntry } from '@/components/shared/LedgerTable.vue';
 
 const ledgerStore = useLedgerStore();
