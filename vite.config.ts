@@ -25,7 +25,7 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://93.189.95.121:3000',
+        target: 'https://93.189.95.121:3000',
         changeOrigin: true,
         secure: false,
       },
