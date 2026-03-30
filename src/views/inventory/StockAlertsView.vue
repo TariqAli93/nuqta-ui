@@ -9,7 +9,7 @@
               <v-avatar color="warning" variant="tonal" size="48" rounded="lg">
                 <v-icon size="24">mdi-package-variant-closed-minus</v-icon>
               </v-avatar>
-              <div class="flex-grow-1">
+              <div class="grow">
                 <div class="text-caption text-medium-emphasis">منتجات منخفضة المخزون</div>
                 <div class="text-h6 font-weight-bold">
                   {{ inventoryStore.dashboard?.lowStockCount ?? 0 }}
@@ -25,10 +25,10 @@
               <v-avatar color="error" variant="tonal" size="48" rounded="lg">
                 <v-icon size="24">mdi-clock-alert-outline</v-icon>
               </v-avatar>
-              <div class="flex-grow-1">
+              <div class="grow">
                 <div class="text-caption text-medium-emphasis">تنبيهات الصلاحية</div>
                 <div class="text-h6 font-weight-bold">
-                  {{ inventoryStore.expiryAlerts.length }}
+                  {{ inventoryStore.expiredProducts.length }}
                 </div>
                 <div class="text-caption text-medium-emphasis">
                   منتجات قاربت أو تجاوزت تاريخ الصلاحية
@@ -59,7 +59,7 @@
         </v-card-text>
         <v-data-table
           :headers="expiryHeaders"
-          :items="inventoryStore.expiryAlerts"
+          :items="inventoryStore.expiredProducts"
           :loading="inventoryStore.loadingAlerts"
           density="comfortable"
           class="ds-table-enhanced ds-table-striped"
@@ -69,16 +69,18 @@
             <v-chip
               size="x-small"
               variant="tonal"
-              :color="isExpired(item.expiryDate) ? 'error' : 'warning'"
+              :color="dateWithTime(item.expireDate) ? 'error' : 'warning'"
             >
-              {{ formatDate(item.expiryDate) }}
+              {{ formatDate(item.expireDate) }}
             </v-chip>
           </template>
           <template #item.daysUntilExpiry="{ item }">
             <span
-              :class="item.daysUntilExpiry <= 0 ? 'text-error font-weight-bold' : 'text-warning'"
+              :class="
+                formatDateRelative(item.expireDate) ? 'text-error font-weight-bold' : 'text-warning'
+              "
             >
-              {{ item.daysUntilExpiry <= 0 ? 'منتهية' : `${item.daysUntilExpiry} يوم` }}
+              {{ formatDateRelative(item.expireDate) }}
             </span>
           </template>
           <template #no-data>
@@ -96,7 +98,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { SubPageShell } from '@/components/layout';
-import { formatDate } from '@/utils/formatters';
+import { dateWithTime, formatDate, formatDateRelative } from '@/utils/formatters';
 import { useInventoryStore } from '@/stores/inventoryStore';
 
 const inventoryStore = useInventoryStore();
@@ -111,20 +113,6 @@ const expiryHeaders = [
   { title: 'الكمية', key: 'quantityOnHand', align: 'center' as const, width: 80 },
 ];
 
-/**
- * Compare dates at the day level only — normalise both to
- * midnight local time so Baghdad timezone doesn't cause
- * "today" to appear expired.
- */
-function isExpired(expiryDate: string): boolean {
-  const expiry = new Date(expiryDate);
-  const today = new Date();
-  // Zero out the time portion for both
-  expiry.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  return expiry <= today;
-}
-
 async function refreshAlerts(): Promise<void> {
   await inventoryStore.fetchExpiryAlerts(daysAhead.value);
 }
@@ -133,6 +121,9 @@ onMounted(async () => {
   await Promise.all([
     inventoryStore.fetchDashboard(),
     inventoryStore.fetchExpiryAlerts(daysAhead.value),
+    inventoryStore.fetchExpiringProducts(),
   ]);
+
+  console.log('Expiry alerts:', inventoryStore.expiredProducts);
 });
 </script>

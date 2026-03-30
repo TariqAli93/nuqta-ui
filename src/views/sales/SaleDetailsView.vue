@@ -74,7 +74,7 @@
               <v-avatar color="primary" variant="tonal" size="48" rounded="lg">
                 <v-icon size="24">mdi-receipt-text-outline</v-icon>
               </v-avatar>
-              <div class="flex-grow-1">
+              <div class="grow">
                 <div class="text-caption text-medium-emphasis">{{ t('sales.invoice') }}</div>
                 <div class="text-h6 font-weight-bold">{{ sale.invoiceNumber }}</div>
               </div>
@@ -88,7 +88,7 @@
               <v-avatar :color="statusColor(sale.status)" variant="tonal" size="48" rounded="lg">
                 <v-icon size="24">{{ statusIcon(sale.status) }}</v-icon>
               </v-avatar>
-              <div class="flex-grow-1">
+              <div class="grow">
                 <div class="text-caption text-medium-emphasis">{{ t('sales.status') }}</div>
                 <v-chip :color="statusColor(sale.status)" size="small" variant="tonal" label>
                   {{ statusLabel(sale.status) }}
@@ -104,7 +104,7 @@
               <v-avatar color="success" variant="tonal" size="48" rounded="lg">
                 <v-icon size="24">mdi-cash-multiple</v-icon>
               </v-avatar>
-              <div class="flex-grow-1">
+              <div class="grow">
                 <div class="text-caption text-medium-emphasis">{{ t('sales.total') }}</div>
                 <div class="text-h6 font-weight-bold">{{ formatAmount(sale.total) }}</div>
               </div>

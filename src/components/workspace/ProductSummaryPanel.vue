@@ -64,14 +64,12 @@
           </v-col>
         </v-row>
 
-        <v-sheet
-          v-if="product.isExpire"
-          class="d-flex align-center ga-2 px-3 py-2 mb-2 text-warning"
-          color="transparent"
-        >
-          <v-icon size="18">mdi-alert</v-icon>
-          <span>المنتج يتتبع الصلاحية. تاريخ الانتهاء: {{ product.expireDate || 'غير محدد' }}</span>
-        </v-sheet>
+        <v-alert type="warning" variant="tonal" class="grow" v-if="product.isExpire">
+          <div class="text-sm">
+            المنتج منتهي الصلاحية منذ {{ formatDateRelative(product.expireDate) }}. يرجى اتخاذ
+            الإجراءات اللازمة.
+          </div>
+        </v-alert>
       </template>
 
       <div v-else class="d-flex flex-column align-center justify-center h-100 text-medium-emphasis">
@@ -108,6 +106,7 @@
 import { computed } from 'vue';
 import { useCurrency } from '@/composables/useCurrency';
 import type { Product } from '@/types/domain';
+import { formatDate, formatDateRelative } from '@/utils/formatters';
 
 const { formatCurrency: formatMoney } = useCurrency();
 

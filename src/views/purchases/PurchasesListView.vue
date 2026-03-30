@@ -84,7 +84,7 @@
             </v-chip>
           </template>
           <template #item.createdAt="{ item }">
-            {{ formatDate(item.createdAt) }}
+            {{ dateWithTime(item.createdAt) }} - ({{ formatDateRelative(item.createdAt) }})
           </template>
           <template #no-data>
             <div class="text-center py-8 text-medium-emphasis">{{ t('purchases.noPurchases') }}</div>
@@ -98,7 +98,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { PageShell, PageHeader, FilterBar } from '@/components/layout';
-import { formatDate } from '@/utils/formatters';
+import { dateWithTime, formatDateRelative } from '@/utils/formatters';
 import { useRouter } from 'vue-router';
 import { usePurchasesStore } from '@/stores/purchasesStore';
 import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
@@ -118,12 +118,12 @@ const statuses = [
 ];
 
 const headers = [
-  { title: t('purchases.invoiceNumber'), key: 'invoiceNumber' },
-  { title: t('common.date'), key: 'createdAt', width: '140px' },
-  { title: t('purchases.total'), key: 'total', align: 'end' as const },
-  { title: 'المتبقي', key: 'remainingAmount', align: 'end' as const },
-  { title: t('common.status'), key: 'status', width: '120px' },
-  { title: 'حالة الدفع', key: 'paymentStatus', width: '130px' },
+  { title: t('purchases.invoiceNumber'), key: 'invoiceNumber', align: 'start' as const },
+  { title: t('common.dateTime'), key: 'createdAt', align: 'start' as const },
+  { title: t('purchases.total'), key: 'total', align: 'start' as const },
+  { title: t('purchases.remainingAmount'), key: 'remainingAmount', align: 'start' as const },
+  { title: t('common.status'), key: 'status', align: 'start' as const },
+  { title: t('purchases.paymentStatus'), key: 'paymentStatus', align: 'start' as const },
 ];
 
 onMounted(() => {

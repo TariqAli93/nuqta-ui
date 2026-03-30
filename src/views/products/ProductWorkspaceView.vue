@@ -541,7 +541,6 @@ function openEditDialog(): void {
   productForm.description = source.description ?? null;
   productForm.costPrice = source.costPrice;
   productForm.sellingPrice = source.sellingPrice;
-  productForm.stock = 0;
   productForm.minStock = source.minStock || 0;
   productForm.unit = source.unit || 'piece';
   productForm.supplier = source.supplier ?? null;
@@ -555,18 +554,25 @@ function openEditDialog(): void {
 
 async function submitProduct(): Promise<void> {
   const selectedSupplier = suppliers.value.find((item) => item.id === productForm.supplierId);
-  const payload: ProductInput = {
-    ...productForm,
-    supplier: selectedSupplier?.name || null,
-  };
 
   if (editMode.value && workspaceStore.selectedProductId) {
+    // For edit, exclude stock as it's managed separately via adjustments
+    const { stock, ...editForm } = productForm;
+    const payload: ProductInput = {
+      ...editForm,
+      supplier: selectedSupplier?.name || null,
+    };
     const result = await workspaceStore.updateProduct(workspaceStore.selectedProductId, payload);
     if (result.ok) {
       productDialog.value = false;
     }
     return;
   }
+
+  const payload: ProductInput = {
+    ...productForm,
+    supplier: selectedSupplier?.name || null,
+  };
 
   const result = await workspaceStore.createProduct(payload);
   if (result.ok) {
@@ -610,6 +616,11 @@ async function onSubmitAdjustment(payload: {
     ...payload,
     idempotencyKey: generateIdempotencyKey('workspace-adjust'),
   });
+
+  // On successful adjustment, close the drawer and switch to movements tab to show the new movement
+  adjustDrawer.value = false;
+  await workspaceStore.fetchProducts();
+  activeTab.value = 'movements';
   if (result.ok) {
     adjustDrawer.value = false;
     activeTab.value = 'movements';

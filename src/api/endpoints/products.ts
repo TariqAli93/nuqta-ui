@@ -41,6 +41,7 @@ export const productsClient = {
     status?: string;
     lowStockOnly?: boolean;
     expiringSoonOnly?: boolean;
+    isExpire?: boolean;
   }): Promise<ApiResult<PagedResult<Product>>> => apiGetPaged<Product>('/products/', params),
 
   getById: (id: number): Promise<ApiResult<Product | null>> =>
@@ -52,8 +53,7 @@ export const productsClient = {
   update: (id: number, product: ProductInput): Promise<ApiResult<Product>> =>
     apiPut<Product>(`/products/${id}`, product),
 
-  delete: (id: number): Promise<ApiResult<null>> =>
-    apiDelete<null>(`/products/${id}`),
+  delete: (id: number): Promise<ApiResult<null>> => apiDelete<null>(`/products/${id}`),
 
   adjustStock: (productId: number, quantityChange: number): Promise<ApiResult<unknown>> =>
     apiPost<unknown>(`/products/${productId}/adjust-stock`, { quantityChange }),
@@ -89,8 +89,7 @@ export const productsClient = {
   updateUnit: (id: number, data: Partial<ProductUnitInput>): Promise<ApiResult<ProductUnit>> =>
     apiPut<ProductUnit>(`/products/units/${id}`, data),
 
-  deleteUnit: (id: number): Promise<ApiResult<null>> =>
-    apiDelete<null>(`/products/units/${id}`),
+  deleteUnit: (id: number): Promise<ApiResult<null>> => apiDelete<null>(`/products/units/${id}`),
 
   setDefaultUnit: (productId: number, unitId: number): Promise<ApiResult<null>> =>
     apiPost<null>(`/products/${productId}/units/${unitId}/set-default`),

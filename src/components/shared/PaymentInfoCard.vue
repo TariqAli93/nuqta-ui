@@ -121,6 +121,17 @@
             prepend-icon="mdi-note-text-outline"
           />
         </template>
+
+        <template v-if="sale.createdAt">
+          <v-divider />
+          <v-list-item
+            :title="t('common.createdAt')"
+            :subtitle="
+              dateWithTime(sale.createdAt) + ' - (' + formatDateRelative(sale.createdAt) + ')'
+            "
+            prepend-icon="mdi-calendar-clock"
+          />
+        </template>
       </v-list>
     </v-card-text>
   </v-card>
@@ -130,6 +141,7 @@
 import { computed } from 'vue';
 import { t } from '@/i18n/t';
 import type { Sale } from '@/types/domain';
+import { dateWithTime, formatDateRelative } from '@/utils/formatters';
 
 const props = defineProps<{
   sale: Sale;

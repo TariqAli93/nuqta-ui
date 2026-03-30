@@ -9,7 +9,7 @@
               <v-avatar color="primary" variant="tonal" size="48" rounded="lg">
                 <v-icon size="24">mdi-warehouse</v-icon>
               </v-avatar>
-              <div class="flex-grow-1">
+              <div class="grow">
                 <div class="text-caption text-medium-emphasis">قيمة المخزون</div>
                 <div class="text-h6 font-weight-bold">
                   {{ (inventoryStore.dashboard?.totalValuation ?? 0).toLocaleString('en-US') }}
@@ -24,7 +24,7 @@
               <v-avatar color="warning" variant="tonal" size="48" rounded="lg">
                 <v-icon size="24">mdi-alert-circle-outline</v-icon>
               </v-avatar>
-              <div class="flex-grow-1">
+              <div class="grow">
                 <div class="text-caption text-medium-emphasis">منتجات منخفضة</div>
                 <div class="text-h6 font-weight-bold">
                   {{ inventoryStore.dashboard?.lowStockCount ?? 0 }}
@@ -39,7 +39,7 @@
               <v-avatar color="error" variant="tonal" size="48" rounded="lg">
                 <v-icon size="24">mdi-clock-alert-outline</v-icon>
               </v-avatar>
-              <div class="flex-grow-1">
+              <div class="grow">
                 <div class="text-caption text-medium-emphasis">تنبيهات صلاحية</div>
                 <div class="text-h6 font-weight-bold">
                   {{ inventoryStore.dashboard?.expiryAlertCount ?? 0 }}
@@ -54,7 +54,7 @@
               <v-avatar color="success" variant="tonal" size="48" rounded="lg">
                 <v-icon size="24">mdi-swap-vertical</v-icon>
               </v-avatar>
-              <div class="flex-grow-1">
+              <div class="grow">
                 <div class="text-caption text-medium-emphasis">حركات مسجلة</div>
                 <div class="text-h6 font-weight-bold">{{ inventoryStore.movementsTotal }}</div>
               </div>
@@ -76,7 +76,7 @@
             :items-per-page="10"
           >
             <template #item.createdAt="{ item }">
-              {{ formatDate(item.createdAt) }}
+              {{ dateWithTime(item.createdAt) }} - ({{ formatDateRelative(item.createdAt) }})
             </template>
             <template #item.movementType="{ item }">
               <v-chip size="x-small" variant="tonal" :color="movementColor(item.movementType)">
@@ -118,7 +118,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { SubPageShell } from '@/components/layout';
-import { formatDate } from '@/utils/formatters';
+import { dateWithTime, formatDateRelative } from '@/utils/formatters';
 import { useInventoryStore } from '@/stores/inventoryStore';
 import { useInventoryHelpers } from '@/composables/useInventoryHelpers';
 import { useMovementTable } from '@/composables/useMovementTable';

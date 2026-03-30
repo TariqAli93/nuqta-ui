@@ -16,7 +16,7 @@
         class="ledger-table ds-table-enhanced ds-table-striped"
       >
         <template #item.createdAt="{ item }">
-          {{ formatDate(item.createdAt) }}
+          {{ dateWithTime(item.createdAt) }} - ({{ formatDateRelative(item.createdAt) }})
         </template>
 
         <template #item.transactionType="{ item }">
@@ -58,8 +58,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { formatDate } from '@/utils/formatters';
+import { computed, ref } from 'vue';
+import { formatDateRelative, dateWithTime } from '@/utils/formatters';
 import MoneyDisplay from '@/components/shared/MoneyDisplay.vue';
 
 export interface LedgerEntry {
@@ -97,6 +97,7 @@ const TYPE_LABELS: Record<string, string> = {
   return: 'مرتجع',
   adjustment: 'تعديل',
   opening: 'رصيد افتتاحي',
+  refund: 'استرداد',
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -106,6 +107,7 @@ const TYPE_COLORS: Record<string, string> = {
   return: 'warning',
   adjustment: 'info',
   opening: 'grey',
+  refund: 'warning',
 };
 
 const TYPE_ICONS: Record<string, string> = {
@@ -115,14 +117,15 @@ const TYPE_ICONS: Record<string, string> = {
   return: 'mdi-cash-refund',
   adjustment: 'mdi-scale-balance',
   opening: 'mdi-book-open-outline',
+  refund: 'mdi-cash-refund',
 };
 
 const headers = computed(() => [
   { title: 'التاريخ', key: 'createdAt', width: '140px' },
-  { title: 'النوع', key: 'transactionType', width: '140px' },
-  { title: 'المبلغ', key: 'amount', align: 'end' as const, width: '150px' },
-  { title: 'الرصيد', key: 'balanceAfter', align: 'end' as const, width: '150px' },
-  { title: 'ملاحظات', key: 'notes', sortable: false },
+  { title: 'النوع', key: 'transactionType', width: '80px' },
+  { title: 'المبلغ', key: 'amount', align: 'start' as const, width: '100px' },
+  { title: 'الرصيد', key: 'balanceAfter', align: 'start' as const, width: '100px' },
+  { title: 'ملاحظات', key: 'notes', sortable: false, width: '250px', align: 'start' as const },
 ]);
 
 function typeLabel(type: string): string {

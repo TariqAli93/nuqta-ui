@@ -20,7 +20,10 @@ import { createFailure, normalizeApiError, normalizeApiResult, toPagedResult } f
 // ---------------------------------------------------------------------------
 // Axios instance
 // ---------------------------------------------------------------------------
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+const baseURL =
+  process.env.NODE_ENV === 'production'
+    ? process.env.VITE_API_BASE_URL
+    : 'http://localhost:3000/api/v1';
 
 export const http: AxiosInstance = axios.create({
   baseURL,

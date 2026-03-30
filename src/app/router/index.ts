@@ -17,7 +17,8 @@ declare module 'vue-router' {
 }
 
 const router = createRouter({
-  history: (import.meta as any).env.PROD ? createWebHashHistory() : createWebHistory(),
+  // history: (import.meta as any).env.PROD ? createWebHashHistory() : createWebHistory(),
+  history: createWebHistory(),
   routes,
 });
 

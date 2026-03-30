@@ -49,6 +49,9 @@
   'common.copyDone': 'تم النسخ',
   'common.appTagline': 'نظام مبيعات شامل لإدارة أعمالك بكفاءة',
   'common.appName': 'نقطة بلس',
+  'common.saved': 'تم الحفظ بنجاح',
+  'common.createdAt': 'تاريخ الإنشاء',
+  'common.dateTime': 'التاريخ و الوقت',
 
   'errors.undefinedText': 'نص غير مُعرّف',
   'errors.unexpected': 'حدث خطأ غير متوقع',
@@ -331,6 +334,8 @@
   'sales.creditWarning': 'هذه الفاتورة آجلة — يوجد مبلغ متبقي على العميل',
   'sales.noItems': 'لا توجد عناصر',
   'sales.noItemsHint': 'لم تُضَف عناصر لهذه الفاتورة',
+  'sales.date': 'التاريخ',
+  'sales.dateTime': 'التاريخ و الوقت',
 
   'suppliers.title': 'الموردين',
   'suppliers.subtitle': 'إدارة بيانات الموردين والأرصدة',
@@ -350,6 +355,8 @@
   'purchases.invoiceNumber': 'رقم الفاتورة',
   'purchases.total': 'الإجمالي',
   'purchases.paidAmount': 'المبلغ المدفوع',
+  'purchases.remainingAmount': 'المبلغ المتبقي',
+  'purchases.paymentStatus': 'حالة الدفع',
 
   'settings.title': 'الإعدادات',
   'settings.subtitle': 'تفضيلات النظام وضبط العملة',
@@ -679,5 +686,4 @@
   'hr.payroll.allowances': 'البدلات',
   'hr.payroll.deductions': 'الخصومات',
   'hr.payroll.netSalary': 'صافي الراتب',
-  'common.saved': 'تم الحفظ بنجاح',
 };

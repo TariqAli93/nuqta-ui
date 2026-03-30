@@ -18,7 +18,7 @@
         clearable
         autofocus
         hide-details
-        class="flex-grow-1"
+        class="grow"
         style="min-width: 200px"
       />
       <v-select
@@ -72,6 +72,9 @@
             </v-chip>
             <span v-else class="text-disabled">—</span>
           </template>
+          <template #item.createdAt="{ item }">
+           {{ dateWithTime(item.createdAt) }} - ({{ formatDateRelative(item.createdAt) }})
+          </template>
           <template #item.actions="{ item }">
             <v-btn
               size="small"
@@ -107,6 +110,7 @@ import { notifyError } from '@/utils/notify';
 import { useCustomersStore } from '@/stores/customersStore';
 import { paymentStatusLabel, paymentStatusColor } from '@/types/invoice';
 import type { Sale } from '@/types/domain';
+import { formatDateRelative, dateWithTime } from '@/utils/formatters';
 
 const store = useSalesStore();
 const searchQuery = ref('');
@@ -135,6 +139,7 @@ const tableHeaders = computed(() => [
   { title: t('sales.total'), key: 'total' },
   { title: t('sales.status'), key: 'status' },
   { title: 'حالة الدفع', key: 'paymentStatus' },
+  {title: t('sales.dateTime'), key: 'createdAt' },
   { title: '', key: 'actions', sortable: false, width: 120 },
 ]);
 

@@ -54,7 +54,7 @@
             </template>
 
             <template #item.entryDate="{ item }">
-              {{ formatDate(item.entryDate) }}
+              {{ dateWithTime(item.entryDate) }} - ({{ formatDateRelative(item.entryDate) }})
             </template>
 
             <template #item.totalAmount="{ item }">
@@ -118,7 +118,7 @@ import { SubPageShell } from '@/components/layout';
 import { postingClient } from '@/api/endpoints/posting';
 import { notifyError, notifySuccess } from '@/utils/notify';
 import { toUserMessage } from '@/utils/errorMessage';
-import { formatDate, formatMoney } from '@/utils/formatters';
+import { formatDateRelative, dateWithTime, formatMoney } from '@/utils/formatters';
 
 const route = useRoute();
 const store = useAccountingStore();

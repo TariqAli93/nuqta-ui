@@ -29,7 +29,6 @@
           density="comfortable"
           class="ds-table-enhanced ds-table-striped"
           :no-data-text="''"
-          :hide-default-footer="true"
           @click:row="(_: Event, { item }: { item: any }) => router.push(`/customers/${item.id}`)"
         >
           <template #item.name="{ item }">

@@ -7,7 +7,8 @@ import {
   type StockAdjustmentInput,
   type StockReconciliationResult,
 } from '../api/endpoints/inventory';
-import type { InventoryMovement } from '../types/domain';
+import { productsClient } from '@/api/endpoints/products';
+import type { InventoryMovement, Product } from '../types/domain';
 
 export const useInventoryStore = defineStore(
   'inventory',
@@ -17,6 +18,7 @@ export const useInventoryStore = defineStore(
     const movementsTotal = ref(0);
     const dashboard = ref<InventoryDashboard | null>(null);
     const expiryAlerts = ref<ExpiryAlert[]>([]);
+    const expiredProducts = ref<Product[]>([]);
     const reconciliation = ref<StockReconciliationResult | null>(null);
     const repairedCount = ref(0);
 
@@ -89,10 +91,6 @@ export const useInventoryStore = defineStore(
     }
 
     async function fetchExpiryAlerts(daysAhead?: number) {
-      // Lightweight background refresh — does not toggle the aggregate loading flag
-      // so the UI is not disrupted while expiry data refreshes silently.
-      // Components that specifically need to track expiry alert loading can use
-      // the `loadingAlerts` flag directly; it is left false intentionally here.
       error.value = null;
       try {
         const result = await inventoryClient.getExpiryAlerts(daysAhead);
@@ -104,6 +102,25 @@ export const useInventoryStore = defineStore(
         return result;
       } catch (err: unknown) {
         error.value = err instanceof Error ? err.message : 'فشل في تحميل تنبيهات الصلاحية';
+        return { ok: false as const, error: { code: 'FETCH_FAILED', message: error.value! } };
+      }
+    }
+
+    // get product with isExpire true
+    async function fetchExpiringProducts() {
+      error.value = null;
+      try {
+        const result = await productsClient.getAll({ isExpire: true, limit: 100 });
+        if (result.ok) {
+          expiredProducts.value = result.data.items;
+          console.log('Expired products:', expiredProducts.value);
+          return { ok: true as const, data: result.data.items };
+        } else {
+          error.value = result.error.message;
+          return { ok: false as const, error: { code: 'FETCH_FAILED', message: error.value! } };
+        }
+      } catch (err: unknown) {
+        error.value = err instanceof Error ? err.message : 'فشل في تحميل المنتجات منتهية الصلاحية';
         return { ok: false as const, error: { code: 'FETCH_FAILED', message: error.value! } };
       }
     }
@@ -171,6 +188,7 @@ export const useInventoryStore = defineStore(
       movementsTotal,
       dashboard,
       expiryAlerts,
+      fetchExpiringProducts,
       reconciliation,
       repairedCount,
 
@@ -191,6 +209,7 @@ export const useInventoryStore = defineStore(
       adjustStock,
       reconcileStock,
       repairDrift,
+      expiredProducts,
     };
   },
   { persist: true }

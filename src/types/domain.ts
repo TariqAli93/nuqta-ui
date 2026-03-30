@@ -167,7 +167,7 @@ export interface CompanySettings {
 }
 
 // ── User ────────────────────────────────────────────────────────────────────
-export type UserRole = 'admin' | 'cashier' | 'manager' | 'viewer';
+export type UserRole = 'admin' | 'cashier' | 'manager';
 
 export interface User {
   id?: number;

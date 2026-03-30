@@ -25,9 +25,9 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       '/api': {
-        target: 'https://93.189.95.121:3000',
+        target: 'https://api.codelapps.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
     },
   },

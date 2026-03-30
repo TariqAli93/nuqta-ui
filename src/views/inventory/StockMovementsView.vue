@@ -57,7 +57,7 @@
             :items-per-page="25"
           >
             <template #item.createdAt="{ item }">
-              {{ formatDate(item.createdAt) }}
+              {{ dateWithTime(item.createdAt) }} - ({{ formatDateRelative(item.createdAt) }})
             </template>
             <template #item.movementType="{ item }">
               <v-chip size="x-small" variant="tonal" :color="movementColor(item.movementType)">
@@ -98,7 +98,7 @@
 import { onMounted, ref } from 'vue';
 import { SubPageShell } from '@/components/layout';
 import AppDateInput from '@/components/shared/AppDateInput.vue';
-import { formatDate } from '@/utils/formatters';
+import { dateWithTime, formatDateRelative } from '@/utils/formatters';
 import { useInventoryStore } from '@/stores/inventoryStore';
 import { useInventoryHelpers } from '@/composables/useInventoryHelpers';
 import { useMovementTable } from '@/composables/useMovementTable';
