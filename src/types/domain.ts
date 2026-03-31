@@ -109,6 +109,8 @@ export interface SaleItem {
   depletions?: SaleItemDepletion[];
 }
 
+type SaleWithUser = Sale & { id: number; username: string; fullName: string };
+
 export interface Sale {
   id?: number;
   invoiceNumber: string;
@@ -133,6 +135,7 @@ export interface Sale {
   createdAt?: string;
   updatedAt?: string;
   createdBy?: number;
+  user?: SaleWithUser;
   items?: SaleItem[];
   payments?: Payment[];
   paymentMethod?: PaymentMethod;

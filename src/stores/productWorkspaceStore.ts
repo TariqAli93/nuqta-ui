@@ -178,6 +178,7 @@ export const useProductWorkspaceStore = defineStore(
       try {
         const result = await productsClient.getPurchaseHistory(productId, { limit, offset });
         if (result.ok) {
+          console.log(result);
           purchaseHistory.value = result.data.items;
           purchaseHistoryTotal.value = result.data.total;
         } else {

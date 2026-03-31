@@ -36,6 +36,7 @@
 
       <v-col cols="12" md="8">
         <ProductSummaryPanel
+          :key="`summary-${pageReloadKey}`"
           :product="workspaceStore.selectedProduct"
           :loading="workspaceStore.loading.product"
           @edit-product="openEditDialog"
@@ -44,7 +45,13 @@
           @open-adjust-stock="openAdjustDrawer"
         />
 
-        <v-card class="mt-4 border" elevation="0" variant="flat" rounded="lg">
+        <v-card
+          :key="`tabs-${pageReloadKey}`"
+          class="mt-4 border"
+          elevation="0"
+          variant="flat"
+          rounded="lg"
+        >
           <v-tabs v-model="activeTab" color="primary" density="comfortable" show-arrows>
             <v-tab value="movements">المخزون والحركات</v-tab>
             <v-tab value="purchases">سجل المشتريات</v-tab>
@@ -86,6 +93,7 @@
                   :total="workspaceStore.salesHistoryTotal"
                   :loading="workspaceStore.loading.sales"
                   @reload="workspaceStore.fetchSalesHistory"
+                  @tabs-change="activeTab = $event"
                 />
               </v-card-text>
             </v-window-item>
@@ -133,6 +141,7 @@
     </v-row>
 
     <StockAdjustDrawer
+      :key="`drawer-${pageReloadKey}`"
       v-model="adjustDrawer"
       :product="workspaceStore.selectedProduct"
       :units="workspaceStore.units"
@@ -345,6 +354,11 @@ const { can } = useRBAC();
 
 const settingsStore = useSystemSettingsStore();
 
+const componentRefreshKey = ref<string | number>(Date.now());
+const pageReloadKey = computed(
+  () => `${selectedProductId.value ?? 'none'}-${activeTab.value}-${componentRefreshKey.value}`
+);
+
 const categories = ref<Array<{ id: number; name: string }>>([]);
 const suppliers = ref<Array<{ id: number; name: string }>>([]);
 
@@ -383,9 +397,29 @@ const productForm = reactive<ProductInput>({
   expireDate: null,
 });
 
-// Sync active tab to URL query param
-watch(activeTab, (tab) => {
-  router.replace({ query: { ...route.query, tab } });
+async function refreshWorkspacePanels(): Promise<void> {
+  componentRefreshKey.value = Date.now();
+
+  if (!workspaceStore.selectedProductId) {
+    return;
+  }
+
+  await workspaceStore.loadProductWorkspace(workspaceStore.selectedProductId);
+}
+
+// Sync active tab to URL query param and refresh the visible workspace panels
+watch(activeTab, (tab, previousTab) => {
+  void router.replace({ query: { ...route.query, tab } });
+
+  if (tab !== previousTab) {
+    void refreshWorkspacePanels();
+  }
+});
+
+watch(selectedProductId, (value, previousValue) => {
+  if (value && value !== previousValue) {
+    componentRefreshKey.value = Date.now();
+  }
 });
 
 // Sync active tab from URL query param
@@ -416,17 +450,6 @@ watch(
     notifyError(toUserMessage(value), { dedupeKey: 'workspace-error' });
   }
 );
-
-/* ── Lifecycle ─────────────────────────────────────────────────── */
-
-onMounted(async () => {
-  await Promise.all([
-    loadLookups(),
-    workspaceStore.fetchProducts({ limit: 25, offset: 0 }),
-    settingsStore.fetch(),
-  ]);
-  await applyRouteSelection();
-});
 
 /* ── Lookups ───────────────────────────────────────────────────── */
 
@@ -648,4 +671,15 @@ async function onCreateBatch(payload: ProductBatchInput): Promise<void> {
   if (!workspaceStore.selectedProductId) return;
   await workspaceStore.createBatch(workspaceStore.selectedProductId, payload);
 }
+
+/* ── Lifecycle ─────────────────────────────────────────────────── */
+
+onMounted(async () => {
+  await Promise.all([
+    loadLookups(),
+    workspaceStore.fetchProducts({ limit: 25, offset: 0 }),
+    settingsStore.fetch(),
+  ]);
+  await applyRouteSelection();
+});
 </script>

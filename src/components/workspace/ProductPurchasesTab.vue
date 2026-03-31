@@ -30,6 +30,7 @@
 <script setup lang="ts">
 import type { ProductPurchaseHistoryItem } from '@/types/workspace';
 import { formatDate, formatMoney } from '@/utils/formatters';
+import { onMounted } from 'vue';
 
 defineProps<{
   items: ProductPurchaseHistoryItem[];

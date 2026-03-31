@@ -132,6 +132,26 @@
             prepend-icon="mdi-calendar-clock"
           />
         </template>
+
+        <template v-if="sale.updatedAt">
+          <v-divider />
+          <v-list-item
+            :title="t('common.updatedAt')"
+            :subtitle="
+              dateWithTime(sale.updatedAt) + ' - (' + formatDateRelative(sale.updatedAt) + ')'
+            "
+            prepend-icon="mdi-calendar-edit"
+          />
+        </template>
+
+        <template v-if="sale.user">
+          <v-divider />
+          <v-list-item
+            :title="t('sales.createdBy')"
+            :subtitle="sale.user.fullName"
+            prepend-icon="mdi-account-outline"
+          />
+        </template>
       </v-list>
     </v-card-text>
   </v-card>

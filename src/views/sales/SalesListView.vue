@@ -47,6 +47,9 @@
           <template #item.invoiceNumber="{ item }">
             <span class="font-weight-medium">{{ item.invoiceNumber }}</span>
           </template>
+          <template #item.lineItems="{ item }">
+            <span>{{ item?.items?.length }}</span>
+          </template>
           <template #item.customerId="{ item }">
             <span v-if="item.customerId" class="text-medium-emphasis">
               {{ fetchCustomerName(item.customerId) }}
@@ -55,6 +58,12 @@
           </template>
           <template #item.total="{ item }">
             <span class="font-weight-bold">{{ formatCurrency(item.total) }}</span>
+          </template>
+          <template #item.discount="{ item }">
+            <span class="font-weight-medium">{{ item.discount === 0 ? '—' : formatCurrency(Number(item.discount)) }}</span>
+          </template>
+          <template #item.tax="{ item }">
+            <span class="font-weight-medium">{{ item.tax === 0 ? '—' : formatCurrency(Number(item.tax)) }}</span>
           </template>
           <template #item.status="{ item }">
             <v-chip size="small" variant="tonal" :color="statusBadgeClass(item.status)">
@@ -74,6 +83,21 @@
           </template>
           <template #item.createdAt="{ item }">
            {{ dateWithTime(item.createdAt) }} - ({{ formatDateRelative(item.createdAt) }})
+          </template>
+          <template #item.updatedAt="{ item }">
+           {{ dateWithTime(item.updatedAt) }} - ({{ formatDateRelative(item.updatedAt) }})
+          </template>
+          <template #item.referenceNumber="{ item }">
+            <span>{{ item.referenceNumber || '—' }}</span>
+          </template>
+          <template #item.paymentMethod="{ item }">
+            <span>
+              {{ item.paymentMethod ? t(`paymentMethods.${item.paymentMethod}`) : '—' }}
+            </span>
+          </template>
+
+          <template #item.createdByWithUser="{ item }">
+            <span>{{ item?.user?.fullName || t('common.unknown') }}</span>
           </template>
           <template #item.actions="{ item }">
             <v-btn
@@ -133,14 +157,23 @@ const localizedError = computed(() =>
   store.error ? mapErrorToArabic(store.error, 'errors.loadFailed') : null
 );
 
+
+
 const tableHeaders = computed(() => [
-  { title: t('sales.invoice'), key: 'invoiceNumber' },
-  { title: t('sales.customer'), key: 'customerId' },
-  { title: t('sales.total'), key: 'total' },
-  { title: t('sales.status'), key: 'status' },
-  { title: 'حالة الدفع', key: 'paymentStatus' },
-  {title: t('sales.dateTime'), key: 'createdAt' },
-  { title: '', key: 'actions', sortable: false, width: 120 },
+  { title: t('sales.invoice'),  key: 'invoiceNumber' },
+  { title: t('sales.customer'),  key: 'customerId' },
+  { title: t('sales.lineItems'),  key: 'lineItems' },
+  { title: t('sales.total'),  key: 'total' },
+  { title: t('sales.discount'),  key: 'discount' },
+  { title: t('sales.tax'),  key: 'tax' },
+  { title: t('sales.currency'),  key: 'currency' }, // نص غير معروف
+  { title: t('sales.status'),  key: 'status' },
+  { title: t('sales.paymentMethod'),  key: 'paymentMethod', sortable: true },
+  { title: t('sales.referenceNumber'),  key: 'referenceNumber', sortable: false },
+  {title: t('sales.dateTime'),  key: 'createdAt' },
+  { title: t('common.updatedAt'),  key: 'updatedAt' },
+  { title: t('sales.createdBy'),  key: 'createdByWithUser', sortable: true },
+  { title: '',  key: 'actions', sortable: false, width: 120 },
 ]);
 
 function statusLabel(status: string | undefined): string {
